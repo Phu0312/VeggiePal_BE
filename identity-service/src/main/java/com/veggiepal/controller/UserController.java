@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import com.veggiepal.dto.request.RegisterRequest;
 import com.veggiepal.dto.response.ApiResponse;
 import com.veggiepal.dto.response.RegisterResponse;
+import com.veggiepal.dto.request.LoginRequest;
+import com.veggiepal.dto.response.LoginResponse;
 import com.veggiepal.service.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -36,6 +38,18 @@ public class UserController {
         return ApiResponse
                 .<RegisterResponse>builder()
                 .result(userService.createUser(request))
+                .build();
+    }
+
+    @Operation(
+            summary = "Login user"
+    )
+    @PostMapping("/login")
+    ApiResponse<LoginResponse> login(@RequestBody @Valid LoginRequest request) {
+
+        return ApiResponse
+                .<LoginResponse>builder()
+                .result(userService.login(request))
                 .build();
     }
 }

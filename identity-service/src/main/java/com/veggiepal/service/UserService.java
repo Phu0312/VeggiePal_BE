@@ -1,5 +1,7 @@
 package com.veggiepal.service;
 
+import com.veggiepal.dto.request.LoginRequest;
+import com.veggiepal.dto.response.LoginResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,7 @@ public class UserService {
     UserRepository userRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+    JwtService jwtService;
 
     public RegisterResponse createUser(RegisterRequest request) {
 
@@ -46,5 +49,44 @@ public class UserService {
 
         userRepository.save(user);
         return userMapper.toUserResponse(user);
+    }
+
+    public LoginResponse login(LoginRequest request) {
+
+        String email =
+                request.getEmail()
+                        .trim()
+                        .toLowerCase();
+
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(
+                        () -> new AppException(
+                                ErrorCode.UNAUTHENTICATED
+                        )
+                );
+
+        boolean passwordMatched =
+                passwordEncoder.matches(
+                        request.getPassword(),
+                        user.getPasswordHash()
+                );
+
+        if (!passwordMatched) {
+            throw new AppException(
+                    ErrorCode.UNAUTHENTICATED
+            );
+        }
+
+        String token =
+                jwtService.generateToken(user);
+
+        return LoginResponse.builder()
+                .accessToken(token)
+                .userId(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole())
+                .build();
     }
 }
