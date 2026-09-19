@@ -6,9 +6,13 @@ import java.util.Objects;
 import jakarta.validation.ConstraintViolation;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import com.veggiepal.dto.response.ApiResponse;
 
@@ -100,6 +104,47 @@ public class GlobalExceptionHandler {
                                         : errorCode.getMessage()
                         )
                         .build();
+
+        return ResponseEntity
+                .status(errorCode.getStatusCode())
+                .body(apiResponse);
+    }
+
+    @ExceptionHandler(value = {
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class
+    })
+    ResponseEntity<ApiResponse<?>> handlingInvalidRequest(
+            Exception exception
+    ) {
+
+        return errorResponse(ErrorCode.INVALID_REQUEST);
+    }
+
+    @ExceptionHandler(value = MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiResponse<?>> handlingMaxUploadSize(
+            MaxUploadSizeExceededException exception
+    ) {
+
+        return errorResponse(ErrorCode.AVATAR_TOO_LARGE);
+    }
+
+    @ExceptionHandler(value = MissingServletRequestPartException.class)
+    ResponseEntity<ApiResponse<?>> handlingMissingPart(
+            MissingServletRequestPartException exception
+    ) {
+
+        return errorResponse(ErrorCode.AVATAR_REQUIRED);
+    }
+
+    private ResponseEntity<ApiResponse<?>> errorResponse(
+            ErrorCode errorCode
+    ) {
+
+        ApiResponse<?> apiResponse = ApiResponse.builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build();
 
         return ResponseEntity
                 .status(errorCode.getStatusCode())

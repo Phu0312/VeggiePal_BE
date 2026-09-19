@@ -1,30 +1,27 @@
 package com.veggiepal.service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.veggiepal.configuration.JwtConfig;
 import com.veggiepal.entity.User;
 
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 
 @Service
 public class JwtService {
 
-    private static final String SECRET =
-            "veggiepal-secret-key-must-be-at-least-32-characters";
-
     private static final long EXPIRATION =
             1000 * 60 * 60 * 24;
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(
-                SECRET.getBytes(StandardCharsets.UTF_8)
-        );
+    private final SecretKey signingKey;
+
+    public JwtService(@Value("${jwt.secret}") String secret) {
+        this.signingKey = JwtConfig.signingKey(secret);
     }
 
     public String generateToken(User user) {
@@ -40,7 +37,7 @@ public class JwtService {
                                         + EXPIRATION
                         )
                 )
-                .signWith(getSigningKey())
+                .signWith(signingKey, Jwts.SIG.HS256)
                 .compact();
     }
 }

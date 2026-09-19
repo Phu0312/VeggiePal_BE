@@ -1,5 +1,6 @@
 package com.veggiepal.entity;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import com.veggiepal.enums.Role;
@@ -33,6 +34,9 @@ public class User {
 
     @Column(name = "avatar_url")
     String avatarUrl;
+
+    @Column(name = "date_of_birth")
+    LocalDate dateOfBirth;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
