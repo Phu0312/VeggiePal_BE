@@ -21,10 +21,34 @@ spring:
               filters:
                 - StripPrefix=1
 
+            - id: identity-service-users
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/users/**
+              filters:
+                - StripPrefix=1
+
             - id: identity-service-docs
               uri: http://localhost:8081
               predicates:
                 - Path=/identity-service/v3/api-docs/**
+              filters:
+                - StripPrefix=1
+
+            # =========================
+            # NUTRITION SERVICE
+            # =========================
+            - id: nutrition-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/nutrition/**
+              filters:
+                - StripPrefix=1
+
+            - id: nutrition-service-docs
+              uri: http://localhost:8082
+              predicates:
+                - Path=/nutrition-service/v3/api-docs/**
               filters:
                 - StripPrefix=1
 
@@ -38,3 +62,5 @@ springdoc:
     urls:
       - name: Identity Service
         url: /identity-service/v3/api-docs
+      - name: Nutrition Service
+        url: /nutrition-service/v3/api-docs
