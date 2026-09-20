@@ -26,6 +26,7 @@ import com.veggiepal.blog.enums.CategoryType;
 import com.veggiepal.blog.exception.AppException;
 import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.mapper.CategoryMapper;
+import com.veggiepal.blog.repository.BlogRepository;
 import com.veggiepal.blog.repository.CategoryRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,6 +34,9 @@ class CategoryServiceTest {
 
     @Mock
     CategoryRepository categoryRepository;
+
+    @Mock
+    BlogRepository blogRepository;
 
     @Spy
     CategoryMapper categoryMapper = Mappers.getMapper(CategoryMapper.class);
@@ -176,10 +180,25 @@ class CategoryServiceTest {
         Category leaf = root(1L, "Công thức");
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(leaf));
         when(categoryRepository.existsByParentId(1L)).thenReturn(false);
+        when(blogRepository.existsByCategoryId(1L)).thenReturn(false);
 
         categoryService.delete(1L);
 
         verify(categoryRepository).delete(leaf);
+    }
+
+    @Test
+    void delete_stillUsedByBlogs_throwsInUse() {
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(root(1L, "Công thức")));
+        when(categoryRepository.existsByParentId(1L)).thenReturn(false);
+        when(blogRepository.existsByCategoryId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> categoryService.delete(1L))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.CATEGORY_IN_USE);
+
+        verify(categoryRepository, never()).delete(any());
     }
 
     @Test
@@ -202,6 +221,22 @@ class CategoryServiceTest {
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.CATEGORY_NOT_EXISTED);
+    }
+
+    // Task 3 review finding: an active child under a deactivated root must not
+    // stay individually selectable just because getTree() hides it from the tree.
+    @Test
+    void requireActiveCategory_activeChildOfInactiveParent_throwsCategoryInactive() {
+        Category parent = root(1L, "Công thức");
+        parent.setActive(false);
+        Category activeChild = child(2L, "Món chính", parent);
+        activeChild.setActive(true);
+        when(categoryRepository.findById(2L)).thenReturn(Optional.of(activeChild));
+
+        assertThatThrownBy(() -> categoryService.requireActiveCategory(2L))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.CATEGORY_INACTIVE);
     }
 
     @Test

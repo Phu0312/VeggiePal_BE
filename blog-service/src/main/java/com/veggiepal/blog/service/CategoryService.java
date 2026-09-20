@@ -14,6 +14,7 @@ import com.veggiepal.blog.enums.CategoryType;
 import com.veggiepal.blog.exception.AppException;
 import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.mapper.CategoryMapper;
+import com.veggiepal.blog.repository.BlogRepository;
 import com.veggiepal.blog.repository.CategoryRepository;
 
 import lombok.AccessLevel;
@@ -27,6 +28,7 @@ public class CategoryService {
 
     CategoryRepository categoryRepository;
     CategoryMapper categoryMapper;
+    BlogRepository blogRepository;
 
     public List<CategoryResponse> getTree(CategoryType type, boolean activeOnly) {
 
@@ -139,7 +141,7 @@ public class CategoryService {
 
         Category category = findCategory(id);
 
-        if (categoryRepository.existsByParentId(id)) {
+        if (categoryRepository.existsByParentId(id) || blogRepository.existsByCategoryId(id)) {
             throw new AppException(ErrorCode.CATEGORY_IN_USE);
         }
 
@@ -151,7 +153,8 @@ public class CategoryService {
 
         Category category = findCategory(id);
 
-        if (!category.getActive()) {
+        // Depth is capped at two levels, so one level up is as far as this needs to walk.
+        if (!category.getActive() || (category.getParent() != null && !category.getParent().getActive())) {
             throw new AppException(ErrorCode.CATEGORY_INACTIVE);
         }
 
