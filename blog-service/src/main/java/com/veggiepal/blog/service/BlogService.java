@@ -1,6 +1,7 @@
 package com.veggiepal.blog.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -33,6 +34,15 @@ public class BlogService {
     static final int MAX_PAGE_SIZE = 100;
 
     static final Sort NEWEST_FIRST = Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
+
+    static final Sort POPULAR_FIRST = Sort.by(Sort.Order.desc("voteScore"), Sort.Order.desc("id"));
+
+    static final Sort MOST_VIEWED_FIRST = Sort.by(Sort.Order.desc("viewCount"), Sort.Order.desc("id"));
+
+    static final Sort RECENTLY_PUBLISHED_FIRST =
+            Sort.by(Sort.Order.desc("publishedAt"), Sort.Order.desc("id"));
+
+    static final int RELATED_LIMIT = 5;
 
     BlogRepository blogRepository;
     CategoryService categoryService;
@@ -127,6 +137,72 @@ public class BlogService {
                                 ErrorCode.BLOG_NOT_EXISTED
                         )
                 );
+    }
+
+    public PageResponse<BlogSummaryResponse> getPublishedBlogs(
+            Long categoryId, String keyword, String sort, int page, int size
+    ) {
+
+        Page<Blog> blogs = blogRepository.search(
+                ContentStatus.PUBLISHED,
+                categoryId,
+                normalizeKeyword(keyword),
+                pageRequest(page, size, sortFor(sort))
+        );
+
+        return toPageResponse(blogs);
+    }
+
+    @Transactional
+    public BlogResponse getPublishedBlog(Long id) {
+
+        Blog blog = requirePublishedBlog(id);
+
+        blogRepository.incrementViewCount(id);
+
+        BlogResponse response = blogMapper.toBlogResponse(blog);
+
+        // The JPQL update bypasses the persistence context, so the entity we hold
+        // still has the old number. Reflect the increment we just made.
+        response.setViewCount(blog.getViewCount() + 1);
+
+        return response;
+    }
+
+    public List<BlogSummaryResponse> getRelatedBlogs(Long id) {
+
+        Blog blog = requirePublishedBlog(id);
+
+        return blogRepository
+                .findByCategoryIdAndStatusAndIdNot(
+                        blog.getCategory().getId(),
+                        ContentStatus.PUBLISHED,
+                        id,
+                        PageRequest.of(0, RELATED_LIMIT, POPULAR_FIRST)
+                )
+                .stream()
+                .map(blogMapper::toBlogSummaryResponse)
+                .toList();
+    }
+
+    /** A blank keyword means "no filter", not "match the empty string". */
+    private static String normalizeKeyword(String keyword) {
+
+        return keyword == null || keyword.isBlank() ? null : keyword.trim();
+    }
+
+    // An unrecognised sort is a client typo, not a reason to fail the whole request
+    private static Sort sortFor(String sort) {
+
+        if (sort == null) {
+            return RECENTLY_PUBLISHED_FIRST;
+        }
+
+        return switch (sort) {
+            case "popular" -> POPULAR_FIRST;
+            case "mostViewed" -> MOST_VIEWED_FIRST;
+            default -> RECENTLY_PUBLISHED_FIRST;
+        };
     }
 
     /**

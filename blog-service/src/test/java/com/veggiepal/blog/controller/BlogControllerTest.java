@@ -12,6 +12,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -26,6 +28,7 @@ import com.veggiepal.blog.configuration.SecurityConfig;
 import com.veggiepal.blog.configuration.SecurityExceptionHandler;
 import com.veggiepal.blog.dto.request.BlogRequest;
 import com.veggiepal.blog.dto.response.BlogResponse;
+import com.veggiepal.blog.dto.response.BlogSummaryResponse;
 import com.veggiepal.blog.dto.response.PageResponse;
 import com.veggiepal.blog.enums.ContentStatus;
 import com.veggiepal.blog.service.BlogService;
@@ -151,5 +154,45 @@ class BlogControllerTest {
                 .andExpect(status().isOk());
 
         verify(blogService).deleteBlog(USER_ID, false, 10L);
+    }
+
+    @Test
+    void getPublishedBlogs_withoutToken_isPublic() throws Exception {
+        when(blogService.getPublishedBlogs(null, null, null, 0, 20))
+                .thenReturn(PageResponse.<BlogSummaryResponse>builder()
+                        .items(List.of()).page(0).size(20).totalElements(0).totalPages(0).build());
+
+        mockMvc.perform(get("/blogs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1000));
+    }
+
+    @Test
+    void getPublishedBlog_withoutToken_isPublic() throws Exception {
+        when(blogService.getPublishedBlog(10L))
+                .thenReturn(BlogResponse.builder().id(10L).viewCount(42).build());
+
+        mockMvc.perform(get("/blogs/10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.viewCount").value(42));
+    }
+
+    // A guest arriving with a leftover expired token must still be able to read
+    @Test
+    void getPublishedBlogs_withExpiredLookingToken_stillPublic() throws Exception {
+        when(blogService.getPublishedBlogs(null, null, null, 0, 20))
+                .thenReturn(PageResponse.<BlogSummaryResponse>builder()
+                        .items(List.of()).page(0).size(20).totalElements(0).totalPages(0).build());
+
+        mockMvc.perform(get("/blogs").header("Authorization", "Bearer not-a-real-token"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void getRelatedBlogs_withoutToken_isPublic() throws Exception {
+        when(blogService.getRelatedBlogs(10L)).thenReturn(List.of());
+
+        mockMvc.perform(get("/blogs/10/related"))
+                .andExpect(status().isOk());
     }
 }

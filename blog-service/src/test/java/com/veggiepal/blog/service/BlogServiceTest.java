@@ -4,23 +4,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mapstruct.factory.Mappers;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import com.veggiepal.blog.dto.request.BlogRequest;
 import com.veggiepal.blog.dto.response.BlogResponse;
+import com.veggiepal.blog.dto.response.BlogSummaryResponse;
+import com.veggiepal.blog.dto.response.PageResponse;
 import com.veggiepal.blog.entity.Blog;
 import com.veggiepal.blog.entity.Category;
 import com.veggiepal.blog.enums.CategoryType;
@@ -282,5 +290,101 @@ class BlogServiceTest {
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.BLOG_NOT_EXISTED);
+    }
+
+    @Test
+    void getPublishedBlogs_blankKeyword_isPassedAsNull() {
+        when(blogRepository.search(eq(ContentStatus.PUBLISHED), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(blog(ContentStatus.PUBLISHED))));
+
+        PageResponse<BlogSummaryResponse> result =
+                blogService.getPublishedBlogs(null, "   ", null, 0, 20);
+
+        assertThat(result.getItems()).hasSize(1);
+        verify(blogRepository).search(eq(ContentStatus.PUBLISHED), isNull(), isNull(), any(Pageable.class));
+    }
+
+    @Test
+    void getPublishedBlogs_noMatch_returnsEmptyPageInsteadOfThrowing() {
+        when(blogRepository.search(any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        PageResponse<BlogSummaryResponse> result =
+                blogService.getPublishedBlogs(null, "không có gì", null, 0, 20);
+
+        assertThat(result.getItems()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    void getPublishedBlogs_sortPopular_ordersByVoteScore() {
+        when(blogRepository.search(any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        blogService.getPublishedBlogs(null, null, "popular", 0, 20);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(blogRepository).search(any(), any(), any(), pageable.capture());
+
+        assertThat(pageable.getValue().getSort().getOrderFor("voteScore")).isNotNull();
+    }
+
+    @Test
+    void getPublishedBlogs_unknownSort_fallsBackToNewest() {
+        when(blogRepository.search(any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        blogService.getPublishedBlogs(null, null, "chaos", 0, 20);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(blogRepository).search(any(), any(), any(), pageable.capture());
+
+        assertThat(pageable.getValue().getSort().getOrderFor("publishedAt")).isNotNull();
+    }
+
+    @Test
+    void getPublishedBlogs_oversizedPage_isClampedToHundred() {
+        when(blogRepository.search(any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        blogService.getPublishedBlogs(null, null, null, -5, 5000);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(blogRepository).search(any(), any(), any(), pageable.capture());
+
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(100);
+        assertThat(pageable.getValue().getPageNumber()).isZero();
+    }
+
+    @Test
+    void getPublishedBlog_incrementsViewAndReportsTheNewCount() {
+        Blog published = blog(ContentStatus.PUBLISHED);
+        published.setViewCount(41);
+        when(blogRepository.findByIdAndStatus(10L, ContentStatus.PUBLISHED))
+                .thenReturn(Optional.of(published));
+
+        BlogResponse response = blogService.getPublishedBlog(10L);
+
+        verify(blogRepository).incrementViewCount(10L);
+        // The JPQL update does not refresh the loaded entity, so the service adds the 1 itself
+        assertThat(response.getViewCount()).isEqualTo(42);
+    }
+
+    @Test
+    void getRelatedBlogs_excludesItselfAndCapsAtFive() {
+        Blog published = blog(ContentStatus.PUBLISHED);
+        when(blogRepository.findByIdAndStatus(10L, ContentStatus.PUBLISHED))
+                .thenReturn(Optional.of(published));
+        when(blogRepository.findByCategoryIdAndStatusAndIdNot(
+                eq(3L), eq(ContentStatus.PUBLISHED), eq(10L), any(Pageable.class)))
+                .thenReturn(List.of(blog(ContentStatus.PUBLISHED)));
+
+        List<BlogSummaryResponse> related = blogService.getRelatedBlogs(10L);
+
+        assertThat(related).hasSize(1);
+
+        ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+        verify(blogRepository).findByCategoryIdAndStatusAndIdNot(any(), any(), any(), pageable.capture());
+        assertThat(pageable.getValue().getPageSize()).isEqualTo(5);
     }
 }

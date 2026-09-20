@@ -1,5 +1,7 @@
 package com.veggiepal.blog.controller;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -95,5 +97,45 @@ public class BlogController {
 
         blogService.deleteBlog(CurrentUser.id(jwt), CurrentUser.isAdmin(jwt), id);
         return ApiResponse.<Void>builder().build();
+    }
+
+    @Operation(summary = "Published blogs; keyword searches title and content")
+    @GetMapping
+    ApiResponse<PageResponse<BlogSummaryResponse>> getPublishedBlogs(
+            @RequestParam(name = "categoryId", required = false) Long categoryId,
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "sort", required = false) String sort,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size
+    ) {
+
+        return ApiResponse
+                .<PageResponse<BlogSummaryResponse>>builder()
+                .result(blogService.getPublishedBlogs(categoryId, keyword, sort, page, size))
+                .build();
+    }
+
+    @Operation(summary = "One published blog; counts a view")
+    @GetMapping("/{id}")
+    ApiResponse<BlogResponse> getPublishedBlog(
+            @PathVariable("id") Long id
+    ) {
+
+        return ApiResponse
+                .<BlogResponse>builder()
+                .result(blogService.getPublishedBlog(id))
+                .build();
+    }
+
+    @Operation(summary = "Up to five published blogs in the same category")
+    @GetMapping("/{id}/related")
+    ApiResponse<List<BlogSummaryResponse>> getRelatedBlogs(
+            @PathVariable("id") Long id
+    ) {
+
+        return ApiResponse
+                .<List<BlogSummaryResponse>>builder()
+                .result(blogService.getRelatedBlogs(id))
+                .build();
     }
 }
