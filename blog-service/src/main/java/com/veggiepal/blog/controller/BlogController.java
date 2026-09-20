@@ -11,12 +11,15 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.veggiepal.blog.dto.request.BlogRequest;
+import com.veggiepal.blog.dto.request.VoteRequest;
 import com.veggiepal.blog.dto.response.ApiResponse;
 import com.veggiepal.blog.dto.response.BlogResponse;
 import com.veggiepal.blog.dto.response.BlogSummaryResponse;
 import com.veggiepal.blog.dto.response.PageResponse;
+import com.veggiepal.blog.dto.response.VoteResponse;
 import com.veggiepal.blog.enums.ContentStatus;
 import com.veggiepal.blog.service.BlogService;
+import com.veggiepal.blog.service.VoteService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,6 +37,7 @@ import lombok.experimental.FieldDefaults;
 public class BlogController {
 
     BlogService blogService;
+    VoteService voteService;
 
     @Operation(summary = "Create a blog; publish=true runs moderation right away")
     @PostMapping
@@ -153,6 +157,46 @@ public class BlogController {
         return ApiResponse
                 .<List<BlogSummaryResponse>>builder()
                 .result(blogService.getRelatedBlogs(id))
+                .build();
+    }
+
+    @Operation(summary = "Set your vote on a blog; 1 or -1")
+    @PutMapping("/{id}/vote")
+    ApiResponse<VoteResponse> vote(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @PathVariable("id") Long id,
+            @RequestBody @Valid VoteRequest request
+    ) {
+
+        return ApiResponse
+                .<VoteResponse>builder()
+                .result(voteService.vote(CurrentUser.id(jwt), id, request.getValue()))
+                .build();
+    }
+
+    @Operation(summary = "Remove your vote; doing it twice is harmless")
+    @DeleteMapping("/{id}/vote")
+    ApiResponse<VoteResponse> removeVote(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @PathVariable("id") Long id
+    ) {
+
+        return ApiResponse
+                .<VoteResponse>builder()
+                .result(voteService.removeVote(CurrentUser.id(jwt), id))
+                .build();
+    }
+
+    @Operation(summary = "My vote on a list of blogs, to overlay on a public listing")
+    @GetMapping("/me/votes")
+    ApiResponse<List<VoteResponse>> getMyVotes(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "blogIds") List<Long> blogIds
+    ) {
+
+        return ApiResponse
+                .<List<VoteResponse>>builder()
+                .result(voteService.getMyVotes(CurrentUser.id(jwt), blogIds))
                 .build();
     }
 }

@@ -51,4 +51,9 @@ public interface BlogRepository extends JpaRepository<Blog, Long> {
     @Modifying
     @Query("update Blog b set b.viewCount = b.viewCount + 1 where b.id = :id")
     void incrementViewCount(@Param("id") Long id);
+
+    /** Atomic so two concurrent votes cannot overwrite each other's adjustment. */
+    @Modifying
+    @Query("update Blog b set b.voteScore = b.voteScore + :delta where b.id = :id")
+    void addVoteScore(@Param("id") Long id, @Param("delta") int delta);
 }

@@ -9,6 +9,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -30,8 +31,10 @@ import com.veggiepal.blog.dto.request.BlogRequest;
 import com.veggiepal.blog.dto.response.BlogResponse;
 import com.veggiepal.blog.dto.response.BlogSummaryResponse;
 import com.veggiepal.blog.dto.response.PageResponse;
+import com.veggiepal.blog.dto.response.VoteResponse;
 import com.veggiepal.blog.enums.ContentStatus;
 import com.veggiepal.blog.service.BlogService;
+import com.veggiepal.blog.service.VoteService;
 
 @WebMvcTest(BlogController.class)
 @Import({SecurityConfig.class, JwtConfig.class, SecurityExceptionHandler.class})
@@ -44,6 +47,9 @@ class BlogControllerTest {
 
     @MockitoBean
     BlogService blogService;
+
+    @MockitoBean
+    VoteService voteService;
 
     static RequestPostProcessor member() {
         return jwt().jwt(token -> token.claim("userId", USER_ID).claim("role", "USER"));
@@ -194,5 +200,57 @@ class BlogControllerTest {
 
         mockMvc.perform(get("/blogs/10/related"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void vote_withoutToken_returnsUnauthenticated() throws Exception {
+        mockMvc.perform(put("/blogs/10/vote")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"value": 1}
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(1008));
+    }
+
+    @Test
+    void vote_withToken_passesValueThrough() throws Exception {
+        when(voteService.vote(USER_ID, 10L, 1))
+                .thenReturn(VoteResponse.builder().blogId(10L).myVote(1).voteScore(5).build());
+
+        mockMvc.perform(put("/blogs/10/vote").with(member())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"value": 1}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.voteScore").value(5));
+    }
+
+    @Test
+    void vote_missingValue_returnsInvalidVoteValue() throws Exception {
+        mockMvc.perform(put("/blogs/10/vote").with(member())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(3040));
+    }
+
+    // /blogs/me/votes is two segments deep; it must not be swallowed by /blogs/{id}
+    @Test
+    void getMyVotes_withoutToken_returnsUnauthenticated() throws Exception {
+        mockMvc.perform(get("/blogs/me/votes").param("blogIds", "10,11"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value(1008));
+    }
+
+    @Test
+    void getMyVotes_withToken_reachesTheService() throws Exception {
+        when(voteService.getMyVotes(USER_ID, List.of(10L, 11L)))
+                .thenReturn(List.of(VoteResponse.builder().blogId(10L).myVote(1).build()));
+
+        mockMvc.perform(get("/blogs/me/votes").param("blogIds", "10,11").with(member()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result[0].myVote").value(1));
     }
 }
