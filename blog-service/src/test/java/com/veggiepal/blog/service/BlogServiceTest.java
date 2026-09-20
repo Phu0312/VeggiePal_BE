@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,6 +18,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -24,6 +26,7 @@ import org.mapstruct.factory.Mappers;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mock.web.MockMultipartFile;
 
 import com.veggiepal.blog.dto.request.BlogRequest;
 import com.veggiepal.blog.dto.response.BlogResponse;
@@ -57,11 +60,21 @@ class BlogServiceTest {
     @Mock
     ContentModerationService contentModerationService;
 
+    @Mock
+    FileStorageService fileStorageService;
+
     @Spy
     BlogMapper blogMapper = Mappers.getMapper(BlogMapper.class);
 
     @InjectMocks
     BlogService blogService;
+
+    static byte[] pngBytes() {
+        byte[] content = new byte[32];
+        byte[] signature = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+        System.arraycopy(signature, 0, content, 0, signature.length);
+        return content;
+    }
 
     static Category category() {
         return Category.builder()
@@ -386,5 +399,72 @@ class BlogServiceTest {
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
         verify(blogRepository).findByCategoryIdAndStatusAndIdNot(any(), any(), any(), pageable.capture());
         assertThat(pageable.getValue().getPageSize()).isEqualTo(5);
+    }
+
+    @Test
+    void uploadThumbnail_validPng_storesAndReplacesPreviousObject() {
+        Blog existing = blog(ContentStatus.PUBLISHED);
+        existing.setThumbnailUrl("http://localhost:9000/veggiepal-blog-thumbnails/old.png");
+
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(fileStorageService.upload(anyString(), any(byte[].class), eq("image/png")))
+                .thenReturn("http://localhost:9000/veggiepal-blog-thumbnails/new.png");
+        when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
+
+        MockMultipartFile file =
+                new MockMultipartFile("file", "cover.png", "image/png", pngBytes());
+
+        BlogResponse response = blogService.uploadThumbnail(AUTHOR_ID, false, 10L, file);
+
+        assertThat(response.getThumbnailUrl()).endsWith("new.png");
+
+        InOrder inOrder = inOrder(fileStorageService, blogRepository);
+        inOrder.verify(fileStorageService).upload(anyString(), any(byte[].class), anyString());
+        inOrder.verify(blogRepository).save(any(Blog.class));
+        // The previous object is only removed once the new URL is safely persisted
+        inOrder.verify(fileStorageService).delete("http://localhost:9000/veggiepal-blog-thumbnails/old.png");
+    }
+
+    @Test
+    void uploadThumbnail_emptyFile_throwsThumbnailRequired() {
+        MockMultipartFile file = new MockMultipartFile("file", "x.png", "image/png", new byte[0]);
+
+        assertThatThrownBy(() -> blogService.uploadThumbnail(AUTHOR_ID, false, 10L, file))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.THUMBNAIL_REQUIRED);
+    }
+
+    // Declared content type lying about the real bytes is the attack this blocks
+    @Test
+    void uploadThumbnail_contentTypeDoesNotMatchMagicBytes_throwsInvalidType() {
+        MockMultipartFile file =
+                new MockMultipartFile("file", "x.jpg", "image/jpeg", pngBytes());
+
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.PUBLISHED)));
+
+        assertThatThrownBy(() -> blogService.uploadThumbnail(AUTHOR_ID, false, 10L, file))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_THUMBNAIL_TYPE);
+
+        verify(fileStorageService, never()).upload(anyString(), any(byte[].class), anyString());
+        verify(blogRepository, never()).save(any());
+    }
+
+    @Test
+    void uploadThumbnail_byStranger_throwsUnauthorized() {
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.PUBLISHED)));
+
+        MockMultipartFile file =
+                new MockMultipartFile("file", "cover.png", "image/png", pngBytes());
+
+        assertThatThrownBy(() -> blogService.uploadThumbnail(STRANGER_ID, false, 10L, file))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.UNAUTHORIZED);
+
+        verify(fileStorageService, never()).upload(anyString(), any(byte[].class), anyString());
+        verify(blogRepository, never()).save(any());
     }
 }

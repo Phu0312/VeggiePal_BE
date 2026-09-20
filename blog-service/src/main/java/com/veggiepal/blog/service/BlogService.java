@@ -1,13 +1,16 @@
 package com.veggiepal.blog.service;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.veggiepal.blog.dto.request.BlogRequest;
 import com.veggiepal.blog.dto.response.BlogResponse;
@@ -15,6 +18,7 @@ import com.veggiepal.blog.dto.response.BlogSummaryResponse;
 import com.veggiepal.blog.dto.response.PageResponse;
 import com.veggiepal.blog.entity.Blog;
 import com.veggiepal.blog.enums.ContentStatus;
+import com.veggiepal.blog.enums.ImageType;
 import com.veggiepal.blog.exception.AppException;
 import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.mapper.BlogMapper;
@@ -25,13 +29,17 @@ import com.veggiepal.blog.repository.BlogRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
 public class BlogService {
 
     static final int MAX_PAGE_SIZE = 100;
+
+    static final long MAX_THUMBNAIL_BYTES = 5L * 1024 * 1024;
 
     static final Sort NEWEST_FIRST = Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"));
 
@@ -48,6 +56,7 @@ public class BlogService {
     CategoryService categoryService;
     ContentModerationService contentModerationService;
     BlogMapper blogMapper;
+    FileStorageService fileStorageService;
 
     @Transactional
     public BlogResponse createBlog(Long authorId, BlogRequest request) {
@@ -112,6 +121,72 @@ public class BlogService {
     public void deleteBlog(Long userId, boolean admin, Long blogId) {
 
         blogRepository.delete(findOwnedBlog(userId, admin, blogId));
+    }
+
+    @Transactional
+    public BlogResponse uploadThumbnail(Long userId, boolean admin, Long blogId, MultipartFile file) {
+
+        if (file == null || file.isEmpty()) {
+            throw new AppException(ErrorCode.THUMBNAIL_REQUIRED);
+        }
+
+        if (file.getSize() > MAX_THUMBNAIL_BYTES) {
+            throw new AppException(ErrorCode.THUMBNAIL_TOO_LARGE);
+        }
+
+        // Ownership before storage: a stranger must not be able to write into the bucket
+        Blog blog = findOwnedBlog(userId, admin, blogId);
+
+        byte[] content = readContent(file);
+
+        // The declared content type must match the real file signature
+        ImageType imageType = ImageTypeDetector
+                .detect(content)
+                .filter(type -> type.getContentType().equals(file.getContentType()))
+                .orElseThrow(
+                        () -> new AppException(
+                                ErrorCode.INVALID_THUMBNAIL_TYPE
+                        )
+                );
+
+        String previousThumbnailUrl = blog.getThumbnailUrl();
+
+        String key = "thumbnails/" + blogId + "/" + UUID.randomUUID() + "." + imageType.getExtension();
+        String thumbnailUrl = fileStorageService.upload(key, content, imageType.getContentType());
+
+        blog.setThumbnailUrl(thumbnailUrl);
+
+        try {
+            blogRepository.save(blog);
+        } catch (RuntimeException exception) {
+            deleteQuietly(thumbnailUrl);
+            throw exception;
+        }
+
+        deleteQuietly(previousThumbnailUrl);
+        return blogMapper.toBlogResponse(blog);
+    }
+
+    private byte[] readContent(MultipartFile file) {
+
+        try {
+            return file.getBytes();
+        } catch (IOException exception) {
+            throw new AppException(ErrorCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    private void deleteQuietly(String url) {
+
+        if (url == null) {
+            return;
+        }
+
+        try {
+            fileStorageService.delete(url);
+        } catch (RuntimeException exception) {
+            log.warn("Could not delete thumbnail object from storage", exception);
+        }
     }
 
     public PageResponse<BlogSummaryResponse> getOwnBlogs(

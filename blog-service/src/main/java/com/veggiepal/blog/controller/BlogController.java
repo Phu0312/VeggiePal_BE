@@ -4,9 +4,11 @@ import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.veggiepal.blog.dto.request.BlogRequest;
 import com.veggiepal.blog.dto.response.ApiResponse;
@@ -85,6 +87,21 @@ public class BlogController {
         return ApiResponse
                 .<BlogResponse>builder()
                 .result(blogService.submitBlog(CurrentUser.id(jwt), id))
+                .build();
+    }
+
+    @Operation(summary = "Upload or replace the cover image")
+    @PostMapping(value = "/{id}/thumbnail", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ApiResponse<BlogResponse> uploadThumbnail(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @PathVariable("id") Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+
+        return ApiResponse
+                .<BlogResponse>builder()
+                .result(blogService.uploadThumbnail(
+                        CurrentUser.id(jwt), CurrentUser.isAdmin(jwt), id, file))
                 .build();
     }
 
