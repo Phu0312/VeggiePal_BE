@@ -8,6 +8,7 @@ import jakarta.validation.ConstraintViolation;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,6 +34,22 @@ public class GlobalExceptionHandler {
         log.error("Exception: ", exception);
 
         return errorResponse(ErrorCode.UNCATEGORIZED_EXCEPTION);
+    }
+
+    // @PreAuthorize denials (AuthorizationDeniedException) are thrown by the method-security
+    // AOP proxy while DispatcherServlet is still invoking the handler, so without this they
+    // would be caught by handlingException above before Spring Security's
+    // ExceptionTranslationFilter ever sees them, turning a 403 into a generic 500.
+    // Rethrowing the exact same exception is the documented escape hatch: Spring detects
+    // invocationEx == exception, treats this resolver as non-resolving, and lets the
+    // exception propagate out of DispatcherServlet to the filter chain, where
+    // SecurityExceptionHandler.handle() produces the correct 403/1009 response.
+    @ExceptionHandler(value = AccessDeniedException.class)
+    void handlingAccessDenied(
+            AccessDeniedException exception
+    ) throws AccessDeniedException {
+
+        throw exception;
     }
 
     @ExceptionHandler(value = DataIntegrityViolationException.class)
