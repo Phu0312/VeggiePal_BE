@@ -79,6 +79,11 @@ public class CommentService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
+        // A takedown is final. A moderation rejection is not — see below.
+        if (comment.getStatus() == CommentStatus.DELETED) {
+            throw new AppException(ErrorCode.COMMENT_NOT_EXISTED);
+        }
+
         comment.setContent(request.getContent());
         applyModeration(comment);
 

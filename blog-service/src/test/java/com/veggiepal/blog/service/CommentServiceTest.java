@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -77,12 +78,18 @@ class CommentServiceTest {
     void createComment_approved_becomesVisible() {
         when(blogService.requirePublishedBlog(10L)).thenReturn(Blog.builder().id(10L).build());
         when(contentModerationService.moderate(anyString())).thenReturn(ModerationResult.approved());
-        when(commentRepository.save(any(Comment.class))).thenAnswer(call -> call.getArgument(0));
+
+        java.util.concurrent.atomic.AtomicReference<Comment> saved = new java.util.concurrent.atomic.AtomicReference<>();
+        when(commentRepository.save(any(Comment.class))).thenAnswer(call -> {
+            saved.set(call.getArgument(0));
+            return call.getArgument(0);
+        });
 
         CommentResponse response = commentService.createComment(AUTHOR_ID, request(null));
 
         assertThat(response.getContent()).isEqualTo("ngon quá");
         assertThat(response.isDeleted()).isFalse();
+        assertThat(saved.get().getStatus()).isEqualTo(CommentStatus.VISIBLE);
     }
 
     @Test
@@ -177,6 +184,38 @@ class CommentServiceTest {
                 .isEqualTo(ErrorCode.UNAUTHORIZED);
     }
 
+    // A takedown is final: the author who was moderated away must not be able to
+    // resurrect the same comment by editing it back to something innocuous.
+    @Test
+    void updateComment_deletedComment_throwsCommentNotExisted() {
+        when(commentRepository.findById(5L)).thenReturn(Optional.of(comment(5L, null, CommentStatus.DELETED)));
+
+        assertThatThrownBy(() -> commentService.updateComment(AUTHOR_ID, 5L, request(null)))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.COMMENT_NOT_EXISTED);
+
+        verify(contentModerationService, never()).moderate(anyString());
+        verify(commentRepository, never()).save(any());
+    }
+
+    @Test
+    void updateComment_byOwner_editsAndReappliesModeration() {
+        Comment existing = comment(5L, null, CommentStatus.VISIBLE);
+        when(commentRepository.findById(5L)).thenReturn(Optional.of(existing));
+        when(contentModerationService.moderate(anyString())).thenReturn(ModerationResult.approved());
+        when(commentRepository.save(any(Comment.class))).thenAnswer(call -> call.getArgument(0));
+
+        CommentRequest edit = CommentRequest.builder()
+                .targetType(TargetType.BLOG).targetId(10L).content("ngon hơn nữa").build();
+
+        CommentResponse response = commentService.updateComment(AUTHOR_ID, 5L, edit);
+
+        assertThat(response.getContent()).isEqualTo("ngon hơn nữa");
+        assertThat(existing.getContent()).isEqualTo("ngon hơn nữa");
+        verify(commentRepository).save(existing);
+    }
+
     // Soft delete: the row stays so its replies do not become orphans
     @Test
     void deleteComment_byOwner_marksDeletedAndKeepsTheRow() {
@@ -227,6 +266,22 @@ class CommentServiceTest {
                 commentService.getRootComments(TargetType.BLOG, 10L, 0, 20);
 
         assertThat(result.getItems()).isEmpty();
+        verify(commentRepository, never()).countRepliesByParentIds(any(), any());
+    }
+
+    // A reply cannot itself have replies, so its replyCount is always hardcoded to zero
+    @Test
+    void getReplies_returnsPubliclyVisibleRepliesWithZeroReplyCount() {
+        Comment root = comment(5L, null, CommentStatus.VISIBLE);
+        Comment reply = comment(6L, root, CommentStatus.VISIBLE);
+        when(commentRepository.findByParentIdAndStatusIn(eq(5L), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(reply)));
+
+        PageResponse<CommentResponse> result = commentService.getReplies(5L, 0, 20);
+
+        assertThat(result.getItems()).hasSize(1);
+        assertThat(result.getItems().getFirst().getParentCommentId()).isEqualTo(5L);
+        assertThat(result.getItems().getFirst().getReplyCount()).isEqualTo(0L);
         verify(commentRepository, never()).countRepliesByParentIds(any(), any());
     }
 }

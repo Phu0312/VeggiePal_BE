@@ -9,6 +9,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -120,6 +121,22 @@ class CommentControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(3031))
                 .andExpect(jsonPath("$.message").value("Comment must be at most 2000 characters"));
+    }
+
+    @Test
+    void updateComment_withToken_usesUserIdFromClaim() throws Exception {
+        when(commentService.updateComment(eq(USER_ID), eq(5L), any(CommentRequest.class)))
+                .thenReturn(CommentResponse.builder().id(5L).content("ngon hơn nữa").build());
+
+        mockMvc.perform(put("/comments/5").with(member())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"targetType": "BLOG", "targetId": 10, "content": "ngon hơn nữa"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.content").value("ngon hơn nữa"));
+
+        verify(commentService).updateComment(eq(USER_ID), eq(5L), any(CommentRequest.class));
     }
 
     @Test
