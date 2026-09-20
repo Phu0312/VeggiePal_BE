@@ -238,6 +238,7 @@ class BlogServiceTest {
     @Test
     void submitBlog_fromDraft_runsModeration() {
         when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.DRAFT)));
+        when(categoryService.requireActiveCategory(3L)).thenReturn(category());
         when(contentModerationService.moderate(anyString())).thenReturn(ModerationResult.approved());
         when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
 
@@ -254,6 +255,23 @@ class BlogServiceTest {
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
+    }
+
+    // A draft's category may have been deactivated after it was written; submit
+    // must not let it slip past that guard just because create/update aren't in play.
+    @Test
+    void submitBlog_categoryDeactivatedSinceDraft_throwsCategoryInactive() {
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.DRAFT)));
+        when(categoryService.requireActiveCategory(3L))
+                .thenThrow(new AppException(ErrorCode.CATEGORY_INACTIVE));
+
+        assertThatThrownBy(() -> blogService.submitBlog(AUTHOR_ID, 10L))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.CATEGORY_INACTIVE);
+
+        verify(contentModerationService, never()).moderate(anyString());
+        verify(blogRepository, never()).save(any());
     }
 
     @Test

@@ -88,6 +88,10 @@ public class BlogService {
             throw new AppException(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
         }
 
+        // Same invariant as createBlog and updateBlog: a draft must not go public
+        // under a category that has been deactivated since it was written.
+        categoryService.requireActiveCategory(blog.getCategory().getId());
+
         String reason = applyModeration(blog);
 
         blogRepository.save(blog);
@@ -166,7 +170,8 @@ public class BlogService {
                         )
                 );
 
-        // BR-07: the owner, or an admin taking down a violation (FR-10-04)
+        // BR-07: the owner, or an admin acting on someone else's post — editing or
+        // deleting it, e.g. to take down a violation (FR-10-04). Shared by update and delete.
         if (!admin && !blog.getAuthorId().equals(userId)) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
