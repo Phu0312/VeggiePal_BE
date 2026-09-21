@@ -52,6 +52,37 @@ spring:
               filters:
                 - StripPrefix=1
 
+            # =========================
+            # BLOG SERVICE
+            # =========================
+            - id: blog-service-blogs
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/blogs/**
+              filters:
+                - StripPrefix=1
+
+            - id: blog-service-categories
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/categories/**
+              filters:
+                - StripPrefix=1
+
+            - id: blog-service-comments
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/comments/**
+              filters:
+                - StripPrefix=1
+
+            - id: blog-service-docs
+              uri: http://localhost:8083
+              predicates:
+                - Path=/blog-service/v3/api-docs/**
+              filters:
+                - StripPrefix=1
+
 # =========================
 # SWAGGER UI T?NG
 # =========================
@@ -64,3 +95,5 @@ springdoc:
         url: /identity-service/v3/api-docs
       - name: Nutrition Service
         url: /nutrition-service/v3/api-docs
+      - name: Blog Service
+        url: /blog-service/v3/api-docs

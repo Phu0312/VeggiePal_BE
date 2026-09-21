@@ -189,6 +189,7 @@ public class BlogService {
         }
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<BlogSummaryResponse> getOwnBlogs(
             Long authorId, ContentStatus status, int page, int size
     ) {
@@ -214,6 +215,7 @@ public class BlogService {
                 );
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<BlogSummaryResponse> getPublishedBlogs(
             Long categoryId, String keyword, String sort, int page, int size
     ) {
@@ -244,6 +246,7 @@ public class BlogService {
         return response;
     }
 
+    @Transactional(readOnly = true)
     public List<BlogSummaryResponse> getRelatedBlogs(Long id) {
 
         Blog blog = requirePublishedBlog(id);

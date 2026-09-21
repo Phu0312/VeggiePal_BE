@@ -42,7 +42,9 @@ public class Blog {
     @Column(nullable = false, length = 200)
     String title;
 
-    @Lob
+    // No @Lob: that maps a String to CLOB in Hibernate 6+, and lower()/like against a
+    // CLOB fails query validation at startup. columnDefinition alone still gives the
+    // real LONGTEXT column; the Java-side mapping stays a plain string.
     @Column(nullable = false, columnDefinition = "LONGTEXT")
     String content;
 

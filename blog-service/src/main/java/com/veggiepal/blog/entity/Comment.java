@@ -47,7 +47,8 @@ public class Comment {
     @EqualsAndHashCode.Exclude
     Comment parent;
 
-    @Lob
+    // No @Lob: see Blog.content for why (CLOB mapping breaks lower()/like validation
+    // at startup). columnDefinition alone still gives the real TEXT column.
     @Column(nullable = false, columnDefinition = "TEXT")
     String content;
 
