@@ -57,7 +57,8 @@ class PublicUserControllerTest {
     @Test
     void getPublicUsers_missingIdsParam_returnsInvalidRequest() throws Exception {
         mockMvc.perform(get("/users/batch"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(1018));
     }
 
     @Test

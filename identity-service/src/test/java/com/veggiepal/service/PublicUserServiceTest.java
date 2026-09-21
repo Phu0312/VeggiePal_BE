@@ -2,6 +2,7 @@ package com.veggiepal.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,6 +88,21 @@ class PublicUserServiceTest {
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_REQUEST);
+    }
+
+    // The cap is "> 50 throws", not ">= 50 throws" — exactly 50 must still go through.
+    // Asserting only "no exception" would also pass if the method silently returned
+    // an empty list, so this verifies the repository was actually invoked with all 50 ids.
+    @Test
+    void getPublicUsers_exactlyFiftyIds_succeeds() {
+        List<Long> ids = java.util.stream.LongStream.rangeClosed(1, 50).boxed().toList();
+
+        when(userRepository.findByIdInAndStatus(eq(ids), eq(UserStatus.ACTIVE)))
+                .thenReturn(List.of(user(1L, "Long Nguyễn")));
+
+        assertThat(publicUserService.getPublicUsers(ids)).hasSize(1);
+
+        verify(userRepository).findByIdInAndStatus(eq(ids), eq(UserStatus.ACTIVE));
     }
 
     // The no-leak guarantee is structural: this DTO carries exactly three fields.
