@@ -109,6 +109,12 @@ public class CommentService {
             TargetType targetType, Long targetId, int page, int size
     ) {
 
+        requireSupportedTarget(targetType);
+
+        // A takedown or a re-moderation to non-published must close the thread to
+        // readers too, exactly like createComment already refuses to add to it.
+        blogService.requirePublishedBlog(targetId);
+
         Page<Comment> comments = commentRepository
                 .findByTargetTypeAndTargetIdAndParentIsNullAndStatusIn(
                         targetType, targetId, PUBLICLY_VISIBLE,
@@ -121,6 +127,12 @@ public class CommentService {
     }
 
     public PageResponse<CommentResponse> getReplies(Long commentId, int page, int size) {
+
+        // getReplies takes only a comment id, so its target is derived from the
+        // parent comment and checked the same way getRootComments checks its own.
+        Comment parent = findComment(commentId);
+        requireSupportedTarget(parent.getTargetType());
+        blogService.requirePublishedBlog(parent.getTargetId());
 
         Page<Comment> replies = commentRepository.findByParentIdAndStatusIn(
                 commentId, PUBLICLY_VISIBLE,

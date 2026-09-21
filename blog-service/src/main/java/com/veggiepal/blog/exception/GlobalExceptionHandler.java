@@ -14,6 +14,8 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import com.veggiepal.blog.dto.response.ApiResponse;
 
@@ -83,6 +85,22 @@ public class GlobalExceptionHandler {
     ) {
 
         return errorResponse(ErrorCode.INVALID_REQUEST);
+    }
+
+    @ExceptionHandler(value = MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiResponse<?>> handlingMaxUploadSize(
+            MaxUploadSizeExceededException exception
+    ) {
+
+        return errorResponse(ErrorCode.THUMBNAIL_TOO_LARGE);
+    }
+
+    @ExceptionHandler(value = MissingServletRequestPartException.class)
+    ResponseEntity<ApiResponse<?>> handlingMissingPart(
+            MissingServletRequestPartException exception
+    ) {
+
+        return errorResponse(ErrorCode.THUMBNAIL_REQUIRED);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)

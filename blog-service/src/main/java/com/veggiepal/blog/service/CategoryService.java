@@ -149,6 +149,7 @@ public class CategoryService {
     }
 
     /** Used by BlogService: the category must exist and still be selectable. */
+    @Transactional(readOnly = true)
     public Category requireActiveCategory(Long id) {
 
         Category category = findCategory(id);

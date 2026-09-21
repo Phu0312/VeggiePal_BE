@@ -435,6 +435,23 @@ class BlogServiceTest {
                 .isEqualTo(ErrorCode.THUMBNAIL_REQUIRED);
     }
 
+    // Between MAX_THUMBNAIL_BYTES (5MB) and the parser's own multipart limit (6MB):
+    // the service's own size check must reject it before touching storage or the DB.
+    @Test
+    void uploadThumbnail_overMaxBytes_throwsThumbnailTooLarge() {
+        byte[] oversized = new byte[(int) BlogService.MAX_THUMBNAIL_BYTES + 1];
+        MockMultipartFile file = new MockMultipartFile("file", "cover.png", "image/png", oversized);
+
+        assertThatThrownBy(() -> blogService.uploadThumbnail(AUTHOR_ID, false, 10L, file))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.THUMBNAIL_TOO_LARGE);
+
+        verify(blogRepository, never()).findById(any());
+        verify(fileStorageService, never()).upload(anyString(), any(byte[].class), anyString());
+        verify(blogRepository, never()).save(any());
+    }
+
     // Declared content type lying about the real bytes is the attack this blocks
     @Test
     void uploadThumbnail_contentTypeDoesNotMatchMagicBytes_throwsInvalidType() {

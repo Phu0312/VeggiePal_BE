@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -242,9 +243,14 @@ class CommentServiceTest {
 
     @Test
     void getRootComments_deletedComment_hidesContentButKeepsTheEntry() {
+        when(blogService.requirePublishedBlog(10L)).thenReturn(Blog.builder().id(10L).build());
+
         Comment deleted = comment(5L, null, CommentStatus.DELETED);
+        // Spelled out rather than referencing PUBLICLY_VISIBLE: an expectation taken from
+        // the field under test moves with it and can never fail. HIDDEN must stay out —
+        // that is the status a moderator's rejection assigns.
         when(commentRepository.findByTargetTypeAndTargetIdAndParentIsNullAndStatusIn(
-                any(), any(), any(), any(Pageable.class)))
+                any(), any(), eq(Set.of(CommentStatus.VISIBLE, CommentStatus.DELETED)), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(deleted)));
         when(commentRepository.countRepliesByParentIds(any(), any())).thenReturn(List.of());
 
@@ -258,6 +264,7 @@ class CommentServiceTest {
 
     @Test
     void getRootComments_emptyPage_skipsTheReplyCountQuery() {
+        when(blogService.requirePublishedBlog(10L)).thenReturn(Blog.builder().id(10L).build());
         when(commentRepository.findByTargetTypeAndTargetIdAndParentIsNullAndStatusIn(
                 any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
@@ -269,12 +276,43 @@ class CommentServiceTest {
         verify(commentRepository, never()).countRepliesByParentIds(any(), any());
     }
 
+    // Sibling of the already-fixed "author revives a deleted comment" bug: a blog
+    // takedown, or a re-moderation to REJECTED, must close the thread to readers too.
+    @Test
+    void getRootComments_targetNotPublished_throwsBlogNotExisted() {
+        when(blogService.requirePublishedBlog(10L))
+                .thenThrow(new AppException(ErrorCode.BLOG_NOT_EXISTED));
+
+        assertThatThrownBy(() -> commentService.getRootComments(TargetType.BLOG, 10L, 0, 20))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.BLOG_NOT_EXISTED);
+
+        verify(commentRepository, never())
+                .findByTargetTypeAndTargetIdAndParentIsNullAndStatusIn(any(), any(), any(), any());
+    }
+
+    // A VIDEO target must answer UNSUPPORTED_TARGET_TYPE rather than have its id
+    // looked up against blogs (requireSupportedTarget must run before the blog check).
+    @Test
+    void getRootComments_videoTarget_throwsUnsupportedTargetTypeWithoutLoadingBlog() {
+        assertThatThrownBy(() -> commentService.getRootComments(TargetType.VIDEO, 10L, 0, 20))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.UNSUPPORTED_TARGET_TYPE);
+
+        verify(blogService, never()).requirePublishedBlog(any());
+    }
+
     // A reply cannot itself have replies, so its replyCount is always hardcoded to zero
     @Test
     void getReplies_returnsPubliclyVisibleRepliesWithZeroReplyCount() {
         Comment root = comment(5L, null, CommentStatus.VISIBLE);
         Comment reply = comment(6L, root, CommentStatus.VISIBLE);
-        when(commentRepository.findByParentIdAndStatusIn(eq(5L), any(), any(Pageable.class)))
+        when(commentRepository.findById(5L)).thenReturn(Optional.of(root));
+        when(blogService.requirePublishedBlog(10L)).thenReturn(Blog.builder().id(10L).build());
+        when(commentRepository.findByParentIdAndStatusIn(
+                eq(5L), eq(Set.of(CommentStatus.VISIBLE, CommentStatus.DELETED)), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of(reply)));
 
         PageResponse<CommentResponse> result = commentService.getReplies(5L, 0, 20);
@@ -283,5 +321,36 @@ class CommentServiceTest {
         assertThat(result.getItems().getFirst().getParentCommentId()).isEqualTo(5L);
         assertThat(result.getItems().getFirst().getReplyCount()).isEqualTo(0L);
         verify(commentRepository, never()).countRepliesByParentIds(any(), any());
+    }
+
+    // Same sibling-bug coverage as getRootComments, but derived from the parent
+    // comment's target since getReplies is only given a comment id.
+    @Test
+    void getReplies_targetNotPublished_throwsBlogNotExisted() {
+        Comment root = comment(5L, null, CommentStatus.VISIBLE);
+        when(commentRepository.findById(5L)).thenReturn(Optional.of(root));
+        when(blogService.requirePublishedBlog(10L))
+                .thenThrow(new AppException(ErrorCode.BLOG_NOT_EXISTED));
+
+        assertThatThrownBy(() -> commentService.getReplies(5L, 0, 20))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.BLOG_NOT_EXISTED);
+
+        verify(commentRepository, never()).findByParentIdAndStatusIn(any(), any(), any());
+    }
+
+    // findComment must still answer COMMENT_NOT_EXISTED for a comment id that
+    // simply does not exist, rather than a confusing BLOG_NOT_EXISTED.
+    @Test
+    void getReplies_missingComment_throwsCommentNotExisted() {
+        when(commentRepository.findById(5L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> commentService.getReplies(5L, 0, 20))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.COMMENT_NOT_EXISTED);
+
+        verify(blogService, never()).requirePublishedBlog(any());
     }
 }
