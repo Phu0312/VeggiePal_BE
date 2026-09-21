@@ -26,8 +26,13 @@ cd api-gateway && ./mvnw spring-boot:run         # :8080
 ./mvnw test -Dtest=ProfileServiceTest#changePassword_success_storesNewHash  # single method
 ./mvnw test -Dtest='!VeggiepalApplicationTests'               # identity-service: everything except the MySQL-backed contextLoads
 ./mvnw test -Dtest='!NutritionServiceApplicationTests'        # nutrition-service: same
-./mvnw test -Dtest='!BlogServiceApplicationTests'             # blog-service: same
+./mvnw test -Dtest='!BlogServiceApplicationTests,!BlogServiceIntegrationTests'   # blog-service: same
+
+# blog-service only: the tests that need a real database, run on their own
+./mvnw test -Dtest='BlogServiceApplicationTests+BlogServiceIntegrationTests'
 ```
+
+**`BlogServiceIntegrationTests` is a required gate before committing a change to an entity, a repository or a `@Query`** — not an optional extra. Two defects that made blog-service completely unusable (see the `@Lob` note below and `@Transactional` on the read methods) survived 126 mock-based tests and eight code reviews, because the one test that starts a Spring context was excluded from the loop for eight consecutive tasks while four of them added queries. The fast command above still excludes both so the loop stays runnable without Docker; the second command is what you owe the change.
 
 There is no linter or formatter configured.
 
@@ -85,6 +90,7 @@ Same conventions as identity-service, under package `com.veggiepal.blog` (shared
 - **Moderation is a stub.** `ContentModerationService` has one implementation, `AutoApproveContentModerationService`. BR-02 is wired but not really enforced until an AI implementation replaces it.
 - **`blogs.vote_score` is denormalized**, kept in sync inside the vote transaction with `UPDATE blogs SET vote_score = vote_score + :delta`. The delta is just `new value - old value`, treating "no vote" as 0.
 - Admin has no separate controller: ownership checks widen to `ROLE_ADMIN` on blog and comment `PUT`/`DELETE`.
+- **`BlogServiceIntegrationTests`** drives the real filter chain and a real MySQL schema (`veggiepal_blog_it`, created on demand via `createDatabaseIfNotExist`, so it never leaves rows in `veggiepal_blog`). Each case is chosen to fail if one of the two defect classes returns: a keyword search forces `lower()` against the real content column, the list assertions read `categoryName` off a lazy proxy, and reading a blog twice checks the `@Modifying` view counter actually ran. Verified by mutation — restoring `@Lob` breaks the context, dropping `@Transactional` turns the list endpoints into 500s.
 
 ### Auth (JWT)
 
