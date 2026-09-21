@@ -63,6 +63,15 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.code").value(1000));
     }
 
+    // Without the MissingServletRequestParameterException handler, this falls through
+    // to the catch-all and answers 500 instead of 400.
+    @Test
+    void getRootComments_missingTargetId_returnsInvalidRequest() throws Exception {
+        mockMvc.perform(get("/comments"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(1018));
+    }
+
     @Test
     void getReplies_withoutToken_isPublic() throws Exception {
         when(commentService.getReplies(5L, 0, 20)).thenReturn(emptyPage());

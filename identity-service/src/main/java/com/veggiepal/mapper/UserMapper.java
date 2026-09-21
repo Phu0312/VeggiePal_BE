@@ -8,6 +8,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import com.veggiepal.dto.request.RegisterRequest;
 import com.veggiepal.dto.request.UpdateProfileRequest;
+import com.veggiepal.dto.response.PublicUserResponse;
 import com.veggiepal.dto.response.RegisterResponse;
 import com.veggiepal.dto.response.UserProfileResponse;
 import com.veggiepal.entity.User;
@@ -29,6 +30,8 @@ public interface UserMapper {
     RegisterResponse toUserResponse(User user);
 
     UserProfileResponse toUserProfileResponse(User user);
+
+    PublicUserResponse toPublicUserResponse(User user);
 
     @BeanMapping(
             ignoreByDefault = true,
