@@ -6,6 +6,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 VeggiePal backend: Spring Boot microservices (Java 21, Spring Boot 4.1.1). There is **no parent/aggregator POM**. Each service (`api-gateway/`, `identity-service/`, `nutrition-service/`, `blog-service/`) is a separate Maven project with its own wrapper, so run Maven commands from inside the service directory. Only `api-gateway` uses `application.yaml`; every other service, including `blog-service`, uses `application.properties`.
 
+## Workflow and skills
+
+Four skill families are installed for this project. Pick by situation — do not load all four for every task. They are local plugins; a session without one simply skips that step.
+
+| Situation | Skill |
+|---|---|
+| Starting a spec or feature, or any change in behaviour | `superpowers:brainstorming` — design and the user's approval before any code |
+| Spec approved and the work has several steps | `superpowers:writing-plans`, then `superpowers:subagent-driven-development` to execute it |
+| Writing production code | `superpowers:test-driven-development` |
+| A bug, a failing test, unexpected behaviour | `superpowers:systematic-debugging` before proposing a fix |
+| About to say "done", commit or push | `superpowers:verification-before-completion` — run the commands and read the output |
+| Feature finished | `superpowers:requesting-code-review`, then `superpowers:finishing-a-development-branch` |
+| "Have we solved this before?", or resuming work from an earlier session | `claude-mem:mem-search` |
+| Finding a function, class or call site without reading whole files | `claude-mem:smart-explore` |
+| Architecture or cross-service questions ("what touches X", "how does Y reach Z") | `graphify` — `graphify query "..."` when `graphify-out/` exists. Building the graph costs an extraction pass, so run `/graphify` for a spec that spans several services, and use `smart-explore` for a one-off lookup |
+| Deciding how much to build, or a design or diff that feels heavy | `ponytail` in `lite` mode (`/ponytail lite`). `ponytail:ponytail-review` on a diff, `ponytail:ponytail-audit` on the repo |
+
+**Starting a spec:**
+1. `claude-mem:mem-search` for earlier work and decisions in that area.
+2. Read the team task sheet rows for the feature (Google Sheet "PHÂN CHIA TASK", tab `TASK`). Its BUSINESS RULE column is the contract the frontend builds against and wins where it differs from the SRS. blog-service was designed from the SRS alone, and six rules had to be reworked after the fact.
+3. Map the code the spec touches: `graphify query` if the graph exists, otherwise `smart-explore`.
+4. `superpowers:brainstorming` → spec in `docs/superpowers/specs/` → the user approves it.
+5. `superpowers:writing-plans` → plan in `docs/superpowers/plans/`.
+
+**How they fit together:**
+- **superpowers owns the process; ponytail only shapes the solution.** ponytail's "never stall on an answer you can default" does not override brainstorming's approval gate, TDD, verification, or the `BlogServiceIntegrationTests` gate below. Use it to cut scope and speculative abstractions, never to skip a step.
+- **`lite`, not ponytail's default `full`.** Features here are fixed by the task sheet and graded against it; `full` questions whether a task needs to exist at all, which is the wrong question for a required feature. `lite` builds what is asked and names the lazier alternative in one line.
+- **Plan and execute with superpowers, not claude-mem's `make-plan` / `do`.** Both pipelines exist; specs and plans in this repo live under `docs/superpowers/`, so use one.
+
 ## Commands
 
 ```bash
