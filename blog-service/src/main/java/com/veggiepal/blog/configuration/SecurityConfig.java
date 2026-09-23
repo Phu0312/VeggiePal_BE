@@ -1,16 +1,15 @@
-package com.veggiepal.configuration;
+package com.veggiepal.blog.configuration;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
@@ -25,19 +24,33 @@ import lombok.experimental.FieldDefaults;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SecurityConfig {
 
-    static final String[] PUBLIC_ENDPOINTS = {
-            "/auth/register",
-            "/auth/login",
-            "/auth/test",
-            "/users/batch",
-            "/swagger-ui/**",
-            "/swagger-ui.html",
-            "/v3/api-docs/**"
-    };
+    /** A public endpoint; a null method means "any method". */
+    record PublicEndpoint(HttpMethod method, String pattern) {
+    }
+
+    // The [0-9]+ constraint is load-bearing: "/blogs/me" matches a bare "/blogs/{id}",
+    // which would make it public, strip its token, and then 401 forever on an
+    // authenticated endpoint. Keep the digits.
+    static final List<PublicEndpoint> PUBLIC_ENDPOINTS = List.of(
+            new PublicEndpoint(null, "/swagger-ui/**"),
+            new PublicEndpoint(null, "/swagger-ui.html"),
+            new PublicEndpoint(null, "/v3/api-docs/**"),
+
+            new PublicEndpoint(HttpMethod.GET, "/blogs"),
+            new PublicEndpoint(HttpMethod.GET, "/blogs/{id:[0-9]+}"),
+            new PublicEndpoint(HttpMethod.GET, "/blogs/{id:[0-9]+}/related"),
+
+            new PublicEndpoint(HttpMethod.GET, "/categories"),
+            new PublicEndpoint(HttpMethod.GET, "/categories/{id:[0-9]+}"),
+
+            new PublicEndpoint(HttpMethod.GET, "/comments"),
+            new PublicEndpoint(HttpMethod.GET, "/comments/{id:[0-9]+}/replies")
+    );
 
     SecurityExceptionHandler securityExceptionHandler;
 
@@ -49,7 +62,7 @@ public class SecurityConfig {
         httpSecurity
                 .authorizeHttpRequests(
                         request -> request
-                                .requestMatchers(PUBLIC_ENDPOINTS)
+                                .requestMatchers(publicMatchers().toArray(RequestMatcher[]::new))
                                 .permitAll()
 
                                 .anyRequest()
@@ -78,10 +91,18 @@ public class SecurityConfig {
         return httpSecurity.build();
     }
 
-    @Bean
-    PasswordEncoder passwordEncoder() {
+    static List<RequestMatcher> publicMatchers() {
 
-        return new BCryptPasswordEncoder(10);
+        return PUBLIC_ENDPOINTS.stream()
+                .map(SecurityConfig::toMatcher)
+                .toList();
+    }
+
+    private static RequestMatcher toMatcher(PublicEndpoint endpoint) {
+
+        return endpoint.method() == null
+                ? PathPatternRequestMatcher.withDefaults().matcher(endpoint.pattern())
+                : PathPatternRequestMatcher.withDefaults().matcher(endpoint.method(), endpoint.pattern());
     }
 
     private JwtAuthenticationConverter jwtAuthenticationConverter() {
@@ -95,13 +116,11 @@ public class SecurityConfig {
         return converter;
     }
 
-    // Public endpoints ignore the Authorization header, so a stale token cannot block login/register.
+    // Public endpoints ignore the Authorization header, so a stale token cannot block them.
     private BearerTokenResolver publicEndpointAwareBearerTokenResolver() {
 
         DefaultBearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
-        List<RequestMatcher> publicMatchers = Arrays.stream(PUBLIC_ENDPOINTS)
-                .map(pattern -> (RequestMatcher) PathPatternRequestMatcher.withDefaults().matcher(pattern))
-                .toList();
+        List<RequestMatcher> publicMatchers = publicMatchers();
 
         return request -> publicMatchers.stream().anyMatch(matcher -> matcher.matches(request))
                 ? null

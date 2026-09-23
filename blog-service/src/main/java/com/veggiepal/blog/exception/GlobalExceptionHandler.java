@@ -1,12 +1,14 @@
-package com.veggiepal.exception;
+package com.veggiepal.blog.exception;
 
 import java.util.Map;
 import java.util.Objects;
 
 import jakarta.validation.ConstraintViolation;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -15,7 +17,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
-import com.veggiepal.dto.response.ApiResponse;
+import com.veggiepal.blog.dto.response.ApiResponse;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,6 +27,8 @@ public class GlobalExceptionHandler {
 
     private static final String MIN_ATTRIBUTE = "min";
 
+    private static final String MAX_ATTRIBUTE = "max";
+
     @ExceptionHandler(value = Exception.class)
     ResponseEntity<ApiResponse<?>> handlingException(
             Exception exception
@@ -32,14 +36,35 @@ public class GlobalExceptionHandler {
 
         log.error("Exception: ", exception);
 
-        ApiResponse<?> apiResponse = ApiResponse.builder()
-                .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
-                .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
-                .build();
+        return errorResponse(ErrorCode.UNCATEGORIZED_EXCEPTION);
+    }
 
-        return ResponseEntity
-                .status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
-                .body(apiResponse);
+    // @PreAuthorize denials (AuthorizationDeniedException) are thrown by the method-security
+    // AOP proxy while DispatcherServlet is still invoking the handler, so without this they
+    // would be caught by handlingException above before Spring Security's
+    // ExceptionTranslationFilter ever sees them, turning a 403 into a generic 500.
+    // Rethrowing the exact same exception is the documented escape hatch: Spring detects
+    // invocationEx == exception, treats this resolver as non-resolving, and lets the
+    // exception propagate out of DispatcherServlet to the filter chain, where
+    // SecurityExceptionHandler.handle() produces the correct 403/1009 response.
+    @ExceptionHandler(value = AccessDeniedException.class)
+    void handlingAccessDenied(
+            AccessDeniedException exception
+    ) throws AccessDeniedException {
+
+        throw exception;
+    }
+
+    @ExceptionHandler(value = DataIntegrityViolationException.class)
+    ResponseEntity<ApiResponse<?>> handlingDataIntegrityViolation(
+            DataIntegrityViolationException exception
+    ) {
+
+        // Never log the exception/message here: a unique-constraint message leaks
+        // which user voted on which content (e.g. "Duplicate entry '7-BLOG-12'").
+        log.warn("Data integrity violation");
+
+        return errorResponse(ErrorCode.UNCATEGORIZED_EXCEPTION);
     }
 
     @ExceptionHandler(value = AppException.class)
@@ -47,16 +72,35 @@ public class GlobalExceptionHandler {
             AppException exception
     ) {
 
-        ErrorCode errorCode = exception.getErrorCode();
+        return errorResponse(exception.getErrorCode());
+    }
 
-        ApiResponse<?> apiResponse = ApiResponse.builder()
-                .code(errorCode.getCode())
-                .message(errorCode.getMessage())
-                .build();
+    @ExceptionHandler(value = {
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class,
+            MissingServletRequestParameterException.class
+    })
+    ResponseEntity<ApiResponse<?>> handlingInvalidRequest(
+            Exception exception
+    ) {
 
-        return ResponseEntity
-                .status(errorCode.getStatusCode())
-                .body(apiResponse);
+        return errorResponse(ErrorCode.INVALID_REQUEST);
+    }
+
+    @ExceptionHandler(value = MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiResponse<?>> handlingMaxUploadSize(
+            MaxUploadSizeExceededException exception
+    ) {
+
+        return errorResponse(ErrorCode.THUMBNAIL_TOO_LARGE);
+    }
+
+    @ExceptionHandler(value = MissingServletRequestPartException.class)
+    ResponseEntity<ApiResponse<?>> handlingMissingPart(
+            MissingServletRequestPartException exception
+    ) {
+
+        return errorResponse(ErrorCode.THUMBNAIL_REQUIRED);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
@@ -111,34 +155,6 @@ public class GlobalExceptionHandler {
                 .body(apiResponse);
     }
 
-    @ExceptionHandler(value = {
-            HttpMessageNotReadableException.class,
-            MethodArgumentTypeMismatchException.class,
-            MissingServletRequestParameterException.class
-    })
-    ResponseEntity<ApiResponse<?>> handlingInvalidRequest(
-            Exception exception
-    ) {
-
-        return errorResponse(ErrorCode.INVALID_REQUEST);
-    }
-
-    @ExceptionHandler(value = MaxUploadSizeExceededException.class)
-    ResponseEntity<ApiResponse<?>> handlingMaxUploadSize(
-            MaxUploadSizeExceededException exception
-    ) {
-
-        return errorResponse(ErrorCode.AVATAR_TOO_LARGE);
-    }
-
-    @ExceptionHandler(value = MissingServletRequestPartException.class)
-    ResponseEntity<ApiResponse<?>> handlingMissingPart(
-            MissingServletRequestPartException exception
-    ) {
-
-        return errorResponse(ErrorCode.AVATAR_REQUIRED);
-    }
-
     private ResponseEntity<ApiResponse<?>> errorResponse(
             ErrorCode errorCode
     ) {
@@ -158,14 +174,17 @@ public class GlobalExceptionHandler {
             Map<String, Object> attributes
     ) {
 
-        String minValue =
-                String.valueOf(
-                        attributes.get(MIN_ATTRIBUTE)
-                );
+        String mapped = message;
 
-        return message.replace(
-                "{" + MIN_ATTRIBUTE + "}",
-                minValue
-        );
+        for (String attribute : new String[]{MIN_ATTRIBUTE, MAX_ATTRIBUTE}) {
+
+            Object value = attributes.get(attribute);
+
+            if (value != null) {
+                mapped = mapped.replace("{" + attribute + "}", String.valueOf(value));
+            }
+        }
+
+        return mapped;
     }
 }
