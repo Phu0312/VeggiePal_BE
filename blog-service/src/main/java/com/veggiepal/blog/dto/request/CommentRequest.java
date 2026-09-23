@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import com.veggiepal.blog.enums.TargetType;
+import com.veggiepal.blog.validation.MaxWords;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +27,10 @@ public class CommentRequest {
     Long parentCommentId;
 
     @NotBlank(message = "COMMENT_CONTENT_REQUIRED")
-    @Size(max = 2000, message = "INVALID_COMMENT_CONTENT")
+    // Task sheet US5: at most 500 words.
+    @MaxWords(max = 500, message = "INVALID_COMMENT_CONTENT")
+    // Word count alone does not bound length — one 100KB "word" is one word. This ceiling
+    // keeps it from reaching the TEXT column and failing there as a 500.
+    @Size(max = 5000, message = "COMMENT_TOO_LONG")
     String content;
 }

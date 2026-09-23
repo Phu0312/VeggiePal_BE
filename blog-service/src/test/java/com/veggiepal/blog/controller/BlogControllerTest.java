@@ -107,10 +107,24 @@ class BlogControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"title": "%s", "content": "%s", "categoryId": 3}
-                                """.formatted("t".repeat(201), "x".repeat(50))))
+                                """.formatted("t".repeat(151), "x".repeat(50))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(3011))
-                .andExpect(jsonPath("$.message").value("Blog title must be at most 200 characters"));
+                .andExpect(jsonPath("$.message").value("Blog title must be at most 150 characters"));
+    }
+
+    // Task sheet US3: @Size(max = 150). The other side of the boundary, so a slip to 149 fails.
+    @Test
+    void createBlog_titleOfExactlyOneHundredFifty_isAccepted() throws Exception {
+        when(blogService.createBlog(eq(USER_ID), any(BlogRequest.class)))
+                .thenReturn(BlogResponse.builder().id(10L).status(ContentStatus.DRAFT).build());
+
+        mockMvc.perform(post("/blogs").with(member())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title": "%s", "content": "%s", "categoryId": 3}
+                                """.formatted("t".repeat(150), "x".repeat(50))))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -135,7 +149,7 @@ class BlogControllerTest {
 
     @Test
     void getOwnBlogs_withToken_reachesTheService() throws Exception {
-        when(blogService.getOwnBlogs(USER_ID, null, 0, 20))
+        when(blogService.getOwnBlogs(USER_ID, null, 0, 10))
                 .thenReturn(PageResponse.<com.veggiepal.blog.dto.response.BlogSummaryResponse>builder()
                         .items(java.util.List.of()).page(0).size(20).totalElements(0).totalPages(0).build());
 
@@ -143,7 +157,7 @@ class BlogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.totalElements").value(0));
 
-        verify(blogService).getOwnBlogs(USER_ID, null, 0, 20);
+        verify(blogService).getOwnBlogs(USER_ID, null, 0, 10);
     }
 
     @Test
@@ -164,13 +178,23 @@ class BlogControllerTest {
 
     @Test
     void getPublishedBlogs_withoutToken_isPublic() throws Exception {
-        when(blogService.getPublishedBlogs(null, null, null, 0, 20))
+        when(blogService.getPublishedBlogs(null, null, null, 0, 10))
                 .thenReturn(PageResponse.<BlogSummaryResponse>builder()
                         .items(List.of()).page(0).size(20).totalElements(0).totalPages(0).build());
 
         mockMvc.perform(get("/blogs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1000));
+    }
+
+    // Task sheet US3: "Mặc định trả về 10 bài/trang". The verify is what pins it — the
+    // test above would pass with any size, since an unmatched stub still yields code 1000.
+    @Test
+    void getPublishedBlogs_withoutSize_defaultsToTenPerPage() throws Exception {
+        mockMvc.perform(get("/blogs"))
+                .andExpect(status().isOk());
+
+        verify(blogService).getPublishedBlogs(null, null, null, 0, 10);
     }
 
     @Test
@@ -186,7 +210,7 @@ class BlogControllerTest {
     // A guest arriving with a leftover expired token must still be able to read
     @Test
     void getPublishedBlogs_withExpiredLookingToken_stillPublic() throws Exception {
-        when(blogService.getPublishedBlogs(null, null, null, 0, 20))
+        when(blogService.getPublishedBlogs(null, null, null, 0, 10))
                 .thenReturn(PageResponse.<BlogSummaryResponse>builder()
                         .items(List.of()).page(0).size(20).totalElements(0).totalPages(0).build());
 
@@ -204,7 +228,7 @@ class BlogControllerTest {
 
     @Test
     void vote_withoutToken_returnsUnauthenticated() throws Exception {
-        mockMvc.perform(put("/blogs/10/vote")
+        mockMvc.perform(post("/blogs/10/vote")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"value": 1}
@@ -218,7 +242,7 @@ class BlogControllerTest {
         when(voteService.vote(USER_ID, 10L, 1))
                 .thenReturn(VoteResponse.builder().blogId(10L).myVote(1).voteScore(5).build());
 
-        mockMvc.perform(put("/blogs/10/vote").with(member())
+        mockMvc.perform(post("/blogs/10/vote").with(member())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"value": 1}
@@ -229,7 +253,7 @@ class BlogControllerTest {
 
     @Test
     void vote_missingValue_returnsInvalidVoteValue() throws Exception {
-        mockMvc.perform(put("/blogs/10/vote").with(member())
+        mockMvc.perform(post("/blogs/10/vote").with(member())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())

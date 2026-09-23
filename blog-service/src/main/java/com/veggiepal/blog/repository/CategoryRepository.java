@@ -14,14 +14,14 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     List<Category> findByParentIsNullOrderByDisplayOrderAscIdAsc();
 
-    /** Unordered sibling lookup, used for the duplicate-name check. */
-    List<Category> findByParentIsNull();
-
     List<Category> findByParentIsNullAndTypeOrderByDisplayOrderAscIdAsc(CategoryType type);
 
     List<Category> findByParentIdInOrderByDisplayOrderAscIdAsc(Collection<Long> parentIds);
 
-    List<Category> findByParentId(Long parentId);
-
     boolean existsByParentId(Long parentId);
+
+    /** Names are unique across the whole tree, compared case-insensitively. */
+    boolean existsByNameIgnoreCase(String name);
+
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
 }

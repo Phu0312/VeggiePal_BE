@@ -15,7 +15,7 @@ import lombok.experimental.FieldDefaults;
 public class BlogRequest {
 
     @NotBlank(message = "BLOG_TITLE_REQUIRED")
-    @Size(max = 200, message = "INVALID_BLOG_TITLE")
+    @Size(max = 150, message = "INVALID_BLOG_TITLE")
     String title;
 
     @NotBlank(message = "BLOG_CONTENT_REQUIRED")

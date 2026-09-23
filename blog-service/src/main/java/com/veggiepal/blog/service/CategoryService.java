@@ -84,7 +84,6 @@ public class CategoryService {
             }
 
             type = request.getType();
-            requireNameFree(categoryRepository.findByParentIsNull(), name, null);
 
         } else {
 
@@ -97,7 +96,11 @@ public class CategoryService {
 
             // A child always follows its parent, so one tree cannot mix both types
             type = parent.getType();
-            requireNameFree(categoryRepository.findByParentId(parent.getId()), name, null);
+        }
+
+        // Unique across the whole tree (task sheet US5), not just among siblings
+        if (categoryRepository.existsByNameIgnoreCase(name)) {
+            throw new AppException(ErrorCode.CATEGORY_NAME_DUPLICATED);
         }
 
         Category category = Category.builder()
@@ -117,11 +120,10 @@ public class CategoryService {
         Category category = findCategory(id);
         String name = request.getName().trim();
 
-        List<Category> siblings = category.getParent() == null
-                ? categoryRepository.findByParentIsNull()
-                : categoryRepository.findByParentId(category.getParent().getId());
-
-        requireNameFree(siblings, name, id);
+        // Excludes this row, or a category could never keep its own name
+        if (categoryRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {
+            throw new AppException(ErrorCode.CATEGORY_NAME_DUPLICATED);
+        }
 
         category.setName(name);
 
@@ -173,14 +175,4 @@ public class CategoryService {
                 );
     }
 
-    private void requireNameFree(List<Category> siblings, String name, Long excludedId) {
-
-        boolean taken = siblings.stream()
-                .filter(sibling -> excludedId == null || !excludedId.equals(sibling.getId()))
-                .anyMatch(sibling -> sibling.getName().equalsIgnoreCase(name));
-
-        if (taken) {
-            throw new AppException(ErrorCode.CATEGORY_NAME_DUPLICATED);
-        }
-    }
 }

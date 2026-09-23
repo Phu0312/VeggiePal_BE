@@ -234,14 +234,55 @@ class BlogServiceTest {
     }
 
     // BR-07 / FR-10-04: an admin may take down someone else's post
+    // Task sheet US3/US6: an admin takedown hides the post but keeps it, so the owner still
+    // sees it in their dashboard with a "Bị cấm" badge. A hard delete would erase it.
     @Test
-    void deleteBlog_byAdmin_deletesSomeoneElsesPost() {
+    void deleteBlog_byAdminOnSomeoneElsesPost_bansItInsteadOfDeleting() {
         Blog existing = blog(ContentStatus.PUBLISHED);
         when(blogRepository.findById(10L)).thenReturn(Optional.of(existing));
 
         blogService.deleteBlog(ADMIN_ID, true, 10L);
 
+        assertThat(existing.getStatus()).isEqualTo(ContentStatus.BANNED);
+        verify(blogRepository).save(existing);
+        verify(blogRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteBlog_byOwner_deletesIt() {
+        Blog existing = blog(ContentStatus.PUBLISHED);
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(existing));
+
+        blogService.deleteBlog(AUTHOR_ID, false, 10L);
+
         verify(blogRepository).delete(existing);
+    }
+
+    // Banning is for other people's content. An admin removing their own post is just an
+    // owner deleting it.
+    @Test
+    void deleteBlog_byAdminOnTheirOwnPost_deletesIt() {
+        Blog existing = blog(ContentStatus.PUBLISHED);
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(existing));
+
+        blogService.deleteBlog(AUTHOR_ID, true, 10L);
+
+        verify(blogRepository).delete(existing);
+    }
+
+    // Editing re-runs moderation, which approves — so without this guard an owner could lift
+    // an admin's ban just by saving the post again.
+    @Test
+    void updateBlog_onBanned_throwsInvalidTransitionWithoutModerating() {
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.BANNED)));
+
+        assertThatThrownBy(() -> blogService.updateBlog(AUTHOR_ID, false, 10L, request(true)))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
+
+        verify(contentModerationService, never()).moderate(anyString());
+        verify(blogRepository, never()).save(any());
     }
 
     @Test

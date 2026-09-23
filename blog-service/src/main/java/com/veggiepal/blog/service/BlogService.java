@@ -84,6 +84,12 @@ public class BlogService {
 
         Blog blog = findOwnedBlog(userId, admin, blogId);
 
+        // Editing re-runs moderation, which approves; without this an owner could lift an
+        // admin's ban just by saving the post again.
+        if (blog.getStatus() == ContentStatus.BANNED) {
+            throw new AppException(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
+        }
+
         blog.setCategory(categoryService.requireActiveCategory(request.getCategoryId()));
         blog.setTitle(request.getTitle().trim());
         blog.setContent(request.getContent());
@@ -120,7 +126,18 @@ public class BlogService {
     @Transactional
     public void deleteBlog(Long userId, boolean admin, Long blogId) {
 
-        blogRepository.delete(findOwnedBlog(userId, admin, blogId));
+        Blog blog = findOwnedBlog(userId, admin, blogId);
+
+        // Only an admin gets past findOwnedBlog on someone else's post, and that is a
+        // takedown: hide it but keep it, so the owner still sees it as banned (task sheet
+        // US3/US6). An owner removing their own post — admin or not — is a real delete.
+        if (!blog.getAuthorId().equals(userId)) {
+            blog.setStatus(ContentStatus.BANNED);
+            blogRepository.save(blog);
+            return;
+        }
+
+        blogRepository.delete(blog);
     }
 
     @Transactional

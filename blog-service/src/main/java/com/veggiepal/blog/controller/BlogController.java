@@ -58,7 +58,7 @@ public class BlogController {
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
             @RequestParam(name = "status", required = false) ContentStatus status,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "20") int size
+            @RequestParam(name = "size", defaultValue = "10") int size
     ) {
 
         return ApiResponse
@@ -127,7 +127,7 @@ public class BlogController {
             @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "sort", required = false) String sort,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "20") int size
+            @RequestParam(name = "size", defaultValue = "10") int size
     ) {
 
         return ApiResponse
@@ -160,8 +160,10 @@ public class BlogController {
                 .build();
     }
 
-    @Operation(summary = "Set your vote on a blog; 1 or -1")
-    @PutMapping("/{id}/vote")
+    // POST rather than PUT: sending the same value twice takes the vote back, so the call is
+    // not idempotent. Task sheet US5 — a heart button sends 1 on every click.
+    @Operation(summary = "Vote on a blog with 1 or -1; the same value again takes the vote back")
+    @PostMapping("/{id}/vote")
     ApiResponse<VoteResponse> vote(
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
             @PathVariable("id") Long id,

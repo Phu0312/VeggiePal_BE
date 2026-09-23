@@ -45,6 +45,13 @@ public class VoteService {
 
         Integer previous = existing.map(ContentVote::getValue).orElse(null);
 
+        // Task sheet US5: the same vote a second time takes it back, so a heart button can
+        // send 1 on every click. The opposite value still switches the vote, keeping downvote.
+        if (value.equals(previous)) {
+            contentVoteRepository.delete(existing.get());
+            return applyDelta(blog, previous, null);
+        }
+
         ContentVote vote = existing.orElseGet(() -> ContentVote.builder()
                 .userId(userId)
                 .targetType(TargetType.BLOG)

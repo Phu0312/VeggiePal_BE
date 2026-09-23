@@ -563,3 +563,20 @@ Hai trường hợp cuối canh đúng cái bẫy đã mô tả ở 3.3. Nếu a
 5. `blog.recipe_id` khi `recipes` ra đời.
 6. Gợi ý nội dung liên quan bằng AI, thay phần thân `GET /blogs/{id}/related`.
 7. Chuyển search sang `FULLTEXT INDEX` khi dữ liệu đủ lớn.
+
+## 12. Thay đổi sau khi đối chiếu task sheet (2026-09-23)
+
+Spec này được viết theo SRS và tài liệu Entities. Sau khi triển khai, đối chiếu với task sheet "PHÂN CHIA TASK" — bản hợp đồng mà FE đang code theo — thấy lệch ở sáu chỗ. Task sheet được ưu tiên; các mục tương ứng ở trên được thay thế như sau.
+
+| Mục | Trước | Sau | Lý do |
+|---|---|---|---|
+| 5.2 | Mặc định 20 bài/trang | **10** bài/trang cho `GET /blogs` và `GET /blogs/me` | Sheet US3 |
+| 4.2 | Tiêu đề tối đa 200 ký tự | Tối đa **150** ký tự | Sheet US3: `@Size(max=150)` |
+| 4.3 | Nội dung bình luận tối đa 2000 ký tự | Tối đa **500 từ** (đếm theo khoảng trắng), mã 3031; thêm trần **5000 ký tự** với mã mới `COMMENT_TOO_LONG` (3037) | Sheet US5. Trần ký tự giữ lại vì đếm từ không giới hạn được độ dài — một "từ" 100KB vẫn là một từ và sẽ vỡ ở cột `TEXT` |
+| 4.1 | Tên danh mục unique trong cùng danh mục cha, kiểm ở service | Unique **toàn cây**, kiểm ở service và ràng buộc `uk_categories_name`; cột dùng collation `utf8mb4_0900_as_ci` | Sheet US5. Collation mặc định của MySQL không phân biệt dấu, sẽ coi "Che", "Chè", "Chế" là một |
+| 6.2 | `PUT` đặt giá trị, không toggle | `POST /blogs/{id}/vote`; gửi **cùng giá trị lần hai thì bỏ vote**, giá trị ngược lại thì đổi vote. `DELETE` vẫn giữ | Sheet US5: "gọi lần 1 là vote, lần 2 là bỏ vote" (nút tim). Giữ ±1 để không mất downvote của SRS FR-04-02. Đổi sang POST vì không còn idempotent |
+| 4.2, 5.4 | Admin xóa bài người khác là xóa cứng | Chuyển sang trạng thái mới **`BANNED`**: ẩn khỏi mọi đường đọc công khai, chủ bài vẫn thấy trong `GET /blogs/me`. `BANNED` là trạng thái cuối — `updateBlog` từ chối, vì sửa bài sẽ chạy lại moderation và tự gỡ lệnh cấm. Chủ bài tự xóa bài mình vẫn là xóa cứng | Sheet US3 ("ẩn bài Banned") và US6 (badge "Bị cấm") |
+
+**Lệch có chủ đích, đề nghị sửa sheet thay vì sửa code:** sheet ghi `Blog @ManyToOne với User` và `Comment @ManyToOne với Blog/Video và User`. Trong kiến trúc microservice, bảng `users` nằm trong DB của identity-service nên blog-service không thể có khóa ngoại tới nó (mục 3.1); comment dùng `target_type` + `target_id` để video cắm vào không phải migrate (mục 4.3).
+
+**Chạm việc của người khác:** `GET /blogs/me` đã đáp ứng phần blog của sheet US6 "My Content" (giao cho Phú). Cần báo để phần đó chỉ còn video.

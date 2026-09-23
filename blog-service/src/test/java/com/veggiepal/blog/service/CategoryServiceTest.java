@@ -3,6 +3,7 @@ package com.veggiepal.blog.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -60,7 +61,6 @@ class CategoryServiceTest {
 
     @Test
     void create_root_savesWithGivenTypeAndDefaults() {
-        when(categoryRepository.findByParentIsNull()).thenReturn(List.of());
         when(categoryRepository.save(any(Category.class))).thenAnswer(call -> call.getArgument(0));
 
         categoryService.create(CategoryRequest.builder()
@@ -93,7 +93,6 @@ class CategoryServiceTest {
     void create_child_inheritsParentTypeEvenWhenRequestSaysOtherwise() {
         Category parent = root(1L, "Công thức");
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(parent));
-        when(categoryRepository.findByParentId(1L)).thenReturn(List.of());
         when(categoryRepository.save(any(Category.class))).thenAnswer(call -> call.getArgument(0));
 
         categoryService.create(CategoryRequest.builder()
@@ -121,38 +120,43 @@ class CategoryServiceTest {
                 .isEqualTo(ErrorCode.CATEGORY_DEPTH_EXCEEDED);
     }
 
+    // Task sheet US5: "Tên danh mục (name) phải là Unique" — across the whole tree, not per
+    // parent. The per-parent rule this replaces let the same name sit under two roots.
     @Test
-    void create_duplicateNameUnderSameParent_throwsDuplicated() {
+    void create_nameAlreadyUsedUnderAnotherParent_throwsDuplicated() {
         Category parent = root(1L, "Công thức");
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(parent));
-        when(categoryRepository.findByParentId(1L)).thenReturn(List.of(child(2L, "Món chính", parent)));
+        when(categoryRepository.existsByNameIgnoreCase("Món chính")).thenReturn(true);
 
         assertThatThrownBy(() -> categoryService.create(
-                CategoryRequest.builder().name("  món chính ").parentId(1L).build()))
+                CategoryRequest.builder().name("  Món chính ").parentId(1L).build()))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.CATEGORY_NAME_DUPLICATED);
+
+        verify(categoryRepository, never()).save(any());
+    }
+
+    @Test
+    void create_rootNameAlreadyUsed_throwsDuplicated() {
+        when(categoryRepository.existsByNameIgnoreCase("Công thức")).thenReturn(true);
+
+        assertThatThrownBy(() -> categoryService.create(
+                CategoryRequest.builder().name("Công thức").type(CategoryType.RECIPE_TYPE).build()))
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.CATEGORY_NAME_DUPLICATED);
     }
 
-    // MySQL treats each NULL as distinct, so a unique(parent_id, name) index would
-    // NOT stop two root categories sharing a name. The service has to.
+    // The category's own name does exist — it is this row. Only a check that excludes the
+    // row being updated lets it keep its name; a plain existence check would reject it.
     @Test
-    void create_duplicateRootName_throwsDuplicated() {
-        when(categoryRepository.findByParentIsNull()).thenReturn(List.of(root(1L, "Công thức")));
-
-        assertThatThrownBy(() -> categoryService.create(
-                CategoryRequest.builder().name("CÔNG THỨC").type(CategoryType.RECIPE_TYPE).build()))
-                .isInstanceOf(AppException.class)
-                .extracting(e -> ((AppException) e).getErrorCode())
-                .isEqualTo(ErrorCode.CATEGORY_NAME_DUPLICATED);
-    }
-
-    @Test
-    void update_sameCategoryKeepsItsOwnName_isAllowed() {
+    void update_keepingItsOwnName_isAllowed() {
         Category parent = root(1L, "Công thức");
         Category target = child(2L, "Món chính", parent);
         when(categoryRepository.findById(2L)).thenReturn(Optional.of(target));
-        when(categoryRepository.findByParentId(1L)).thenReturn(List.of(target));
+        lenient().when(categoryRepository.existsByNameIgnoreCase("Món chính")).thenReturn(true);
+        when(categoryRepository.existsByNameIgnoreCaseAndIdNot("Món chính", 2L)).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenAnswer(call -> call.getArgument(0));
 
         categoryService.update(2L, CategoryRequest.builder()
@@ -160,6 +164,21 @@ class CategoryServiceTest {
 
         assertThat(target.getDisplayOrder()).isEqualTo((short) 5);
         assertThat(target.getActive()).isFalse();
+    }
+
+    @Test
+    void update_toANameAnotherCategoryUses_throwsDuplicated() {
+        Category parent = root(1L, "Công thức");
+        when(categoryRepository.findById(2L)).thenReturn(Optional.of(child(2L, "Món chính", parent)));
+        when(categoryRepository.existsByNameIgnoreCaseAndIdNot("Món phụ", 2L)).thenReturn(true);
+
+        assertThatThrownBy(() -> categoryService.update(2L,
+                CategoryRequest.builder().name("Món phụ").build()))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.CATEGORY_NAME_DUPLICATED);
+
+        verify(categoryRepository, never()).save(any());
     }
 
     @Test

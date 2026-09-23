@@ -81,6 +81,47 @@ class BlogServiceIntegrationTests {
                         .value("Món chính " + suffix));
     }
 
+    // Task sheet US5: category names are unique across the whole tree.
+    @Test
+    void categoryNames_areUniqueAcrossDifferentParents() throws Exception {
+        String suffix = unique();
+        long firstRoot = createRootCategory("Gốc một " + suffix);
+        long secondRoot = createRootCategory("Gốc hai " + suffix);
+        createChildCategory("Món chính " + suffix, firstRoot);
+
+        mockMvc.perform(authed(post("/categories"), ADMIN_ID, "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Món chính %s","parentId":%d}
+                                """.formatted(suffix, secondRoot)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(3004));
+    }
+
+    @Test
+    void categoryNames_differingOnlyInCase_areDuplicates() throws Exception {
+        String suffix = unique();
+        createRootCategory("Canh " + suffix);
+
+        mockMvc.perform(authed(post("/categories"), ADMIN_ID, "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"CANH %s","type":"RECIPE_TYPE"}
+                                """.formatted(suffix)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(3004));
+    }
+
+    // In Vietnamese diacritics change the word: "Che", "Chè" and "Chế" are three different
+    // things. MySQL's default collation (utf8mb4_0900_ai_ci) is accent-insensitive and would
+    // treat them as one name — both in the service's lookup and in the UNIQUE index.
+    @Test
+    void categoryNames_differingOnlyInDiacritics_areDistinct() throws Exception {
+        String suffix = unique();
+        createRootCategory("Che " + suffix);
+        createRootCategory("Chè " + suffix);
+    }
+
     // ---------------------------------------------------------------- blogs
 
     @Test
@@ -170,6 +211,36 @@ class BlogServiceIntegrationTests {
                 .andExpect(jsonPath("$.result[?(@.id == %d)]".formatted(first)).doesNotExist());
     }
 
+    // Task sheet US3/US6: a takedown hides the post from everyone but its owner, who still
+    // sees it with a "Bị cấm" badge — and cannot lift the ban by editing it.
+    @Test
+    void adminTakedown_hidesThePostButTheOwnerStillSeesItAsBanned() throws Exception {
+        String suffix = unique();
+        long categoryId = createRootCategory("Danh mục " + suffix);
+        long blogId = createPublishedBlog(categoryId, "Bị gỡ " + suffix, body(suffix));
+
+        mockMvc.perform(authed(delete("/blogs/" + blogId), ADMIN_ID, "ADMIN"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/blogs/" + blogId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(3014));
+
+        mockMvc.perform(get("/blogs/me").header("Authorization", bearer(AUTHOR_ID, "USER"))
+                        .param("status", "BANNED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.items[?(@.id == %d)].status".formatted(blogId))
+                        .value("BANNED"));
+
+        mockMvc.perform(authed(put("/blogs/" + blogId), AUTHOR_ID, "USER")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"Sửa lại %s","content":"%s","categoryId":%d,"publish":true}
+                                """.formatted(suffix, body(suffix), categoryId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(3015));
+    }
+
     // ---------------------------------------------------------------- comments
 
     @Test
@@ -237,7 +308,7 @@ class BlogServiceIntegrationTests {
         long categoryId = createRootCategory("Danh mục " + suffix);
         long blogId = createPublishedBlog(categoryId, "Bài viết " + suffix, body(suffix));
 
-        mockMvc.perform(authed(put("/blogs/" + blogId + "/vote"), OTHER_MEMBER_ID, "USER")
+        mockMvc.perform(authed(post("/blogs/" + blogId + "/vote"), OTHER_MEMBER_ID, "USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"value":1}
@@ -247,7 +318,7 @@ class BlogServiceIntegrationTests {
 
         // Second vote from the same user on the same blog: the unique constraint must be
         // updated rather than violated, and the delta must be -2 rather than -1.
-        mockMvc.perform(authed(put("/blogs/" + blogId + "/vote"), OTHER_MEMBER_ID, "USER")
+        mockMvc.perform(authed(post("/blogs/" + blogId + "/vote"), OTHER_MEMBER_ID, "USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"value":-1}
@@ -260,13 +331,40 @@ class BlogServiceIntegrationTests {
                 .andExpect(jsonPath("$.result.voteScore").value(-1));
     }
 
+    // Task sheet US5: a heart button sends the same vote on every click, so the second one
+    // must take it back — against the real unique constraint, not a mocked repository.
+    @Test
+    void votingTheSameValueTwice_takesTheVoteBack() throws Exception {
+        String suffix = unique();
+        long categoryId = createRootCategory("Danh mục " + suffix);
+        long blogId = createPublishedBlog(categoryId, "Bài viết " + suffix, body(suffix));
+
+        mockMvc.perform(authed(post("/blogs/" + blogId + "/vote"), OTHER_MEMBER_ID, "USER")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"value":1}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.myVote").value(1))
+                .andExpect(jsonPath("$.result.voteScore").value(1));
+
+        mockMvc.perform(authed(post("/blogs/" + blogId + "/vote"), OTHER_MEMBER_ID, "USER")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"value":1}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.myVote").doesNotExist())
+                .andExpect(jsonPath("$.result.voteScore").value(0));
+    }
+
     @Test
     void votingOnYourOwnBlog_isRejected() throws Exception {
         String suffix = unique();
         long categoryId = createRootCategory("Danh mục " + suffix);
         long blogId = createPublishedBlog(categoryId, "Bài viết " + suffix, body(suffix));
 
-        mockMvc.perform(authed(put("/blogs/" + blogId + "/vote"), AUTHOR_ID, "USER")
+        mockMvc.perform(authed(post("/blogs/" + blogId + "/vote"), AUTHOR_ID, "USER")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"value":1}

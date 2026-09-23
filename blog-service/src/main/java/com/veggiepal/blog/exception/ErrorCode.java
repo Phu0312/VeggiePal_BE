@@ -61,7 +61,7 @@ public enum ErrorCode {
     // Comment
     COMMENT_CONTENT_REQUIRED(3030, "Comment content is required", HttpStatus.BAD_REQUEST),
 
-    INVALID_COMMENT_CONTENT(3031, "Comment must be at most {max} characters", HttpStatus.BAD_REQUEST),
+    INVALID_COMMENT_CONTENT(3031, "Comment must be at most {max} words", HttpStatus.BAD_REQUEST),
 
     COMMENT_NOT_EXISTED(3032, "Comment not existed", HttpStatus.NOT_FOUND),
 
@@ -72,6 +72,8 @@ public enum ErrorCode {
     COMMENT_TARGET_NOT_EXISTED(3035, "The content being commented on does not exist", HttpStatus.BAD_REQUEST),
 
     UNSUPPORTED_TARGET_TYPE(3036, "This content type is not supported yet", HttpStatus.BAD_REQUEST),
+
+    COMMENT_TOO_LONG(3037, "Comment must be at most {max} characters", HttpStatus.BAD_REQUEST),
 
     // Vote
     INVALID_VOTE_VALUE(3040, "Vote value must be 1 or -1", HttpStatus.BAD_REQUEST),

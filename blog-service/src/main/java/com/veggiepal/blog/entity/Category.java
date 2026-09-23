@@ -20,7 +20,10 @@ import lombok.experimental.FieldDefaults;
         indexes = {
                 @Index(name = "idx_categories_parent", columnList = "parent_id, display_order"),
                 @Index(name = "idx_categories_type", columnList = "type, is_active")
-        }
+        },
+        // Task sheet US5: names are unique across the whole tree. Named so a schema update
+        // recognises it instead of adding a second, auto-named copy.
+        uniqueConstraints = @UniqueConstraint(name = "uk_categories_name", columnNames = "name")
 )
 public class Category {
 
@@ -39,7 +42,10 @@ public class Category {
     @Column(nullable = false)
     CategoryType type;
 
-    @Column(nullable = false, length = 100)
+    // Case-insensitive but accent-sensitive. MySQL's default utf8mb4_0900_ai_ci ignores
+    // diacritics, so "Che", "Chè" and "Chế" — three different Vietnamese words — would collide
+    // both in the uniqueness lookup and in the UNIQUE index.
+    @Column(nullable = false, columnDefinition = "VARCHAR(100) COLLATE utf8mb4_0900_as_ci")
     String name;
 
     @Column(name = "display_order", nullable = false)

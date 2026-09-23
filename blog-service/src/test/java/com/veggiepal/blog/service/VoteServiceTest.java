@@ -100,16 +100,22 @@ class VoteServiceTest {
         assertThat(response.getVoteScore()).isEqualTo(2);
     }
 
+    // Task sheet US5: "Gọi API lần 1 là Insert (Vote), gọi lần 2 là Delete (Un-vote)".
+    // A heart button sends 1 on every click, so a second identical vote must take it back.
     @Test
-    void vote_sameValueTwice_doesNotTouchTheScore() {
+    void vote_sameValueTwice_removesTheVote() {
         when(blogService.requirePublishedBlog(10L)).thenReturn(publishedBlog());
+        ContentVote existing = existingVote(1);
         when(contentVoteRepository.findByUserIdAndTargetTypeAndTargetId(VOTER_ID, TargetType.BLOG, 10L))
-                .thenReturn(Optional.of(existingVote(1)));
-        when(contentVoteRepository.save(any(ContentVote.class))).thenAnswer(call -> call.getArgument(0));
+                .thenReturn(Optional.of(existing));
 
-        voteService.vote(VOTER_ID, 10L, 1);
+        var response = voteService.vote(VOTER_ID, 10L, 1);
 
-        verify(blogRepository, never()).addVoteScore(any(), org.mockito.ArgumentMatchers.anyInt());
+        verify(contentVoteRepository).delete(existing);
+        verify(contentVoteRepository, never()).save(any());
+        verify(blogRepository).addVoteScore(10L, -1);
+        assertThat(response.getMyVote()).isNull();
+        assertThat(response.getVoteScore()).isEqualTo(3);
     }
 
     @Test

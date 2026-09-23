@@ -120,16 +120,49 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.code").value(3030));
     }
 
+    static String words(int count) {
+        return "ngon ".repeat(count).trim();
+    }
+
+    // Task sheet US5: "Độ dài nội dung < 500 từ". The sheet writes "< 150 ký tự" for the
+    // title and pairs it with @Size(max = 150), so "< 500 từ" is read the same way: at most 500.
     @Test
-    void createComment_contentTooLong_returnsInvalidContentWithMaxFilledIn() throws Exception {
+    void createComment_moreThanFiveHundredWords_returnsInvalidContentWithMaxFilledIn() throws Exception {
         mockMvc.perform(post("/comments").with(member())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"targetType": "BLOG", "targetId": 10, "content": "%s"}
-                                """.formatted("x".repeat(2001))))
+                                """.formatted(words(501))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(3031))
-                .andExpect(jsonPath("$.message").value("Comment must be at most 2000 characters"));
+                .andExpect(jsonPath("$.message").value("Comment must be at most 500 words"));
+    }
+
+    @Test
+    void createComment_exactlyFiveHundredWords_isAccepted() throws Exception {
+        when(commentService.createComment(eq(USER_ID), any(CommentRequest.class)))
+                .thenReturn(CommentResponse.builder().id(5L).build());
+
+        mockMvc.perform(post("/comments").with(member())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"targetType": "BLOG", "targetId": 10, "content": "%s"}
+                                """.formatted(words(500))))
+                .andExpect(status().isOk());
+    }
+
+    // A word count alone does not bound length: one 6,000-character "word" is a single word.
+    // Without a character ceiling it would reach the TEXT column and fail there as a 500.
+    @Test
+    void createComment_oneEnormousWord_returnsCommentTooLong() throws Exception {
+        mockMvc.perform(post("/comments").with(member())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"targetType": "BLOG", "targetId": 10, "content": "%s"}
+                                """.formatted("x".repeat(5001))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(3037))
+                .andExpect(jsonPath("$.message").value("Comment must be at most 5000 characters"));
     }
 
     @Test
