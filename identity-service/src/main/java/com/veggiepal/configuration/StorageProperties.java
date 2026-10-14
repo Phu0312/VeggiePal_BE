@@ -2,13 +2,10 @@ package com.veggiepal.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-@ConfigurationProperties(prefix = "storage.s3")
+@ConfigurationProperties(prefix = "storage.cloudinary")
 public record StorageProperties(
-        String endpoint,
-        String region,
-        String accessKey,
-        String secretKey,
-        String bucket,
-        String publicUrl
+        String cloudName,
+        String apiKey,
+        String apiSecret
 ) {
 }

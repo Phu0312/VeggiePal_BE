@@ -7,7 +7,7 @@
 - Bài blog và vòng đời draft/moderation/published/rejected/banned.
 - Cây category hai cấp.
 - Tìm kiếm, lọc, sắp xếp và bài liên quan.
-- Thumbnail lưu trên MinIO/S3.
+- Thumbnail lưu trên Cloudinary.
 - Comment và một cấp reply.
 - Upvote/downvote và tổng điểm vote.
 - Điểm mở rộng cho moderation service.
@@ -17,18 +17,18 @@ Service lưu `authorId/userId` lấy từ JWT, nhưng không có entity/foreign 
 ```text
 Client -> Gateway :8080 -> Blog :8083 -> veggiepal_blog
                                   |
-                                  +-> MinIO/S3 thumbnails
+                                  +-> Cloudinary thumbnails
 ```
 
 Tên/avatar tác giả không được join trong service. Frontend gom `authorId` rồi gọi identity service `/api/users/batch`.
 
 ## 2. Công nghệ và package
 
-Service dùng Java 21, Spring Boot 4.1.1, MVC, JPA, MySQL, Spring Security Resource Server, Jakarta Validation, MapStruct, Lombok, AWS SDK S3 và Springdoc.
+Service dùng Java 21, Spring Boot 4.1.1, MVC, JPA, MySQL, Spring Security Resource Server, Jakarta Validation, MapStruct, Lombok, Cloudinary SDK và Springdoc.
 
 ```text
 com.veggiepal.blog
-├── configuration  security, JWT, OpenAPI, S3
+├── configuration  security, JWT, OpenAPI, Cloudinary
 ├── controller     blogs, categories, comments
 ├── dto            API request/response
 ├── entity         Blog, Category, Comment, ContentVote
@@ -53,11 +53,13 @@ Hibernate dùng `ddl-auto=update`, show/format SQL và tắt Open Session in Vie
 
 JWT dùng `JWT_SECRET` giống identity service và thuật toán HS256.
 
-Thumbnail dùng bucket `veggiepal-blog-thumbnails`:
+Thumbnail lưu trên Cloudinary; credential đọc từ `.env` ở gốc repo (template `.env.example`):
 
 ```properties
-storage.s3.endpoint=http://localhost:9000
-storage.s3.public-url=http://localhost:9000/veggiepal-blog-thumbnails
+spring.config.import=optional:file:.env[.properties],optional:file:../.env[.properties]
+storage.cloudinary.cloud-name=${CLOUDINARY_CLOUD_NAME:}
+storage.cloudinary.api-key=${CLOUDINARY_API_KEY:}
+storage.cloudinary.api-secret=${CLOUDINARY_API_SECRET:}
 ```
 
 Multipart framework cho phép file 6 MB/request 7 MB, cao hơn business limit 5 MB để `BlogService` có cơ hội trả đúng error code `THUMBNAIL_TOO_LARGE`.
@@ -393,7 +395,7 @@ Implementation hiện tại `AutoApproveContentModerationService` **approve tấ
 
 Blog moderation nhận `title + newline + content`; comment moderation nhận content.
 
-## 14. Thumbnail và S3/MinIO
+## 14. Thumbnail và Cloudinary
 
 Business limit là 5 MB. Chỉ JPEG/PNG/WEBP, kiểm tra cả MIME type và magic bytes thật.
 
@@ -410,7 +412,7 @@ validate file/size
 
 Nếu upload thành công nhưng DB save thất bại, service xóa file mới để bù trừ. Nếu xóa file cũ thất bại, request vẫn thành công và log warning.
 
-`FileStorageService` tách business logic khỏi AWS SDK. `S3FileStorageService` chỉ xóa URL thuộc public prefix của bucket hiện tại. MinIO dùng path-style URL; production có thể thay endpoint/property bằng AWS S3-compatible storage.
+`FileStorageService` tách business logic khỏi Cloudinary SDK. `CloudinaryFileStorageService` dùng key bỏ đuôi làm `public_id` (`thumbnails/{blogId}/{UUID}`) và trả `secure_url`. Nó chỉ xóa URL bắt đầu bằng `https://res.cloudinary.com/{cloudName}/image/upload/`; URL MinIO cũ và URL ngoài bị bỏ qua. Lỗi SDK thành `FILE_UPLOAD_FAILED` (503).
 
 ## 15. Repository/query đáng chú ý
 
@@ -512,12 +514,12 @@ Chạy toàn bộ cần MySQL/database sẵn sàng:
 ## 20. Chạy local
 
 ```powershell
-docker compose up -d mysql minio minio-init
+docker compose up -d mysql
 cd blog-service
 ./mvnw.cmd spring-boot:run
 ```
 
-Database tự tạo nhờ `createDatabaseIfNotExist=true`. Bucket thumbnail do `minio-init` tạo và cấp anonymous download.
+Database tự tạo nhờ `createDatabaseIfNotExist=true`. Credential Cloudinary đọc từ `.env` ở gốc repo (copy từ `.env.example`).
 
 Swagger tổng: `http://localhost:8080/swagger-ui.html` khi gateway chạy.
 
