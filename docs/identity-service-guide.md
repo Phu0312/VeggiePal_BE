@@ -27,7 +27,7 @@ Trong kiến trúc hiện tại, `identity-service` sở hữu cả **account**,
 | Profile | Họ tên, số điện thoại, ngày sinh, avatar |
 | Public identity | Trả tên và avatar theo danh sách user ID |
 | Security | Kiểm tra JWT, ánh xạ role thành authority, trả lỗi 401/403 |
-| File storage | Upload/xóa avatar qua S3 API; local dùng MinIO |
+| File storage | Upload/xóa avatar trên Cloudinary |
 
 Tên `identity-service` vẫn phù hợp vì identity không chỉ là login/logout. Nó còn quản lý danh tính và tài khoản cơ bản của người dùng.
 
@@ -57,8 +57,8 @@ API Gateway
                          +------------+-------------+
                          |                          |
                          v                          v
-                  MySQL :3307                 MinIO :9000
-             veggiepal_identity        veggiepal-avatars bucket
+                  MySQL :3307                 Cloudinary
+             veggiepal_identity        avatars/{userId}/...
 ```
 
 Gateway dùng `StripPrefix=1`, vì vậy:
@@ -98,7 +98,7 @@ File: `identity-service/pom.xml`
 | Jakarta Validation | Validate request DTO |
 | MapStruct | Sinh code chuyển đổi DTO/entity |
 | Lombok | Sinh getter, setter, builder, constructor |
-| AWS SDK S3 | Làm việc với MinIO hoặc AWS S3 |
+| Cloudinary SDK (`cloudinary-http5`) | Upload/xóa ảnh avatar |
 | Springdoc OpenAPI | Sinh OpenAPI và Swagger UI |
 
 ### Vì sao vừa có JJWT vừa có OAuth2 Resource Server?
@@ -145,7 +145,7 @@ Controller -> Service -> Repository -> MySQL
                   |
                   +-> Mapper
                   +-> JwtService
-                  +-> FileStorageService -> S3/MinIO
+                  +-> FileStorageService -> Cloudinary
 ```
 
 Controller không truy cập repository trực tiếp. Business rule nằm trong service.
@@ -219,18 +219,16 @@ jwt.secret=${JWT_SECRET:veggiepal-secret-key-must-be-at-least-32-characters}
 - Các microservice xác thực token phải dùng cùng secret.
 - Không nên dùng default secret trong production.
 
-### S3/MinIO
+### Cloudinary
 
 ```properties
-storage.s3.endpoint=${S3_ENDPOINT:http://localhost:9000}
-storage.s3.region=${S3_REGION:us-east-1}
-storage.s3.access-key=${S3_ACCESS_KEY:minioadmin}
-storage.s3.secret-key=${S3_SECRET_KEY:minioadmin}
-storage.s3.bucket=${S3_BUCKET:veggiepal-avatars}
-storage.s3.public-url=${S3_PUBLIC_URL:http://localhost:9000/veggiepal-avatars}
+spring.config.import=optional:file:.env[.properties],optional:file:../.env[.properties]
+storage.cloudinary.cloud-name=${CLOUDINARY_CLOUD_NAME:}
+storage.cloudinary.api-key=${CLOUDINARY_API_KEY:}
+storage.cloudinary.api-secret=${CLOUDINARY_API_SECRET:}
 ```
 
-Các giá trị mặc định trỏ tới MinIO local. Khi deploy, có thể thay bằng biến môi trường để trỏ tới object storage thật.
+Credential lấy từ file `.env` ở gốc repository (đã gitignore, template là `.env.example`). `../.env` dùng khi chạy Maven trong thư mục service; `.env` dùng khi IDE chạy ở gốc repo. Biến môi trường của OS (ví dụ `env_file` trong docker-compose) được ưu tiên hơn file. Giá trị mặc định rỗng: service vẫn khởi động khi thiếu `.env`, chỉ upload ảnh trả 503.
 
 ### Giới hạn multipart
 
@@ -960,7 +958,7 @@ Sau khi detect bằng bytes, `ProfileService` còn yêu cầu loại detect đư
 
 ---
 
-## 21. File storage và MinIO/S3
+## 21. File storage và Cloudinary
 
 ### Interface `FileStorageService`
 
@@ -969,51 +967,34 @@ String upload(String key, byte[] content, String contentType);
 void delete(String url);
 ```
 
-Business service phụ thuộc interface, không phụ thuộc trực tiếp AWS SDK. Nhờ đó có thể thay implementation hoặc mock trong unit test.
+Business service phụ thuộc interface, không phụ thuộc trực tiếp Cloudinary SDK. Nhờ đó có thể thay implementation hoặc mock trong unit test.
 
 ### `StorageProperties`
 
 ```java
-@ConfigurationProperties(prefix = "storage.s3")
-public record StorageProperties(...)
+@ConfigurationProperties(prefix = "storage.cloudinary")
+public record StorageProperties(String cloudName, String apiKey, String apiSecret)
 ```
 
-Spring bind nhóm property `storage.s3.*` vào một immutable record.
+### `CloudinaryConfig`
 
-### `S3Config`
+Tạo singleton `Cloudinary` từ `cloud_name`, `api_key`, `api_secret` với `secure=true` (URL `https`). Việc khởi tạo không gọi mạng, nên credential rỗng vẫn tạo được bean.
 
-Tạo singleton `S3Client` với:
+### `CloudinaryFileStorageService.upload`
 
-- Region.
-- Access key/secret key.
-- Endpoint override cho MinIO.
-- Path-style URL để tương thích MinIO.
-- Checksum mode phù hợp S3 API/MinIO.
-
-Nếu endpoint rỗng, AWS SDK dùng endpoint S3 mặc định theo region.
-
-### `S3FileStorageService.upload`
-
-```java
-PutObjectRequest.builder()
-    .bucket(storageProperties.bucket())
-    .key(key)
-    .contentType(contentType)
-```
-
-Sau `putObject`, method trả URL:
+Key `avatars/{userId}/{uuid}.{ext}` được bỏ đuôi để làm `public_id` (`avatars/7/abc`), vì Cloudinary tự nhận dạng định dạng từ byte và tự thêm đuôi vào URL. Ảnh upload với `resource_type=image`, `overwrite=false`; method trả `secure_url`:
 
 ```text
-{publicUrl}/{key}
+https://res.cloudinary.com/{cloudName}/image/upload/v{version}/avatars/7/abc.png
 ```
 
-Nếu AWS SDK ném `SdkException`, service log lỗi và chuyển thành `FILE_UPLOAD_FAILED`/HTTP 503.
+Tham số `contentType` không được dùng; magic bytes đã được `ImageTypeDetector` kiểm tra trước đó.
 
 ### `delete`
 
-Service chỉ xóa URL bắt đầu bằng public URL của chính bucket. URL null hoặc URL ngoài hệ thống bị bỏ qua. Phần còn lại sau prefix được dùng làm object key.
+Service chỉ xóa URL bắt đầu bằng `https://res.cloudinary.com/{cloudName}/image/upload/`. URL null, URL MinIO cũ và URL ngoài hệ thống bị bỏ qua. `public_id` được lấy từ phần sau prefix sau khi bỏ đoạn `v{version}/` và đuôi file, rồi gọi `destroy`. Kết quả `not found` không bị coi là lỗi.
 
-Bucket `veggiepal-avatars` được `minio-init` tạo và cấp quyền anonymous download trong `docker-compose.yml`.
+Ở cả hai method, `IOException` (mạng) và `RuntimeException` (SDK báo lỗi API, ví dụ sai credential) được log và chuyển thành `FILE_UPLOAD_FAILED`/HTTP 503.
 
 ---
 
@@ -1231,7 +1212,7 @@ GET /api/users/batch?ids=1,2,3
     {
       "id": 1,
       "fullName": "Nguyen Van A",
-      "avatarUrl": "http://localhost:9000/veggiepal-avatars/avatars/1/...png"
+      "avatarUrl": "https://res.cloudinary.com/<cloud>/image/upload/v1712345678/avatars/1/...png"
     }
   ]
 }
@@ -1283,7 +1264,7 @@ Nút **Authorize** thêm header bearer khi thử protected endpoint.
 - `PublicUserServiceTest`: field public, user không tồn tại, giới hạn 50 ID.
 - `JwtServiceTest`: token phát ra decode được bằng decoder thật.
 - `ImageTypeDetectorTest`: nhận JPEG/PNG/WEBP, từ chối dữ liệu khác/null/quá ngắn.
-- `S3FileStorageServiceTest`: upload, delete, URL và lỗi SDK.
+- `CloudinaryFileStorageServiceTest`: public_id bỏ đuôi, trả `secure_url`, parse URL khi delete (có/không có version), bỏ qua URL ngoài, lỗi SDK.
 
 ### Context test
 
@@ -1308,12 +1289,13 @@ Chạy toàn bộ, gồm context test khi MySQL sẵn sàng:
 
 ## 28. Cách chạy local
 
-### 1. Khởi động MySQL và MinIO
+### 1. Khởi động MySQL và tạo `.env`
 
 Tại root repository:
 
 ```powershell
-docker compose up -d mysql minio minio-init
+docker compose up -d mysql
+Copy-Item .env.example .env   # rồi điền CLOUDINARY_*
 ```
 
 ### 2. Tạo database identity nếu chưa có
@@ -1343,8 +1325,6 @@ Các địa chỉ chính:
 | Gateway | `http://localhost:8080` |
 | Identity trực tiếp | `http://localhost:8081` |
 | Swagger tổng | `http://localhost:8080/swagger-ui.html` |
-| MinIO API | `http://localhost:9000` |
-| MinIO console | `http://localhost:9001` |
 
 ---
 
@@ -1371,9 +1351,8 @@ Các địa chỉ chính:
 
 ### Upload avatar trả 503
 
-- Kiểm tra MinIO/S3 đang chạy.
-- Kiểm tra bucket `veggiepal-avatars` tồn tại.
-- Kiểm tra endpoint, access key, secret key và public URL.
+- Kiểm tra `.env` ở gốc repo có đủ `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
+- Đọc log `Could not upload image to Cloudinary`: exception kèm theo chứa lỗi HTTP Cloudinary trả về (ví dụ `Invalid Signature` khi sai secret, hoặc status 401/404 khi thiếu `CLOUDINARY_*`), hoặc lỗi mạng/timeout.
 
 ### Context test không chạy
 
@@ -1392,7 +1371,7 @@ Các địa chỉ chính:
 4. Đổi password không vô hiệu hóa token đã phát.
 5. Không có logout server-side; client chỉ xóa token local.
 6. JWT dùng shared symmetric secret; mọi service biết secret đều có khả năng ký token nếu bị cấu hình sai/rò rỉ.
-7. Default secret và thông tin MySQL/MinIO chỉ phù hợp local development.
+7. Default secret và thông tin MySQL chỉ phù hợp local development.
 8. `ddl-auto=update` không phải chiến lược migration production tốt.
 9. Check email trước insert vẫn có race condition; unique constraint bảo vệ DB nhưng exception chưa được map đẹp.
 10. `User` dùng Lombok `@Data`, nên `toString()` có thể chứa `passwordHash` nếu entity bị log trực tiếp.
@@ -1439,7 +1418,7 @@ Khi đó hai service dùng database riêng và đồng bộ việc tạo profile
 
 ## 32. Tóm tắt ngắn
 
-`identity-service` hiện là nguồn dữ liệu chính của account và profile cơ bản. Nó nhận đăng ký/đăng nhập, hash mật khẩu bằng BCrypt, phát JWT HS256 có hạn 24 giờ, xác thực bearer token theo mô hình stateless, quản lý profile và lưu avatar trên MinIO/S3. Các controller lấy user ID từ JWT thay vì tin dữ liệu client. Response và exception có format thống nhất. Public batch chỉ lộ ID, tên và avatar của user active.
+`identity-service` hiện là nguồn dữ liệu chính của account và profile cơ bản. Nó nhận đăng ký/đăng nhập, hash mật khẩu bằng BCrypt, phát JWT HS256 có hạn 24 giờ, xác thực bearer token theo mô hình stateless, quản lý profile và lưu avatar trên Cloudinary. Các controller lấy user ID từ JWT thay vì tin dữ liệu client. Response và exception có format thống nhất. Public batch chỉ lộ ID, tên và avatar của user active.
 
 Luồng quan trọng nhất cần nhớ:
 

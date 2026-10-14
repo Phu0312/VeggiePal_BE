@@ -38,9 +38,9 @@ Four skill families are installed for this project. Pick by situation — do not
 ## Commands
 
 ```bash
-# Start MySQL (host 3307, root/12345) and MinIO (API 9000, console 9001, minioadmin/minioadmin).
-# minio-init creates the public-read buckets veggiepal-avatars and veggiepal-blog-thumbnails.
-docker compose up -d
+# Start MySQL (host 3307, root/12345).
+# Images live on Cloudinary: copy .env.example to .env at the repo root and fill CLOUDINARY_* (never commit .env).
+docker compose up -d mysql   # compose also defines an identity-service container on :8081 — don't run it alongside mvnw
 
 # Run a service (from its directory; on Windows use mvnw.cmd or Git Bash)
 cd identity-service && ./mvnw spring-boot:run    # :8081
@@ -70,7 +70,7 @@ There is no linter or formatter configured.
 **Database gotchas:**
 - `docker-compose.yml` creates a database named `veggiepal`. identity-service connects to `veggiepal_identity` without `createDatabaseIfNotExist`, so create it by hand: `docker exec veggiepal-mysql mysql -uroot -p12345 -e "CREATE DATABASE IF NOT EXISTS veggiepal_identity"`. nutrition-service creates `veggiepal_nutrition` itself, and blog-service creates `veggiepal_blog` itself the same way.
 - Tables come from Hibernate `ddl-auto=update`; there are no migrations. nutrition-service seeds the `allergens` catalog from `src/main/resources/data.sql` (`INSERT IGNORE`, runs on every start).
-- `minio-init` creates two public-read buckets: `veggiepal-avatars` (identity-service) and `veggiepal-blog-thumbnails` (blog-service).
+- Images live on Cloudinary. identity-service and blog-service read `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` from the repo-root `.env` through `spring.config.import=optional:file:.env[.properties],optional:file:../.env[.properties]` (`../.env` because Maven runs inside the service directory). `.env` is gitignored; `.env.example` is the template. The properties default to empty, so every context (including `BlogServiceIntegrationTests`) loads without `.env` and only uploads fail with 503.
 - The `@SpringBootTest` `contextLoads` tests use the same MySQL (no test profile or H2). Unit tests and `@WebMvcTest` tests need no database.
 - Hibernate maps `@Enumerated(EnumType.STRING)` to a native MySQL `ENUM` column. `ddl-auto=update` does not add new constants to it, so adding an enum value needs a manual `ALTER TABLE ... MODIFY COLUMN`. This happened with `ContentStatus.BANNED`: a database created before it existed rejects the value and the admin takedown answers 500 until the column is altered.
 - `@Lob` on a `String` field maps it to CLOB in Hibernate 6+, and `lower()`/`like` against a CLOB fails query validation at application startup (this took down blog-service entirely once a `search` query added `lower()` on a `@Lob` column). A text column that needs searching should get its real column type from `columnDefinition` alone, without `@Lob`.
@@ -105,7 +105,7 @@ A new service needs all three: an API route, a docs route, and a springdoc `urls
 - **MapStruct + Lombok:** both annotation processors are listed in `maven-compiler-plugin` (Lombok first). When mapping a request DTO onto an entity, explicitly `@Mapping(target = ..., ignore = true)` any fields the service sets itself (see `UserMapper`).
 - Emails are normalized with `trim().toLowerCase()` before lookup or storage.
 - **Error code ranges:** shared codes keep the same number in every service (1001, 1008, 1009, 1018 `INVALID_REQUEST`, 9999); identity-service uses 10xx, nutrition-service uses 20xx.
-- **Avatar storage:** `FileStorageService` (S3 API via AWS SDK v2; MinIO locally). Configured with `storage.s3.*` / `S3_*` env vars. Uploads are validated by content type **and** magic bytes (`ImageTypeDetector`).
+- **Avatar storage:** `FileStorageService` → `CloudinaryFileStorageService` (Cloudinary Java SDK, `storage.cloudinary.*`). The storage key minus its extension becomes the `public_id` (Cloudinary appends the format itself). `delete` only acts on `https://res.cloudinary.com/<cloud>/image/upload/` URLs and ignores everything else, old MinIO URLs included. Uploads are validated by content type **and** magic bytes (`ImageTypeDetector`). blog-service thumbnails use a copy of the same classes.
 - **Controller slice tests:** `@WebMvcTest(X.class)` + `@Import({SecurityConfig.class, JwtConfig.class, SecurityExceptionHandler.class})` + `@MockitoBean` for the service; authenticate with `SecurityMockMvcRequestPostProcessors.jwt().jwt(t -> t.claim("userId", 7L))`.
 
 ### nutrition-service
