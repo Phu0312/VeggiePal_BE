@@ -114,6 +114,23 @@ spring:
               filters:
                 - StripPrefix=1
 
+            # =========================
+            # LOCATION SERVICE
+            # =========================
+            - id: location-service-restaurants
+              uri: http://localhost:8085
+              predicates:
+                - Path=/api/restaurants/**
+              filters:
+                - StripPrefix=1
+
+            - id: location-service-docs
+              uri: http://localhost:8085
+              predicates:
+                - Path=/location-service/v3/api-docs/**
+              filters:
+                - StripPrefix=1
+
 
 # =========================
 # SWAGGER UI TỔNG
@@ -134,3 +151,6 @@ springdoc:
 
       - name: Recipe Service
         url: /recipe-service/v3/api-docs
+
+      - name: Location Service
+        url: /location-service/v3/api-docs
