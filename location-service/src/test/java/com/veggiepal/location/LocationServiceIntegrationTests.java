@@ -62,20 +62,21 @@ class LocationServiceIntegrationTests {
                 .andExpect(jsonPath("$.result[0].name").value("Shamballa Vegetarian Restaurant"))
                 .andExpect(jsonPath("$.result[0].phoneNumber").value("0917876788"))
                 .andExpect(jsonPath("$.result[0].veganOnly").value(true))
-                // Seeded by data.sql: Shamballa is a plain restaurant, and id 2 rotates to restaurant-3.
+                // Seeded by data.sql: Shamballa has a photo of its own, hotlinked from its website.
                 .andExpect(jsonPath("$.result[0].imageUrl").value(
-                        "https://res.cloudinary.com/r3ubxlz3/image/upload/c_fill,w_600,h_400,f_auto,q_auto/veggiepal/restaurants/restaurant-3"))
+                        "https://www.shamballa.co/wp-content/uploads/2024/09/banner-m-1.jpg"))
                 .andExpect(jsonPath("$.result[0].distanceKm", closeTo(0.53, 0.02)))
                 .andExpect(jsonPath("$.result[6].distanceKm", lessThanOrEqualTo(1.0)));
     }
 
     @Test
     void nearby_radiusIsTheCutOff() throws Exception {
-        // In the seed, id 20 is 7.14 km from Bến Thành and id 19 is 11.52 km; nothing lies between.
+        // In the seed, id 20 is 7.14 km from Bến Thành, the farthest inside 10 km, and id 90 is
+        // 10.44 km, the nearest outside it.
         mockMvc.perform(nearby(CENTER_LAT, CENTER_LNG).param("radiusKm", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result[*].id", hasItem(20)))
-                .andExpect(jsonPath("$.result[*].id", not(hasItem(19))));
+                .andExpect(jsonPath("$.result[*].id", not(hasItem(90))));
     }
 
     @Test
