@@ -53,6 +53,7 @@ public class RestaurantService {
                 .phoneNumber(restaurant.getPhoneNumber())
                 .rating(restaurant.getRating())
                 .veganOnly(restaurant.getVeganOnly())
+                .imageUrl(restaurant.getImageUrl())
                 .distanceKm(Math.round(restaurant.getDistanceMeters() / 10) / 100.0)
                 .build();
     }

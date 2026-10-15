@@ -40,6 +40,7 @@ class RestaurantControllerTest {
                         .latitude(10.7768)
                         .longitude(106.7001)
                         .veganOnly(true)
+                        .imageUrl("https://res.cloudinary.com/demo/image/upload/veggiepal/restaurants/restaurant-3")
                         .distanceKm(0.53)
                         .build()));
 
@@ -49,6 +50,8 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$.result[0].id").value(2))
                 .andExpect(jsonPath("$.result[0].name").value("Shamballa Vegetarian Restaurant"))
                 .andExpect(jsonPath("$.result[0].veganOnly").value(true))
+                .andExpect(jsonPath("$.result[0].imageUrl")
+                        .value("https://res.cloudinary.com/demo/image/upload/veggiepal/restaurants/restaurant-3"))
                 .andExpect(jsonPath("$.result[0].distanceKm").value(0.53));
     }
 

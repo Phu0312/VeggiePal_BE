@@ -31,6 +31,8 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
         Boolean getVeganOnly();
 
+        String getImageUrl();
+
         Double getDistanceMeters();
     }
 
@@ -42,6 +44,7 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             select r.id as id, r.name as name, r.address as address,
                    r.latitude as latitude, r.longitude as longitude,
                    r.phone_number as phoneNumber, r.rating as rating, r.is_vegan_only as veganOnly,
+                   r.image_url as imageUrl,
                    ST_Distance_Sphere(point(r.longitude, r.latitude), point(:lng, :lat)) as distanceMeters
             from vegetarian_restaurants r
             where ST_Distance_Sphere(point(r.longitude, r.latitude), point(:lng, :lat)) <= :radiusMeters

@@ -62,6 +62,9 @@ class LocationServiceIntegrationTests {
                 .andExpect(jsonPath("$.result[0].name").value("Shamballa Vegetarian Restaurant"))
                 .andExpect(jsonPath("$.result[0].phoneNumber").value("0917876788"))
                 .andExpect(jsonPath("$.result[0].veganOnly").value(true))
+                // Seeded by data.sql: Shamballa is a plain restaurant, and id 2 rotates to restaurant-3.
+                .andExpect(jsonPath("$.result[0].imageUrl").value(
+                        "https://res.cloudinary.com/r3ubxlz3/image/upload/c_fill,w_600,h_400,f_auto,q_auto/veggiepal/restaurants/restaurant-3"))
                 .andExpect(jsonPath("$.result[0].distanceKm", closeTo(0.53, 0.02)))
                 .andExpect(jsonPath("$.result[6].distanceKm", lessThanOrEqualTo(1.0)));
     }

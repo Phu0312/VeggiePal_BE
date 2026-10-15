@@ -48,6 +48,7 @@ class RestaurantServiceTest {
                 "phoneNumber", "0917876788",
                 "rating", 4.7,
                 "veganOnly", true,
+                "imageUrl", "https://res.cloudinary.com/demo/image/upload/veggiepal/restaurants/restaurant-3",
                 "distanceMeters", distanceMeters));
     }
 
@@ -66,6 +67,8 @@ class RestaurantServiceTest {
             assertThat(restaurant.getPhoneNumber()).isEqualTo("0917876788");
             assertThat(restaurant.getRating()).isEqualTo(4.7);
             assertThat(restaurant.getVeganOnly()).isTrue();
+            assertThat(restaurant.getImageUrl())
+                    .isEqualTo("https://res.cloudinary.com/demo/image/upload/veggiepal/restaurants/restaurant-3");
             assertThat(restaurant.getDistanceKm()).isEqualTo(0.53);
         });
     }

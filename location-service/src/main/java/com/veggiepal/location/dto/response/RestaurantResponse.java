@@ -26,6 +26,9 @@ public class RestaurantResponse {
 
     Boolean veganOnly;
 
+    // Null when the restaurant has no image; the FE falls back to its default
+    String imageUrl;
+
     // From the search point, rounded to 2 decimals
     Double distanceKm;
 }

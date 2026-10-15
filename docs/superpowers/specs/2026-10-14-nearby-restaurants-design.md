@@ -74,6 +74,7 @@ Entity `Restaurant`, bảng `vegetarian_restaurants` (giữ tên trong file dữ
 | `phone_number` | `phoneNumber` | `VARCHAR(255)` | |
 | `rating` | `rating` | `Double` | |
 | `is_vegan_only` | `veganOnly` | `Boolean` (`bit(1)`) | NOT NULL |
+| `image_url` | `imageUrl` | `VARCHAR(500)` | null được (bổ sung 2026-10-15) |
 
 `src/main/resources/data.sql` là file 100 quán của Long, sửa ba chỗ:
 
@@ -82,6 +83,19 @@ Entity `Restaurant`, bảng `vegetarian_restaurants` (giữ tên trong file dữ
 3. `\'` → `''` (`L''Herbanyste`, `Buffet Chay D''GEMMA`): cú pháp chuẩn, không phụ thuộc `sql_mode`.
 
 Không thêm index: 100 dòng thì quét toàn bảng là đủ.
+
+**Ảnh minh họa (bổ sung 2026-10-15).** File CSV ảnh kèm theo chỉ có link trang Google Images, trang Google Maps và Static Maps với API key giữ chỗ: không có ảnh nào tải được, và lưu ảnh Google lên Cloudinary vi phạm bản quyền/điều khoản Google Maps Platform. Thay vào đó mỗi dòng seed có `image_url` trỏ tới một trong 10 ảnh miễn phí bản quyền (Unsplash) đặt sẵn trong Cloudinary của nhóm, thư mục `veggiepal/restaurants/`, chọn theo loại quán (từ tên):
+
+| Tên quán chứa | Ảnh | Số quán |
+|---|---|---|
+| "Lẩu" | `lau` | 2 |
+| "Buffet" | `buffet` | 1 |
+| "Café"/"Cafe" | `cafe` | 4 |
+| "Hủ Tiếu"/"Bánh Mì" | `street-food` | 2 |
+| "Cơm", hoặc tên bắt đầu bằng "Quán" | `com-chay-{id % 2 + 1}` | 25 |
+| còn lại | `restaurant-{id % 4 + 1}` | 66 |
+
+URL: `https://res.cloudinary.com/r3ubxlz3/image/upload/c_fill,w_600,h_400,f_auto,q_auto/veggiepal/restaurants/<ảnh>` (Cloudinary cắt 600×400 và tự chọn định dạng/chất lượng). Đây là ảnh minh họa, không phải ảnh thật của quán; khi có ảnh thật thì chỉ sửa URL của dòng đó trong `data.sql`.
 
 ### 3.3 Hợp đồng API
 
@@ -113,6 +127,7 @@ Response `ApiResponse<List<RestaurantResponse>>`, **xếp theo khoảng cách t�
       "phoneNumber": "0917876788",
       "rating": 4.7,
       "veganOnly": true,
+      "imageUrl": "https://res.cloudinary.com/r3ubxlz3/image/upload/c_fill,w_600,h_400,f_auto,q_auto/veggiepal/restaurants/restaurant-3",
       "distanceKm": 0.53
     }
   ]
@@ -120,6 +135,7 @@ Response `ApiResponse<List<RestaurantResponse>>`, **xếp theo khoảng cách t�
 ```
 
 - `distanceKm` làm tròn 2 chữ số thập phân.
+- `imageUrl` là ảnh minh họa (xem §3.2); `null` thì FE hiện ảnh mặc định. FE nên ghi "ảnh minh họa".
 - Không có quán nào trong bán kính: `result: []`, HTTP 200.
 - Tên tham số là `lat`/`lng`, không phải `userLat`/`userLng` như bản phác workflow. Cần báo Hưng (FE).
 
