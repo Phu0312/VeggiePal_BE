@@ -97,6 +97,13 @@ Không thêm index: 100 dòng thì quét toàn bảng là đủ.
 
 URL: `https://res.cloudinary.com/r3ubxlz3/image/upload/c_fill,w_600,h_400,f_auto,q_auto/veggiepal/restaurants/<ảnh>` (Cloudinary cắt 600×400 và tự chọn định dạng/chất lượng). Đây là ảnh minh họa, không phải ảnh thật của quán; khi có ảnh thật thì chỉ sửa URL của dòng đó trong `data.sql`.
 
+**Ảnh thật và danh sách quán mới (bổ sung 2026-10-15, từ `map_data.docx` của Long).**
+
+- id 81–90 đổi sang quán mới: 7 quán lẩu chay ở Dĩ An (Bình Dương) và 3 quán chay ở TP. Thủ Đức, thay cho các quán ở Vũng Tàu và Thủ Dầu Một. Các dòng khác giữ nguyên dữ liệu. Các quán mới cách chợ Bến Thành 10,4–17 km, nên giá trị pin của integration test không đổi; test bán kính 10 km giờ dùng id 90 (10,44 km) làm quán gần nhất nằm ngoài.
+- 88 dòng có `image_url` là ảnh thật của quán, **hotlink** đúng link trong file (web của quán, TripAdvisor, PasGo, báo, Shopee, thumbnail Google Images/Google Maps…). Không sao chép các ảnh này lên Cloudinary: đó là ảnh có bản quyền của bên thứ ba. Link có thể hỏng bất cứ lúc nào, nên FE phải hiện ảnh mặc định khi ảnh tải lỗi (`onError`).
+- 12 dòng không có ảnh dùng được giữ ảnh minh họa theo bảng trên: 91–100 (file dùng lại ảnh của quán khác), 57 (link Facebook trả về HTML) và 49 (ảnh stock chung).
+- Cột vẫn là `image_url` một URL, không phải mảng JSON `img` như trong file, vì mỗi quán chỉ có một ảnh.
+
 ### 3.3 Hợp đồng API
 
 ```
@@ -127,7 +134,7 @@ Response `ApiResponse<List<RestaurantResponse>>`, **xếp theo khoảng cách t�
       "phoneNumber": "0917876788",
       "rating": 4.7,
       "veganOnly": true,
-      "imageUrl": "https://res.cloudinary.com/r3ubxlz3/image/upload/c_fill,w_600,h_400,f_auto,q_auto/veggiepal/restaurants/restaurant-3",
+      "imageUrl": "https://www.shamballa.co/wp-content/uploads/2024/09/banner-m-1.jpg",
       "distanceKm": 0.53
     }
   ]
@@ -135,7 +142,7 @@ Response `ApiResponse<List<RestaurantResponse>>`, **xếp theo khoảng cách t�
 ```
 
 - `distanceKm` làm tròn 2 chữ số thập phân.
-- `imageUrl` là ảnh minh họa (xem §3.2); `null` thì FE hiện ảnh mặc định. FE nên ghi "ảnh minh họa".
+- `imageUrl` là ảnh thật của quán (hotlink) hoặc ảnh minh họa trên Cloudinary (xem §3.2). FE hiện ảnh mặc định khi `null` hoặc khi ảnh tải lỗi (`onError`).
 - Không có quán nào trong bán kính: `result: []`, HTTP 200.
 - Tên tham số là `lat`/`lng`, không phải `userLat`/`userLng` như bản phác workflow. Cần báo Hưng (FE).
 
