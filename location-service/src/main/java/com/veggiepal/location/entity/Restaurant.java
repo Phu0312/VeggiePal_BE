@@ -38,4 +38,9 @@ public class Restaurant {
     // this tells the strictly vegan ones apart.
     @Column(name = "is_vegan_only", nullable = false)
     Boolean veganOnly;
+
+    // Cloudinary URL. Seeded rows carry an illustrative photo per kind of restaurant, not
+    // the restaurant's own; null means the FE shows its default image.
+    @Column(name = "image_url", length = 500)
+    String imageUrl;
 }
