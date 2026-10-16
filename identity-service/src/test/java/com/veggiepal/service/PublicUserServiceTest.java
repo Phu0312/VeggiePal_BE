@@ -42,7 +42,7 @@ class PublicUserServiceTest {
     static User user(Long id, String fullName) {
         return User.builder()
                 .id(id).email("a@b.com").fullName(fullName)
-                .avatarUrl("http://minio/avatars/" + id + ".png")
+                .avatarUrl("https://res.cloudinary.com/veggiepal/image/upload/v1/avatars/" + id + ".png")
                 .status(UserStatus.ACTIVE)
                 .build();
     }

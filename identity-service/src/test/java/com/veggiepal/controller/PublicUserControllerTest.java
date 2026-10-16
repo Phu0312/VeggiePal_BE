@@ -36,7 +36,7 @@ class PublicUserControllerTest {
     void getPublicUsers_withoutToken_isPublic() throws Exception {
         when(publicUserService.getPublicUsers(List.of(1L, 2L)))
                 .thenReturn(List.of(PublicUserResponse.builder()
-                        .id(1L).fullName("Long Nguyễn").avatarUrl("http://minio/a.png").build()));
+                        .id(1L).fullName("Long Nguyễn").avatarUrl("https://res.cloudinary.com/veggiepal/image/upload/v1/a.png").build()));
 
         mockMvc.perform(get("/users/batch").param("ids", "1,2"))
                 .andExpect(status().isOk())

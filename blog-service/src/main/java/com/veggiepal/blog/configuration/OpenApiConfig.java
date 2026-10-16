@@ -31,7 +31,10 @@ public class OpenApiConfig {
                         List.of(
                                 new Server()
                                         .url("/api")
-                                        .description("API Gateway")
+                                        .description("API Gateway"),
+                                new Server()
+                                        .url("/")
+                                        .description("Direct Service")
                         )
                 )
                 .components(
