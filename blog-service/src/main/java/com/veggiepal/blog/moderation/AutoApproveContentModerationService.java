@@ -1,13 +1,10 @@
 package com.veggiepal.blog.moderation;
 
-import org.springframework.stereotype.Service;
-
-/** Placeholder until the AI moderation service exists. Approves everything. */
-@Service
+/** Test utility retained for callers that explicitly construct it. Not registered in production. */
 public class AutoApproveContentModerationService implements ContentModerationService {
 
     @Override
-    public ModerationResult moderate(String text) {
+    public ModerationResult moderate(String contentType, Long externalContentId, Long authorId, String text) {
         return ModerationResult.approved();
     }
 }
