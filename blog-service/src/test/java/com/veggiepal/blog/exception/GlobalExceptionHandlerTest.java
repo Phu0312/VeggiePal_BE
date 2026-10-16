@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -103,12 +104,31 @@ class GlobalExceptionHandlerTest {
     void handlingMaxUploadSize_returnsThumbnailTooLarge() {
         MaxUploadSizeExceededException exception = new MaxUploadSizeExceededException(6L * 1024 * 1024);
 
-        ResponseEntity<ApiResponse<?>> response =
-                globalExceptionHandler.handlingMaxUploadSize(exception);
+        ResponseEntity<ApiResponse<?>> response = globalExceptionHandler.handlingMaxUploadSize(
+                exception, new MockHttpServletRequest("POST", "/blogs/1/thumbnail"));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getCode()).isEqualTo(ErrorCode.THUMBNAIL_TOO_LARGE.getCode());
+    }
+
+    @Test
+    void handlingMaxUploadSize_onVideos_returnsVideoTooLarge() {
+        ResponseEntity<ApiResponse<?>> response = globalExceptionHandler.handlingMaxUploadSize(
+                new MaxUploadSizeExceededException(32L * 1024 * 1024),
+                new MockHttpServletRequest("POST", "/videos"));
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getCode()).isEqualTo(3066);
+    }
+
+    @Test
+    void handlingMaxUploadSize_onAThumbnail_keepsThumbnailTooLarge() {
+        ResponseEntity<ApiResponse<?>> response = globalExceptionHandler.handlingMaxUploadSize(
+                new MaxUploadSizeExceededException(32L * 1024 * 1024),
+                new MockHttpServletRequest("POST", "/blogs/1/thumbnail"));
+
+        assertThat(response.getBody().getCode()).isEqualTo(3022);
     }
 
     // Without this handler, a multipart request missing the "file" part falls to the

@@ -29,6 +29,7 @@ import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.mapper.CategoryMapper;
 import com.veggiepal.blog.repository.BlogRepository;
 import com.veggiepal.blog.repository.CategoryRepository;
+import com.veggiepal.blog.repository.VideoRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CategoryServiceTest {
@@ -38,6 +39,9 @@ class CategoryServiceTest {
 
     @Mock
     BlogRepository blogRepository;
+
+    @Mock
+    VideoRepository videoRepository;
 
     @Spy
     CategoryMapper categoryMapper = Mappers.getMapper(CategoryMapper.class);
@@ -211,6 +215,22 @@ class CategoryServiceTest {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(root(1L, "Công thức")));
         when(categoryRepository.existsByParentId(1L)).thenReturn(false);
         when(blogRepository.existsByCategoryId(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> categoryService.delete(1L))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.CATEGORY_IN_USE);
+
+        verify(categoryRepository, never()).delete(any());
+    }
+
+    // Task sheet US5: a category still referenced by a Blog **or a Video** cannot be deleted
+    @Test
+    void delete_stillUsedByVideos_throwsInUse() {
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(root(1L, "Công thức")));
+        when(categoryRepository.existsByParentId(1L)).thenReturn(false);
+        when(blogRepository.existsByCategoryId(1L)).thenReturn(false);
+        when(videoRepository.existsByCategoryId(1L)).thenReturn(true);
 
         assertThatThrownBy(() -> categoryService.delete(1L))
                 .isInstanceOf(AppException.class)

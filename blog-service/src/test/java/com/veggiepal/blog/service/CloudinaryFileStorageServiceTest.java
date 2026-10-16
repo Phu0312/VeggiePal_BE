@@ -36,6 +36,9 @@ class CloudinaryFileStorageServiceTest {
     private static final String IMAGE_URL =
             "https://res.cloudinary.com/demo-cloud/image/upload/v1712345678/thumbnails/12/a.png";
 
+    private static final String VIDEO_URL =
+            "https://res.cloudinary.com/demo-cloud/video/upload/v1712345678/videos/5/b.mp4";
+
     @Mock
     Cloudinary cloudinary;
 
@@ -126,5 +129,48 @@ class CloudinaryFileStorageServiceTest {
         assertThatThrownBy(() -> storageService.delete(IMAGE_URL))
                 .isInstanceOfSatisfying(AppException.class,
                         e -> assertThat(e.getErrorCode()).isEqualTo(ErrorCode.FILE_UPLOAD_FAILED));
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void upload_videoContentType_usesVideoResourceType() throws IOException {
+        byte[] content = {1, 2, 3};
+        when(uploader.upload(eq(content), anyMap())).thenReturn(Map.of("secure_url", VIDEO_URL));
+
+        String url = storageService.upload("videos/5/b.mp4", content, "video/mp4");
+
+        ArgumentCaptor<Map> options = ArgumentCaptor.forClass(Map.class);
+        verify(uploader).upload(eq(content), options.capture());
+        assertThat((Map<String, Object>) options.getValue())
+                .containsEntry("public_id", "videos/5/b")
+                .containsEntry("resource_type", "video");
+        assertThat(url).isEqualTo(VIDEO_URL);
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void delete_videoUrl_destroysWithVideoResourceType() throws IOException {
+        storageService.delete(VIDEO_URL);
+
+        ArgumentCaptor<Map> options = ArgumentCaptor.forClass(Map.class);
+        verify(uploader).destroy(eq("videos/5/b"), options.capture());
+        assertThat((Map<String, Object>) options.getValue()).containsEntry("resource_type", "video");
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    void delete_imageUrl_stillDestroysWithImageResourceType() throws IOException {
+        storageService.delete(IMAGE_URL);
+
+        ArgumentCaptor<Map> options = ArgumentCaptor.forClass(Map.class);
+        verify(uploader).destroy(eq("thumbnails/12/a"), options.capture());
+        assertThat((Map<String, Object>) options.getValue()).containsEntry("resource_type", "image");
+    }
+
+    @Test
+    void delete_youTubeEmbedUrl_doesNothing() {
+        storageService.delete("https://www.youtube.com/embed/dQw4w9WgXcQ?enablejsapi=1");
+
+        verifyNoInteractions(uploader);
     }
 }

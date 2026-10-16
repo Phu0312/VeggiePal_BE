@@ -54,6 +54,22 @@ class SecurityConfigTest {
     }
 
     @Test
+    void videoListAndDetail_arePublicForGet() {
+        assertThat(isPublic("GET", "/videos")).isTrue();
+        assertThat(isPublic("GET", "/videos/12")).isTrue();
+    }
+
+    // Same digit constraint as /blogs/{id}: /videos/me must keep its token
+    @Test
+    void videoWritesAndOwnVideos_areNotPublic() {
+        assertThat(isPublic("GET", "/videos/me")).isFalse();
+        assertThat(isPublic("POST", "/videos")).isFalse();
+        assertThat(isPublic("PUT", "/videos/12")).isFalse();
+        assertThat(isPublic("POST", "/videos/12/submit")).isFalse();
+        assertThat(isPublic("DELETE", "/videos/12")).isFalse();
+    }
+
+    @Test
     void swaggerIsPublicForAnyMethod() {
         assertThat(isPublic("GET", "/swagger-ui.html")).isTrue();
         assertThat(isPublic("GET", "/v3/api-docs")).isTrue();

@@ -3,6 +3,7 @@ package com.veggiepal.blog.exception;
 import java.util.Map;
 import java.util.Objects;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -89,10 +90,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = MaxUploadSizeExceededException.class)
     ResponseEntity<ApiResponse<?>> handlingMaxUploadSize(
-            MaxUploadSizeExceededException exception
+            MaxUploadSizeExceededException exception,
+            HttpServletRequest request
     ) {
 
-        return errorResponse(ErrorCode.THUMBNAIL_TOO_LARGE);
+        // Thumbnails and videos share the multipart limit; answer with the code for what was sent
+        return errorResponse(request.getRequestURI().startsWith("/videos")
+                ? ErrorCode.VIDEO_TOO_LARGE
+                : ErrorCode.THUMBNAIL_TOO_LARGE);
     }
 
     @ExceptionHandler(value = MissingServletRequestPartException.class)

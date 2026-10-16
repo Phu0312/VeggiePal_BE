@@ -30,7 +30,7 @@ public enum ErrorCode {
 
     CATEGORY_NAME_DUPLICATED(3004, "A category with this name already exists under the same parent", HttpStatus.BAD_REQUEST),
 
-    CATEGORY_IN_USE(3005, "Category is still used by blogs or child categories", HttpStatus.BAD_REQUEST),
+    CATEGORY_IN_USE(3005, "Category is still used by blogs, videos or child categories", HttpStatus.BAD_REQUEST),
 
     CATEGORY_DEPTH_EXCEEDED(3006, "Category tree is limited to two levels", HttpStatus.BAD_REQUEST),
 
@@ -81,6 +81,26 @@ public enum ErrorCode {
     CANNOT_VOTE_OWN_CONTENT(3041, "You cannot vote on your own content", HttpStatus.BAD_REQUEST),
 
     BLOG_IDS_REQUIRED(3042, "Blog id list is required", HttpStatus.BAD_REQUEST),
+
+    // Video
+    VIDEO_NOT_EXISTED(3060, "Video not existed", HttpStatus.NOT_FOUND),
+
+    VIDEO_TITLE_REQUIRED(3061, "Video title is required", HttpStatus.BAD_REQUEST),
+
+    INVALID_VIDEO_TITLE(3062, "Video title must be at most {max} characters", HttpStatus.BAD_REQUEST),
+
+    INVALID_VIDEO_DESCRIPTION(3063, "Video description must be at most {max} characters", HttpStatus.BAD_REQUEST),
+
+    VIDEO_SOURCE_REQUIRED(3064, "Provide either a video file or a YouTube link, not both", HttpStatus.BAD_REQUEST),
+
+    INVALID_VIDEO_TYPE(3065, "Video must be an MP4 file", HttpStatus.BAD_REQUEST),
+
+    // No number in the message: the limit is configurable (video.max-file-size)
+    VIDEO_TOO_LARGE(3066, "Video exceeds the upload size limit", HttpStatus.BAD_REQUEST),
+
+    INVALID_YOUTUBE_URL(3067, "YouTube link is not valid", HttpStatus.BAD_REQUEST),
+
+    INVALID_VIDEO_STATUS_TRANSITION(3068, "Video is not in a state that allows this action", HttpStatus.BAD_REQUEST),
 
     MODERATION_UNAVAILABLE(3050, "AI moderation is temporarily unavailable", HttpStatus.SERVICE_UNAVAILABLE),
 
