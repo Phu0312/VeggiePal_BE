@@ -16,6 +16,20 @@ public class RecipeIngredientResponse {
 
     String ingredientName;
 
+    String normalizedName;
+
+    BigDecimal caloriesPer100g;
+
+    BigDecimal proteinPer100g;
+
+    BigDecimal carbsPer100g;
+
+    BigDecimal fatPer100g;
+
+    Boolean vegan;
+
+    Boolean allergen;
+
     BigDecimal quantity;
 
     String unit;

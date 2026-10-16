@@ -33,6 +33,13 @@ public interface RecipeMapper {
             target = "ingredientName",
             source = "ingredient.name"
     )
+    @Mapping(target = "normalizedName", source = "ingredient.normalizedName")
+    @Mapping(target = "caloriesPer100g", source = "ingredient.caloriesPer100g")
+    @Mapping(target = "proteinPer100g", source = "ingredient.proteinPer100g")
+    @Mapping(target = "carbsPer100g", source = "ingredient.carbsPer100g")
+    @Mapping(target = "fatPer100g", source = "ingredient.fatPer100g")
+    @Mapping(target = "vegan", source = "ingredient.vegan")
+    @Mapping(target = "allergen", source = "ingredient.allergen")
     RecipeIngredientResponse
     toRecipeIngredientResponse(
             RecipeIngredient recipeIngredient
