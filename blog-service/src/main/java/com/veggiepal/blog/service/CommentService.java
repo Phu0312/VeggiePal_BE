@@ -63,6 +63,7 @@ public class CommentService {
                 .status(CommentStatus.PENDING)
                 .build();
 
+        commentRepository.saveAndFlush(comment);
         applyModeration(comment);
 
         commentRepository.save(comment);
@@ -183,13 +184,23 @@ public class CommentService {
 
     private void applyModeration(Comment comment) {
 
-        ModerationResult result = contentModerationService.moderate(comment.getContent());
+        ModerationResult result = contentModerationService.moderate(
+                "COMMENT", comment.getId(), comment.getAuthorId(), comment.getContent());
 
         comment.setStatus(switch (result.decision()) {
             case APPROVED -> CommentStatus.VISIBLE;
             case REJECTED -> CommentStatus.HIDDEN;
-            case PENDING -> CommentStatus.PENDING;
+            case REVIEW_REQUIRED -> CommentStatus.PENDING;
         });
+    }
+
+    @Transactional
+    public void applyAdminModeration(Long commentId, Long expectedAuthorId, boolean approved) {
+        Comment comment = findComment(commentId);
+        if (expectedAuthorId == null || !comment.getAuthorId().equals(expectedAuthorId)) {
+            throw new AppException(ErrorCode.MODERATION_TARGET_MISMATCH);
+        }
+        comment.setStatus(approved ? CommentStatus.VISIBLE : CommentStatus.HIDDEN);
     }
 
     private static void requireSupportedTarget(TargetType targetType) {

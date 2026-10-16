@@ -71,6 +71,10 @@ public class BlogService {
                 .voteScore(0)
                 .build();
 
+        // Persist first so the moderation case can point to a real resource id. The
+        // surrounding transaction rolls this insert back if moderation is unavailable.
+        blogRepository.saveAndFlush(blog);
+
         String reason = Boolean.TRUE.equals(request.getPublish())
                 ? applyModeration(blog)
                 : null;
@@ -307,6 +311,9 @@ public class BlogService {
     private String applyModeration(Blog blog) {
 
         ModerationResult result = contentModerationService.moderate(
+                "BLOG",
+                blog.getId(),
+                blog.getAuthorId(),
                 blog.getTitle() + "\n" + blog.getContent()
         );
 
@@ -325,10 +332,23 @@ public class BlogService {
 
             case REJECTED -> blog.setStatus(ContentStatus.REJECTED);
 
-            case PENDING -> blog.setStatus(ContentStatus.PENDING);
+            case REVIEW_REQUIRED -> blog.setStatus(ContentStatus.PENDING);
         }
 
         return result.reason();
+    }
+
+    @Transactional
+    public void applyAdminModeration(Long blogId, Long expectedAuthorId, boolean approved) {
+        Blog blog = blogRepository.findById(blogId)
+                .orElseThrow(() -> new AppException(ErrorCode.BLOG_NOT_EXISTED));
+        if (expectedAuthorId == null || !blog.getAuthorId().equals(expectedAuthorId)) {
+            throw new AppException(ErrorCode.MODERATION_TARGET_MISMATCH);
+        }
+        blog.setStatus(approved ? ContentStatus.PUBLISHED : ContentStatus.REJECTED);
+        if (approved && blog.getPublishedAt() == null) {
+            blog.setPublishedAt(LocalDateTime.now());
+        }
     }
 
     private Blog findOwnedBlog(Long userId, boolean admin, Long blogId) {

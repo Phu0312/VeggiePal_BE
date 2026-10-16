@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,10 +21,14 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import com.jayway.jsonpath.JsonPath;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -31,6 +36,8 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import com.veggiepal.blog.moderation.ContentModerationService;
+import com.veggiepal.blog.moderation.ModerationResult;
 
 /**
  * End-to-end tests against a real MySQL schema and the real filter chain.
@@ -51,7 +58,7 @@ import com.nimbusds.jwt.SignedJWT;
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:mysql://localhost:3307/veggiepal_blog_it?createDatabaseIfNotExist=true",
+        "spring.datasource.url=jdbc:mysql://localhost:${DB_PORT:3306}/veggiepal_blog_it?createDatabaseIfNotExist=true",
         "spring.jpa.show-sql=false"
 })
 class BlogServiceIntegrationTests {
@@ -65,6 +72,15 @@ class BlogServiceIntegrationTests {
 
     @Autowired
     MockMvc mockMvc;
+
+    @MockitoBean
+    private ContentModerationService contentModerationService;
+
+    @BeforeEach
+    void setUpModeration() {
+        when(contentModerationService.moderate(any(), any(), any(), any()))
+                .thenReturn(ModerationResult.approved());
+    }
 
     // ---------------------------------------------------------------- categories
 

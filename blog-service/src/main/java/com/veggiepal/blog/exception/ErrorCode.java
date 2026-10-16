@@ -80,7 +80,13 @@ public enum ErrorCode {
 
     CANNOT_VOTE_OWN_CONTENT(3041, "You cannot vote on your own content", HttpStatus.BAD_REQUEST),
 
-    BLOG_IDS_REQUIRED(3042, "Blog id list is required", HttpStatus.BAD_REQUEST);
+    BLOG_IDS_REQUIRED(3042, "Blog id list is required", HttpStatus.BAD_REQUEST),
+
+    MODERATION_UNAVAILABLE(3050, "AI moderation is temporarily unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+
+    INVALID_MODERATION_RESPONSE(3051, "AI moderation returned an invalid response", HttpStatus.BAD_GATEWAY),
+
+    MODERATION_TARGET_MISMATCH(3052, "Moderation target does not match its author", HttpStatus.CONFLICT);
 
     ErrorCode(
             int code,
