@@ -345,6 +345,10 @@ public class BlogService {
         if (expectedAuthorId == null || !blog.getAuthorId().equals(expectedAuthorId)) {
             throw new AppException(ErrorCode.MODERATION_TARGET_MISMATCH);
         }
+        // A ban is terminal: a moderation decision queued before the ban must not lift it
+        if (blog.getStatus() == ContentStatus.BANNED) {
+            throw new AppException(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
+        }
         blog.setStatus(approved ? ContentStatus.PUBLISHED : ContentStatus.REJECTED);
         if (approved && blog.getPublishedAt() == null) {
             blog.setPublishedAt(LocalDateTime.now());

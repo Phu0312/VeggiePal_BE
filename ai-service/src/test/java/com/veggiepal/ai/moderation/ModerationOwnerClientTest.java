@@ -56,7 +56,7 @@ class ModerationOwnerClientTest {
     @Test
     void applyThrowsDownstreamUnavailableWhenContentTypeIsUnsupported() {
         AppException ex = assertThrows(AppException.class, () ->
-                client.apply("VIDEO", 10L, 1L, ModerationDtos.Decision.APPROVED, "token"));
+                client.apply("RECIPE", 10L, 1L, ModerationDtos.Decision.APPROVED, "token"));
         assertEquals(ErrorCode.DOWNSTREAM_UNAVAILABLE, ex.getErrorCode());
     }
 
@@ -67,6 +67,15 @@ class ModerationOwnerClientTest {
         verify(uriSpec).uri("http://blog-service/internal/moderation/{type}/{id}", "BLOG", 42L);
         verify(bodySpec).header(HttpHeaders.AUTHORIZATION, "Bearer admin-token");
         verify(bodySpec).body(Map.of("decision", "APPROVED", "authorId", 7L));
+        verify(responseSpec).toBodilessEntity();
+    }
+
+    @Test
+    void applySendsVideoDecisionToBlogService() {
+        client.apply("VIDEO", 42L, 7L, ModerationDtos.Decision.REJECTED, "admin-token");
+
+        verify(uriSpec).uri("http://blog-service/internal/moderation/{type}/{id}", "VIDEO", 42L);
+        verify(bodySpec).body(Map.of("decision", "REJECTED", "authorId", 7L));
         verify(responseSpec).toBodilessEntity();
     }
 

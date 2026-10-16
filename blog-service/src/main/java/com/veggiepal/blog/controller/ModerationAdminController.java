@@ -6,6 +6,7 @@ import com.veggiepal.blog.exception.AppException;
 import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.service.BlogService;
 import com.veggiepal.blog.service.CommentService;
+import com.veggiepal.blog.service.VideoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,6 +22,7 @@ public class ModerationAdminController {
 
     private final BlogService blogService;
     private final CommentService commentService;
+    private final VideoService videoService;
 
     @PutMapping("/{contentType}/{id}")
     ApiResponse<Void> apply(
@@ -31,6 +33,7 @@ public class ModerationAdminController {
         boolean approved = request.decision() == ModerationDecisionRequest.Decision.APPROVED;
         switch (contentType.toUpperCase()) {
             case "BLOG" -> blogService.applyAdminModeration(id, request.authorId(), approved);
+            case "VIDEO" -> videoService.applyAdminModeration(id, request.authorId(), approved);
             case "COMMENT" -> commentService.applyAdminModeration(id, request.authorId(), approved);
             default -> throw new AppException(ErrorCode.UNSUPPORTED_TARGET_TYPE);
         }

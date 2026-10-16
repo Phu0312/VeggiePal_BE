@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-VeggiePal backend: Spring Boot microservices (Java 21, Spring Boot 4.1.1). There is **no parent/aggregator POM**. Each service (`api-gateway/`, `identity-service/`, `nutrition-service/`, `blog-service/`, `location-service/`) is a separate Maven project with its own wrapper, so run Maven commands from inside the service directory. Only `api-gateway` uses `application.yaml`; every other service, including `blog-service`, uses `application.properties`.
+VeggiePal backend: Spring Boot microservices (Java 21, Spring Boot 4.1.1). There is **no parent/aggregator POM**. Each service (`api-gateway/`, `identity-service/`, `nutrition-service/`, `blog-service/`, `location-service/`) is a separate Maven project with its own wrapper, so run Maven commands from inside the service directory. Every service, `api-gateway` included, uses `application.properties`.
 
 ## Workflow and skills
 
@@ -84,9 +84,9 @@ There is no linter or formatter configured.
 
 ### Request flow through the gateway
 
-`api-gateway` uses **Spring Cloud Gateway Server WebMVC** (servlet-based, not the reactive WebFlux gateway). Routes are defined in `api-gateway/src/main/resources/application.yaml`, and downstream URIs are hardcoded `localhost` ports (no service discovery).
+`api-gateway` uses **Spring Cloud Gateway Server WebMVC** (servlet-based, not the reactive WebFlux gateway). Routes are defined in `api-gateway/src/main/resources/application.properties` as indexed `spring.cloud.gateway.server.webmvc.routes[N]` entries (append a new route at the next free index), and downstream URLs default to `localhost` ports through `services.*.url` (no service discovery).
 
-- Routes (all `StripPrefix=1`): `/api/auth/**` and `/api/users/**` → identity-service (8081); `/api/nutrition/**` → nutrition-service (8082); `/api/blogs/**`, `/api/categories/**`, `/api/comments/**` → blog-service (8083); `/api/restaurants/**` → location-service (8085).
+- Routes (all `StripPrefix=1`): `/api/auth/**` and `/api/users/**` → identity-service (8081); `/api/nutrition/**` → nutrition-service (8082); `/api/blogs/**`, `/api/categories/**`, `/api/comments/**`, `/api/videos/**` → blog-service (8083); `/api/restaurants/**` → location-service (8085).
 - Do not set `spring.servlet.multipart.*` in api-gateway: the gateway disables multipart parsing on its own so file uploads stream through to the service.
 - Controllers in a service therefore map paths **without** the `/api` prefix, and identity-service's `SecurityConfig` matchers use the un-prefixed paths (`/auth/login`).
 - CORS is configured **only** in the gateway (`CorsConfig`, allowing `http://localhost:*` with credentials). The frontend must go through the gateway.
@@ -95,7 +95,7 @@ There is no linter or formatter configured.
 
 The gateway serves a combined Swagger UI at `http://localhost:8080/swagger-ui.html`. The pieces fit together like this:
 1. A gateway route `/identity-service/v3/api-docs/**` with `StripPrefix=1` forwards to the service's `/v3/api-docs`.
-2. An entry under `springdoc.swagger-ui.urls` in the gateway yaml points at that route.
+2. An entry under `springdoc.swagger-ui.urls` in the gateway properties points at that route.
 3. The service's `OpenApiConfig` sets the server URL to `/api`, so "Try it out" requests go back through the gateway.
 
 A new service needs all three: an API route, a docs route, and a springdoc `urls` entry. It also needs its own `OpenApiConfig`. Each service's `OpenApiConfig` except location-service's (it has no authenticated endpoint) also declares the `bearerAuth` scheme so the Swagger **Authorize** button sends the JWT.
@@ -110,7 +110,7 @@ A new service needs all three: an API route, a docs route, and a springdoc `urls
 - **MapStruct + Lombok:** both annotation processors are listed in `maven-compiler-plugin` (Lombok first). When mapping a request DTO onto an entity, explicitly `@Mapping(target = ..., ignore = true)` any fields the service sets itself (see `UserMapper`).
 - Emails are normalized with `trim().toLowerCase()` before lookup or storage.
 - **Error code ranges:** shared codes keep the same number in every service (1001, 1008, 1009, 1018 `INVALID_REQUEST`, 9999); identity-service uses 10xx, nutrition-service 20xx, blog-service 30xx, recipe-service 40xx, location-service 50xx.
-- **Avatar storage:** `FileStorageService` → `CloudinaryFileStorageService` (Cloudinary Java SDK, `storage.cloudinary.*`). The storage key minus its extension becomes the `public_id` (Cloudinary appends the format itself). `delete` only acts on `https://res.cloudinary.com/<cloud>/image/upload/` URLs and ignores everything else, old MinIO URLs included. Uploads are validated by content type **and** magic bytes (`ImageTypeDetector`). blog-service thumbnails use a copy of the same classes.
+- **Avatar storage:** `FileStorageService` → `CloudinaryFileStorageService` (Cloudinary Java SDK, `storage.cloudinary.*`). The storage key minus its extension becomes the `public_id` (Cloudinary appends the format itself). `delete` only acts on `https://res.cloudinary.com/<cloud>/image/upload/` URLs and ignores everything else, old MinIO URLs included. Uploads are validated by content type **and** magic bytes (`ImageTypeDetector`). blog-service uses a copy of the same classes for thumbnails and videos; its `delete` also acts on `/video/upload/` URLs (destroying with `resource_type=video`).
 - **Controller slice tests:** `@WebMvcTest(X.class)` + `@Import({SecurityConfig.class, JwtConfig.class, SecurityExceptionHandler.class})` + `@MockitoBean` for the service; authenticate with `SecurityMockMvcRequestPostProcessors.jwt().jwt(t -> t.claim("userId", 7L))`.
 
 ### nutrition-service
@@ -119,15 +119,16 @@ Same conventions as identity-service, under package `com.veggiepal.nutrition` (i
 
 ### blog-service
 
-Same conventions as identity-service, under package `com.veggiepal.blog` (shared classes are copies, not a shared module). Controllers map `/blogs/**`, `/categories/**`, `/comments/**`. It owns blogs, the category tree, comments and votes, and stores only `author_id` from the JWT — the frontend resolves display names through identity-service's `GET /users/batch`.
+Same conventions as identity-service, under package `com.veggiepal.blog` (shared classes are copies, not a shared module). Controllers map `/blogs/**`, `/videos/**`, `/categories/**`, `/comments/**`. It owns blogs, videos, the category tree, comments and votes, and stores only `author_id` from the JWT — the frontend resolves display names through identity-service's `GET /users/batch`.
 
 - **Comments and votes are polymorphic** (`target_type` + `target_id`) so videos slot in without a migration. `TargetType.VIDEO` and `CommentStatus.PENDING` already exist in the enums for the same reason — `ddl-auto=update` cannot add an ENUM constant later.
 - **`SecurityConfig.PUBLIC_ENDPOINTS` here is method-aware** and its path variables are constrained to digits (`/blogs/{id:[0-9]+}`). Without the digits, `/blogs/me` matches `/blogs/{id}`, becomes public, loses its bearer token and then 401s forever. `SecurityConfigTest` guards this.
-- **Moderation is a stub.** `ContentModerationService` has one implementation, `AutoApproveContentModerationService`. BR-02 is wired but not really enforced until an AI implementation replaces it.
+- **Moderation calls ai-service.** `AiContentModerationService` (the only `ContentModerationService` bean; `AutoApproveContentModerationService` is not registered) posts to ai-service `/ai/moderation/check` with the caller's JWT. ai-service unreachable → 503 `MODERATION_UNAVAILABLE`, so publishing a blog or video fails. An admin's decision on a `REVIEW_REQUIRED` case comes back through `PUT /internal/moderation/{BLOG|VIDEO|COMMENT}/{id}` (`ROLE_ADMIN`).
 - **`blogs.vote_score` is denormalized**, kept in sync inside the vote transaction with `UPDATE blogs SET vote_score = vote_score + :delta`. The delta is just `new value - old value`, treating "no vote" as 0.
 - **Voting is `POST /blogs/{id}/vote` and toggles**: the same value a second time takes the vote back (the task sheet's heart button sends `1` on every click), the opposite value switches it. It is POST, not PUT, because it is not idempotent. `DELETE /blogs/{id}/vote` still removes explicitly.
 - **Keyword search ranks title matches first** (task sheet US7): `BlogRepository.search` orders by `case when title like %kw% then 0 else 1 end` ahead of the `Pageable` sort, so `sort` only orders rows within each tier. It stays `LIKE`, not FULLTEXT, on purpose: InnoDB FULLTEXT skips 2-letter Vietnamese syllables ("bò", "cà") and matches whole words, which breaks the FE's search-as-you-type from 2 characters. The default `ai_ci` collation makes it accent-insensitive ("pho" finds "Phở").
-- Admin has no separate controller: ownership checks widen to `ROLE_ADMIN` on blog and comment `PUT`/`DELETE`. **An admin deleting someone else's blog bans it** (`ContentStatus.BANNED`) rather than removing the row: hidden from every public read, still listed in the owner's `GET /blogs/me`. `BANNED` is terminal — `updateBlog` refuses it, because editing re-runs moderation and would otherwise let the owner lift the ban. An owner deleting their own post is a real delete.
+- Admin has no separate controller: ownership checks widen to `ROLE_ADMIN` on blog and comment `PUT`/`DELETE`. **An admin deleting someone else's blog bans it** (`ContentStatus.BANNED`) rather than removing the row: hidden from every public read, still listed in the owner's `GET /blogs/me`. `BANNED` is terminal — `updateBlog` refuses it, because editing re-runs moderation and would otherwise let the owner lift the ban, and `applyAdminModeration` refuses it so a `REVIEW_REQUIRED` decision queued before the ban cannot lift it either. An owner deleting their own post is a real delete.
+- **Videos** (task sheet US4): `POST /videos` is one multipart request with exactly one of `file` (.mp4 — content type `video/mp4` plus the `ftyp` box — at most `video.max-file-size`, 30MB) or `youtubeUrl`. `video_url`/`thumbnail_url` are always built by `VideoService` (the Cloudinary `secure_url` and its `.jpg` poster, or `youtube.com/embed/{id}?enablejsapi=1` and `img.youtube.com/vi/{id}/hqdefault.jpg`), never stored from input. `spring.servlet.multipart.max-file-size` (31MB) must stay above `video.max-file-size` so the service answers `VIDEO_TOO_LARGE` itself. Status rules, owner delete vs admin ban, and the `BANNED` lock match blogs; an owner delete also removes the Cloudinary file. An UPLOAD video's poster (`thumbnail_url`) shares the video's `public_id`, so never pass it to `FileStorageService.delete` — that destroys the video. Votes and comments on videos are not enabled yet (`TargetType.VIDEO` is ready).
 - **Category names are unique across the whole tree**, not per parent, enforced by the service and by `uk_categories_name`. The column is `utf8mb4_0900_as_ci` on purpose: MySQL's default `ai_ci` ignores diacritics, so "Che", "Chè" and "Chế" would collide both in the lookup and in the index.
 - **`BlogServiceIntegrationTests`** drives the real filter chain and a real MySQL schema (`veggiepal_blog_it`, created on demand via `createDatabaseIfNotExist`, so it never leaves rows in `veggiepal_blog`). Each case is chosen to fail if one of the two defect classes returns: a keyword search forces `lower()` against the real content column, the list assertions read `categoryName` off a lazy proxy, and reading a blog twice checks the `@Modifying` view counter actually ran. Verified by mutation — restoring `@Lob` breaks the context, dropping `@Transactional` turns the list endpoints into 500s.
 

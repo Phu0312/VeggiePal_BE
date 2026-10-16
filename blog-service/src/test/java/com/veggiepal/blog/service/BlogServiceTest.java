@@ -286,6 +286,18 @@ class BlogServiceTest {
     }
 
     @Test
+    void applyAdminModeration_bannedBlog_staysBanned() {
+        Blog blog = blog(ContentStatus.BANNED);
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog));
+
+        assertThatThrownBy(() -> blogService.applyAdminModeration(10L, AUTHOR_ID, true))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
+        assertThat(blog.getStatus()).isEqualTo(ContentStatus.BANNED);
+    }
+
+    @Test
     void deleteBlog_byStranger_throwsUnauthorized() {
         when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.PUBLISHED)));
 

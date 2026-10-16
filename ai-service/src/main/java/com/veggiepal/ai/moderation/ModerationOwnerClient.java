@@ -3,6 +3,7 @@ package com.veggiepal.ai.moderation;
 import com.veggiepal.ai.common.AppException;
 import com.veggiepal.ai.common.ErrorCode;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -12,6 +13,9 @@ import org.springframework.web.client.RestClientException;
 
 @Component
 public class ModerationOwnerClient {
+
+    // Content types whose source of truth is blog-service
+    private static final Set<String> BLOG_SERVICE_TYPES = Set.of("BLOG", "VIDEO", "COMMENT");
 
     private final RestClient http;
     private final String blogUrl;
@@ -34,9 +38,8 @@ public class ModerationOwnerClient {
         if (externalContentId == null || authorId == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
-        if (!"BLOG".equals(contentType) && !"COMMENT".equals(contentType)) {
-            // There is no source-owned Video API in the repository yet. Never report a
-            // synchronized decision when there is nowhere safe to apply it.
+        if (!BLOG_SERVICE_TYPES.contains(contentType)) {
+            // Never report a synchronized decision when there is nowhere safe to apply it
             throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
         }
         try {

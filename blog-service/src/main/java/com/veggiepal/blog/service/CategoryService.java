@@ -16,6 +16,7 @@ import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.mapper.CategoryMapper;
 import com.veggiepal.blog.repository.BlogRepository;
 import com.veggiepal.blog.repository.CategoryRepository;
+import com.veggiepal.blog.repository.VideoRepository;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class CategoryService {
     CategoryRepository categoryRepository;
     CategoryMapper categoryMapper;
     BlogRepository blogRepository;
+    VideoRepository videoRepository;
 
     public List<CategoryResponse> getTree(CategoryType type, boolean activeOnly) {
 
@@ -143,14 +145,16 @@ public class CategoryService {
 
         Category category = findCategory(id);
 
-        if (categoryRepository.existsByParentId(id) || blogRepository.existsByCategoryId(id)) {
+        if (categoryRepository.existsByParentId(id)
+                || blogRepository.existsByCategoryId(id)
+                || videoRepository.existsByCategoryId(id)) {
             throw new AppException(ErrorCode.CATEGORY_IN_USE);
         }
 
         categoryRepository.delete(category);
     }
 
-    /** Used by BlogService: the category must exist and still be selectable. */
+    /** Used by BlogService and VideoService: the category must exist and still be selectable. */
     @Transactional(readOnly = true)
     public Category requireActiveCategory(Long id) {
 

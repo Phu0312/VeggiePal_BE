@@ -45,6 +45,9 @@ public class SecurityConfig {
             new PublicEndpoint(HttpMethod.GET, "/blogs/{id:[0-9]+}"),
             new PublicEndpoint(HttpMethod.GET, "/blogs/{id:[0-9]+}/related"),
 
+            new PublicEndpoint(HttpMethod.GET, "/videos"),
+            new PublicEndpoint(HttpMethod.GET, "/videos/{id:[0-9]+}"),
+
             new PublicEndpoint(HttpMethod.GET, "/categories"),
             new PublicEndpoint(HttpMethod.GET, "/categories/{id:[0-9]+}"),
 
