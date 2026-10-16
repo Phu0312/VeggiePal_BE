@@ -65,6 +65,9 @@ public class SecurityConfig {
                                 .requestMatchers(publicMatchers().toArray(RequestMatcher[]::new))
                                 .permitAll()
 
+                                .requestMatchers("/internal/moderation/**")
+                                .hasRole("ADMIN")
+
                                 .anyRequest()
                                 .authenticated()
                 )

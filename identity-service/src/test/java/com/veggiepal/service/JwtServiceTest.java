@@ -1,6 +1,7 @@
 package com.veggiepal.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -31,5 +32,12 @@ class JwtServiceTest {
         assertThat(((Number) jwt.getClaim("userId")).longValue()).isEqualTo(7L);
         assertThat(jwt.getClaimAsString("role")).isEqualTo("USER");
         assertThat(jwt.getExpiresAt()).isAfter(jwt.getIssuedAt());
+    }
+
+    @Test
+    void shortSecretIsRejected() {
+        assertThatThrownBy(() -> JwtConfig.signingKey("too-short"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("32");
     }
 }

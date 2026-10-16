@@ -78,7 +78,7 @@ class CommentServiceTest {
     @Test
     void createComment_approved_becomesVisible() {
         when(blogService.requirePublishedBlog(10L)).thenReturn(Blog.builder().id(10L).build());
-        when(contentModerationService.moderate(anyString())).thenReturn(ModerationResult.approved());
+        when(contentModerationService.moderate(anyString(), any(), any(), anyString())).thenReturn(ModerationResult.approved());
 
         java.util.concurrent.atomic.AtomicReference<Comment> saved = new java.util.concurrent.atomic.AtomicReference<>();
         when(commentRepository.save(any(Comment.class))).thenAnswer(call -> {
@@ -96,7 +96,7 @@ class CommentServiceTest {
     @Test
     void createComment_rejected_isHiddenInsteadOfVisible() {
         when(blogService.requirePublishedBlog(10L)).thenReturn(Blog.builder().id(10L).build());
-        when(contentModerationService.moderate(anyString()))
+        when(contentModerationService.moderate(anyString(), any(), any(), anyString()))
                 .thenReturn(new ModerationResult(ModerationDecision.REJECTED, "abuse"));
 
         java.util.concurrent.atomic.AtomicReference<Comment> saved = new java.util.concurrent.atomic.AtomicReference<>();
@@ -141,7 +141,7 @@ class CommentServiceTest {
     void createComment_replyToRootComment_isAllowed() {
         when(blogService.requirePublishedBlog(10L)).thenReturn(Blog.builder().id(10L).build());
         when(commentRepository.findById(5L)).thenReturn(Optional.of(comment(5L, null, CommentStatus.VISIBLE)));
-        when(contentModerationService.moderate(anyString())).thenReturn(ModerationResult.approved());
+        when(contentModerationService.moderate(anyString(), any(), any(), anyString())).thenReturn(ModerationResult.approved());
         when(commentRepository.save(any(Comment.class))).thenAnswer(call -> call.getArgument(0));
 
         CommentResponse response = commentService.createComment(AUTHOR_ID, request(5L));
@@ -196,7 +196,7 @@ class CommentServiceTest {
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.COMMENT_NOT_EXISTED);
 
-        verify(contentModerationService, never()).moderate(anyString());
+        verify(contentModerationService, never()).moderate(anyString(), any(), any(), anyString());
         verify(commentRepository, never()).save(any());
     }
 
@@ -204,7 +204,7 @@ class CommentServiceTest {
     void updateComment_byOwner_editsAndReappliesModeration() {
         Comment existing = comment(5L, null, CommentStatus.VISIBLE);
         when(commentRepository.findById(5L)).thenReturn(Optional.of(existing));
-        when(contentModerationService.moderate(anyString())).thenReturn(ModerationResult.approved());
+        when(contentModerationService.moderate(anyString(), any(), any(), anyString())).thenReturn(ModerationResult.approved());
         when(commentRepository.save(any(Comment.class))).thenAnswer(call -> call.getArgument(0));
 
         CommentRequest edit = CommentRequest.builder()
