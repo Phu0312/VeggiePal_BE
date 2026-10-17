@@ -62,4 +62,31 @@ class SecurityConfigTest {
                 .andExpect(jsonPath("$.code").value(1000))
                 .andExpect(jsonPath("$.result.accessToken").value("token"));
     }
+
+    @Test
+    void googleLogin_withStaleBearerHeader_isNotRejected() throws Exception {
+        when(userService.loginWithGoogle("google-id-token"))
+                .thenReturn(LoginResponse.builder().accessToken("token").build());
+
+        mockMvc.perform(post("/auth/google")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer expired-or-garbage")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"idToken": "google-id-token"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(1000))
+                .andExpect(jsonPath("$.result.accessToken").value("token"));
+    }
+
+    @Test
+    void googleLogin_blankIdToken_returns400InvalidRequest() throws Exception {
+        mockMvc.perform(post("/auth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"idToken": ""}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(1018));
+    }
 }
