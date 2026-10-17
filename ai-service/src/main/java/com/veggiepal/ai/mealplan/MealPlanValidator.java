@@ -227,8 +227,7 @@ public class MealPlanValidator {
 
             dayNode.set("meals", finalMealsArray);
             dayNode.set("nutritionTotals", dayScaledTotal.toJson(mapper));
-
-            validateDailyTargetWithTolerance(dayScaledTotal, target);
+            markTarget(dayNode, dayScaledTotal, target);
 
             finalDaysArray.add(dayNode);
         }
@@ -463,19 +462,28 @@ public class MealPlanValidator {
         if (min != null && max != null && min.compareTo(max) > 0) throw new AppException(ErrorCode.INVALID_REQUEST);
     }
 
-    public void validateDailyTarget(Macro value, MealPlanDtos.NutritionTarget target) {
-        validateDailyTargetWithTolerance(value, target);
-    }
-
-    private void validateDailyTargetWithTolerance(Macro value, MealPlanDtos.NutritionTarget target) {
+    // A day that misses the target is flagged, not rejected: one off metric on one day used to fail
+    // the whole 7-day plan. Stale flags are cleared first because replace() re-runs this on a stored plan.
+    private void markTarget(ObjectNode dayNode, Macro value, MealPlanDtos.NutritionTarget target) {
+        dayNode.remove(List.of("targetMet", "targetDeviations"));
         if (target == null) return;
         BigDecimal tol = BigDecimal.valueOf(toleranceRatio);
-        if (!insideWithTolerance(value.calories, target.minCalories(), target.maxCalories(), tol)
-                || !insideWithTolerance(value.protein, target.minProtein(), target.maxProtein(), tol)
-                || !insideWithTolerance(value.carbohydrate, target.minCarbohydrate(), target.maxCarbohydrate(), tol)
-                || !insideWithTolerance(value.fat, target.minFat(), target.maxFat(), tol)) {
-            throw new AppException(ErrorCode.NUTRITION_TARGET_UNATTAINABLE);
-        }
+        ObjectNode deviations = mapper.createObjectNode();
+        addDeviation(deviations, "calories", value.calories, target.minCalories(), target.maxCalories(), tol);
+        addDeviation(deviations, "protein", value.protein, target.minProtein(), target.maxProtein(), tol);
+        addDeviation(deviations, "carbohydrate", value.carbohydrate, target.minCarbohydrate(), target.maxCarbohydrate(), tol);
+        addDeviation(deviations, "fat", value.fat, target.minFat(), target.maxFat(), tol);
+        dayNode.put("targetMet", deviations.isEmpty());
+        if (!deviations.isEmpty()) dayNode.set("targetDeviations", deviations);
+    }
+
+    private void addDeviation(ObjectNode deviations, String metric, BigDecimal value,
+            BigDecimal min, BigDecimal max, BigDecimal tol) {
+        if (insideWithTolerance(value, min, max, tol)) return;
+        ObjectNode deviation = deviations.putObject(metric);
+        deviation.put("actual", value.setScale(2, RoundingMode.HALF_UP));
+        if (min != null) deviation.put("min", min);
+        if (max != null) deviation.put("max", max);
     }
 
     private boolean insideWithTolerance(BigDecimal value, BigDecimal min, BigDecimal max, BigDecimal tol) {

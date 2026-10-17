@@ -94,4 +94,17 @@ class VideoProcessingServiceTest {
         assertEquals("cooking.mp4", response.filename());
         assertEquals("transcribed text", response.transcript());
     }
+
+    @Test
+    void getReturnsExtractionThatSpringMvcWritesAsJson() {
+        VideoJob job = new VideoJob(1L, "cooking.mp4");
+        job.complete("transcribed text", "{\"title\":\"Vegan Soup\",\"ingredients\":[],\"steps\":[]}");
+        when(repository.findByIdAndUserId(10L, 1L)).thenReturn(Optional.of(job));
+
+        // Spring MVC writes responses with Jackson 3, not this service's Jackson 2 mapper.
+        var json = tools.jackson.databind.json.JsonMapper.builder().build();
+        var written = json.readTree(json.writeValueAsString(service.get(1L, 10L)));
+
+        assertEquals("Vegan Soup", written.path("extraction").path("title").asString());
+    }
 }

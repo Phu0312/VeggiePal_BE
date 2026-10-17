@@ -12,5 +12,6 @@ public interface UsageLogRepository extends JpaRepository<UsageLog, Long>, JpaSp
     @Query("select count(u), coalesce(sum(u.promptTokens),0), coalesce(sum(u.completionTokens),0), "
             + "coalesce(avg(u.latencyMs),0), coalesce(sum(case when u.status='FAILED' then 1 else 0 end),0) "
             + "from UsageLog u where u.createdAt >= :since")
-    Object[] aggregateSince(@Param("since") LocalDateTime since);
+    // List<Object[]>, not Object[]: Spring Data wraps a single multi-column row as Object[]{Object[]{...}}.
+    List<Object[]> aggregateSince(@Param("since") LocalDateTime since);
 }

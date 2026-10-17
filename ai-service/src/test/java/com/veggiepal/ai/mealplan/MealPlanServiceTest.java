@@ -6,6 +6,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -245,9 +249,11 @@ class MealPlanServiceTest {
         );
 
         MealPlanDtos.MealPlanResponse response = service.generate(1L, "test-jwt", request);
+        verify(groq).complete(any(), argThat((List<com.veggiepal.ai.groq.dto.GroqRequest.Message> messages) ->
+                messages.getLast().content().contains("note viết bằng tiếng Việt")), anyDouble(), anyInt());
 
         assertEquals("Kế hoạch 7 ngày", response.name());
-        com.fasterxml.jackson.databind.JsonNode planNode = response.plan();
+        com.fasterxml.jackson.databind.JsonNode planNode = mapper.valueToTree(response.plan());
         com.fasterxml.jackson.databind.node.ArrayNode days = (com.fasterxml.jackson.databind.node.ArrayNode) planNode.path("days");
         assertEquals(7, days.size());
 
@@ -323,8 +329,10 @@ class MealPlanServiceTest {
         );
 
         MealPlanDtos.MealPlanResponse response = service.replace(1L, 100L, "test-jwt", replaceRequest);
+        verify(groq).complete(any(), argThat((List<com.veggiepal.ai.groq.dto.GroqRequest.Message> messages) ->
+                messages.getLast().content().contains("note viết bằng tiếng Việt")), anyDouble(), anyInt());
 
-        com.fasterxml.jackson.databind.JsonNode updatedDay = response.plan().path("days").get(0);
+        com.fasterxml.jackson.databind.JsonNode updatedDay = mapper.valueToTree(response.plan()).path("days").get(0);
         assertEquals("MONDAY", updatedDay.path("day").asText());
         com.fasterxml.jackson.databind.JsonNode updatedBreakfast = updatedDay.path("meals").get(0);
         assertEquals("BREAKFAST", updatedBreakfast.path("mealType").asText());

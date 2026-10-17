@@ -70,6 +70,15 @@ class IngredientUnitConverterTest {
     }
 
     @Test
+    void convertsTheRecipeFormPieceUnit() {
+        // The FE recipe form offers GRAM, KG, ML, TBSP, TSP and PIECE.
+        Optional<BigDecimal> tomatoes = IngredientUnitConverter.toGrams(new BigDecimal("2"), "PIECE", "Cà chua", "ca chua");
+        assertEquals(Optional.of(new BigDecimal("240.00")), tomatoes);
+        assertEquals(Optional.of(new BigDecimal("150.00")),
+                IngredientUnitConverter.toGrams(BigDecimal.ONE, "pcs", "Đậu hũ", "dau hu"));
+    }
+
+    @Test
     void convertsPieceUnitsForGroundedIngredients() {
         // 2 tomatoes (120g each) = 240g
         Optional<BigDecimal> tomatoes = IngredientUnitConverter.toGrams(new BigDecimal("2"), "quả", "Cà chua", "ca chua");
