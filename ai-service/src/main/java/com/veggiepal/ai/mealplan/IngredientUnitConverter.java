@@ -119,7 +119,9 @@ public final class IngredientUnitConverter {
     private static boolean isPieceUnit(String unit) {
         return unit.equals("qua") || unit.equals("trai") || unit.equals("cu")
                 || unit.equals("bap") || unit.equals("tep") || unit.equals("cay")
-                || unit.equals("mieng") || unit.equals("bia") || unit.equals("la");
+                || unit.equals("mieng") || unit.equals("bia") || unit.equals("la")
+                // PIECE is what the FE recipe form sends.
+                || unit.equals("piece") || unit.equals("pieces") || unit.equals("pcs");
     }
 
     private static BigDecimal liquidDensity(String name) {

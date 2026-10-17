@@ -338,7 +338,7 @@ class MealPlanValidatorTest {
     }
 
     @Test
-    void throwsNutritionTargetUnattainableWhenTargetCannotBeMet() {
+    void flagsDaysThatMissTheTargetInsteadOfRejectingThePlan() {
         // Recipe has 76 kcal per serving. 3 meals = 228 kcal. Max scale 1.5x -> 342 kcal.
         // Target: 1000 kcal (impossible to reach even with 1.5x portion scaling and 15% tolerance)
         ObjectNode r1 = recipe(false);
@@ -351,9 +351,32 @@ class MealPlanValidatorTest {
                 null, null, null, null, null, null
         );
 
-        AppException ex = assertThrows(AppException.class,
-                () -> validator.validateAndEnrich(plan, recipes, mapper.createArrayNode(), target));
-        assertEquals(com.veggiepal.ai.common.ErrorCode.NUTRITION_TARGET_UNATTAINABLE, ex.getErrorCode());
+        validator.validateAndEnrich(plan, recipes, mapper.createArrayNode(), target);
+
+        assertEquals(7, plan.path("days").size());
+        var day = plan.path("days").get(0);
+        assertEquals(false, day.path("targetMet").asBoolean(true));
+        var calories = day.path("targetDeviations").path("calories");
+        assertEquals(new BigDecimal("342.00"), calories.path("actual").decimalValue());
+        assertEquals(0, new BigDecimal("1000").compareTo(calories.path("min").decimalValue()));
+        assertEquals(0, new BigDecimal("1200").compareTo(calories.path("max").decimalValue()));
+        assertEquals(false, day.path("targetDeviations").has("protein"), "protein has no target, so it cannot deviate");
+    }
+
+    @Test
+    void marksDaysThatMeetTheTarget() {
+        ArrayNode recipes = mapper.createArrayNode().add(recipe(false));
+        ObjectNode plan = sevenDayPlan(1L);
+        MealPlanDtos.NutritionTarget target = new MealPlanDtos.NutritionTarget(
+                new BigDecimal("300"), new BigDecimal("350"),
+                null, null, null, null, null, null
+        );
+
+        validator.validateAndEnrich(plan, recipes, mapper.createArrayNode(), target);
+
+        var day = plan.path("days").get(0);
+        assertEquals(true, day.path("targetMet").asBoolean(false));
+        assertEquals(false, day.has("targetDeviations"));
     }
 
     private ObjectNode recipeWithIngredients(long id, String title, List<String> ingNames) {

@@ -2,7 +2,6 @@ package com.veggiepal.ai.mealplan;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.Valid;
@@ -21,5 +20,7 @@ public final class MealPlanDtos {
             @DecimalMin("0") BigDecimal minCarbohydrate, @DecimalMin("0") BigDecimal maxCarbohydrate,
             @DecimalMin("0") BigDecimal minFat, @DecimalMin("0") BigDecimal maxFat) {}
     public record ReplaceMealRequest(@NotBlank String day,@NotBlank String mealType,Long currentRecipeId) {}
-    public record MealPlanResponse(Long id,String name,String goal,JsonNode plan,LocalDateTime createdAt,LocalDateTime updatedAt) {}
+    // plan is a Map, not a JsonNode: Spring MVC writes with Jackson 3, which serializes
+    // this service's Jackson 2 JsonNode as a bean ({"array":false,"nodeType":...}) instead of its JSON.
+    public record MealPlanResponse(Long id,String name,String goal,Object plan,LocalDateTime createdAt,LocalDateTime updatedAt) {}
 }

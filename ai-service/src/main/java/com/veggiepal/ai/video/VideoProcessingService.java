@@ -50,7 +50,7 @@ public class VideoProcessingService {
         }catch(AppException e){job.fail(e.getMessage());repository.save(job);throw e;}catch(Exception e){job.fail(e.getMessage());repository.save(job);throw new AppException(ErrorCode.VIDEO_PROCESSING_FAILED,e);}finally{delete(video);delete(audio);}
     }
     public VideoJobResponse get(Long userId,Long id){return view(repository.findByIdAndUserId(id,userId).orElseThrow(()->new AppException(ErrorCode.RESOURCE_NOT_FOUND)));}
-    private VideoJobResponse view(VideoJob j){try{return new VideoJobResponse(j.getId(),j.getStatus(),j.getOriginalFilename(),j.getTranscript(),j.getExtractionJson()==null?null:mapper.readTree(j.getExtractionJson()),j.getErrorMessage(),j.getCreatedAt(),j.getUpdatedAt());}catch(Exception e){throw new AppException(ErrorCode.INVALID_AI_RESPONSE,e);}}
+    private VideoJobResponse view(VideoJob j){try{return new VideoJobResponse(j.getId(),j.getStatus(),j.getOriginalFilename(),j.getTranscript(),j.getExtractionJson()==null?null:mapper.readValue(j.getExtractionJson(),Object.class),j.getErrorMessage(),j.getCreatedAt(),j.getUpdatedAt());}catch(Exception e){throw new AppException(ErrorCode.INVALID_AI_RESPONSE,e);}}
     private String safeName(String name){if(name==null)return"video";return Path.of(name).getFileName().toString().substring(0,Math.min(255,Path.of(name).getFileName().toString().length()));}
     private String cleanJson(String raw){return raw.replaceFirst("(?s)^```(?:json)?\\s*","").replaceFirst("\\s*```$","").trim();}
     private void validateDuration(Path video)throws Exception{

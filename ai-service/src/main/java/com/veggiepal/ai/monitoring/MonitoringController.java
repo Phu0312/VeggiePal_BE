@@ -19,7 +19,7 @@ public class MonitoringController {
     private final QuotaProperties quotas;
     private final TokenProperties tokens;
     @GetMapping("/summary") ApiResponse<Map<String,Object>> summary(@RequestParam(defaultValue="7") int days){
-        int safe=Math.max(1,Math.min(days,90));Object[] aggregate=repository.aggregateSince(LocalDateTime.now().minusDays(safe));
+        int safe=Math.max(1,Math.min(days,90));Object[] aggregate=repository.aggregateSince(LocalDateTime.now().minusDays(safe)).getFirst();
         return ApiResponse.success(Map.of("periodDays",safe,"requests",aggregate[0],"promptTokens",aggregate[1],
                 "completionTokens",aggregate[2],"averageLatencyMs",aggregate[3],"failedRequests",aggregate[4]));
     }

@@ -1,6 +1,5 @@
 package com.veggiepal.blog.moderation;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.veggiepal.blog.exception.AppException;
 import com.veggiepal.blog.exception.ErrorCode;
 import java.time.Duration;
@@ -14,6 +13,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+// Jackson 3: Spring Boot 4's RestClient cannot deserialize into Jackson 2's com.fasterxml JsonNode.
+import tools.jackson.databind.JsonNode;
 
 @Service
 public class AiContentModerationService implements ContentModerationService {
@@ -53,17 +54,17 @@ public class AiContentModerationService implements ContentModerationService {
                     .body(JsonNode.class);
 
             JsonNode result = response == null ? null : response.path("result");
-            if (result == null || result.isMissingNode() || result.path("decision").asText().isBlank()) {
+            if (result == null || result.isMissingNode() || result.path("decision").asString().isBlank()) {
                 throw new AppException(ErrorCode.INVALID_MODERATION_RESPONSE);
             }
 
             ModerationDecision decision;
             try {
-                decision = ModerationDecision.valueOf(result.path("decision").asText());
+                decision = ModerationDecision.valueOf(result.path("decision").asString());
             } catch (IllegalArgumentException exception) {
                 throw new AppException(ErrorCode.INVALID_MODERATION_RESPONSE);
             }
-            return new ModerationResult(decision, result.path("reason").asText(null));
+            return new ModerationResult(decision, result.path("reason").asString(null));
         } catch (AppException exception) {
             throw exception;
         } catch (RestClientException exception) {

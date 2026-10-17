@@ -65,6 +65,7 @@ public class MealPlanService {
                 Tạo thực đơn chay đúng 7 ngày từ danh sách recipe thật. Không tự tạo recipe hoặc ID.
                 Mỗi ngày phải có duy nhất BREAKFAST, LUNCH và DINNER. Ưu tiên sở thích và mục tiêu được cung cấp.
                 Trả duy nhất JSON {"days":[{"day":"MONDAY","meals":[{"mealType":"BREAKFAST","recipeId":1,"note":"..."}]}]}.
+                Mỗi note viết bằng tiếng Việt, một câu ngắn.
                 Mục tiêu: %s; sở thích: %s; nguyên liệu sẵn có: %s; sức khỏe: %s; dị ứng đã lọc: %s;
                 mục tiêu dinh dưỡng/ngày: %s; recipes an toàn: %s
                 """.formatted(request.healthGoal(), request.preferences(), request.availableIngredients(), health,
@@ -124,7 +125,7 @@ public class MealPlanService {
         ArrayNode candidates = validator.safeCandidates(allRecipes, allergies, available);
         String prompt = "Chọn một recipe thay thế từ danh sách thật, khác ID " + request.currentRecipeId()
                 + ", phù hợp mục tiêu " + entity.getGoal()
-                + ". Trả duy nhất JSON {\"recipeId\":1,\"note\":\"...\"}. Recipes: "
+                + ". Trả duy nhất JSON {\"recipeId\":1,\"note\":\"...\"}, note viết bằng tiếng Việt. Recipes: "
                 + json(validator.promptCandidates(candidates));
 
         long replacementId = -1;
@@ -256,7 +257,8 @@ public class MealPlanService {
     }
 
     private MealPlanResponse view(MealPlan plan) {
-        return new MealPlanResponse(plan.getId(), plan.getName(), plan.getGoal(), read(plan.getPlanJson()),
+        return new MealPlanResponse(plan.getId(), plan.getName(), plan.getGoal(),
+                mapper.convertValue(read(plan.getPlanJson()), Object.class),
                 plan.getCreatedAt(), plan.getUpdatedAt());
     }
 
