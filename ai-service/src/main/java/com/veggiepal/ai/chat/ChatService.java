@@ -35,8 +35,8 @@ public class ChatService {
     private final UsageService usage;
     private final GuestSessionService guestSessions;
 
-    public ChatReply guest(String guestSession, String remoteAddress, String text) {
-        guestSessions.requireValid(guestSession, remoteAddress);
+    public ChatReply guest(String guestSession, String text) {
+        guestSessions.requireValid(guestSession);
         String principal = "guest:" + guestSession;
         int remaining = quota.reserveChat(principal, true);
         var prompts = List.of(new GroqRequest.Message("system", SYSTEM_PROMPT), new GroqRequest.Message("user", text.trim()));

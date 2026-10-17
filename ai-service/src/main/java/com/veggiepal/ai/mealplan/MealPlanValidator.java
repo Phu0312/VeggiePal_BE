@@ -172,23 +172,54 @@ public class MealPlanValidator {
         return true;
     }
 
-    private boolean isAllergySafe(JsonNode recipe, JsonNode allergies) {
+    public boolean isAllergySafe(JsonNode recipe, JsonNode allergies) {
         if (allergies == null || !allergies.isArray() || allergies.isEmpty()) return true;
-        Set<String> allergyTerms = new HashSet<>();
+
+        Set<String> userAllergyCodes = new HashSet<>();
+        Set<String> userAllergyTerms = new HashSet<>();
         allergies.forEach(item -> {
-            addTerm(allergyTerms, item.path("code").asText());
-            addTerm(allergyTerms, item.path("name").asText());
+            String code = item.path("code").asText().trim().toUpperCase(Locale.ROOT);
+            if (!code.isBlank()) userAllergyCodes.add(code);
+            addTerm(userAllergyTerms, code);
+            addTerm(userAllergyTerms, item.path("name").asText());
         });
-        for (JsonNode ingredient : recipe.path("ingredients")) {
-            String name = normalize(ingredient.path("ingredientName").asText());
-            String normalizedName = normalize(ingredient.path("normalizedName").asText());
-            for (String term : allergyTerms) {
-                if ((!name.isBlank() && (name.contains(term) || term.contains(name)))
-                        || (!normalizedName.isBlank() && (normalizedName.contains(term) || term.contains(normalizedName)))) return false;
+
+        JsonNode ingredients = recipe.path("ingredients");
+        if (!ingredients.isArray() || ingredients.isEmpty()) return false;
+
+        for (JsonNode ingredient : ingredients) {
+            JsonNode allergenNode = ingredient.path("allergen");
+            if (allergenNode.isMissingNode() || allergenNode.isNull()) {
+                log.warn("Excluding recipe id={}, title='{}': ingredient '{}' has missing allergen info",
+                        recipe.path("id").asLong(-1), recipe.path("title").asText(),
+                        ingredient.path("ingredientName").asText());
+                return false;
             }
-            // The recipe schema only has a generic allergen flag, not allergen codes.
-            // Fail closed whenever a user has allergies and the mapping is ambiguous.
-            if (ingredient.path("allergen").asBoolean(false)) return false;
+
+            String name = ingredient.path("ingredientName").asText();
+            String norm = ingredient.path("normalizedName").asText();
+            String normalizedIngName = normalize(name);
+            String normalizedIngNorm = normalize(norm);
+
+            for (String term : userAllergyTerms) {
+                if ((!normalizedIngName.isBlank() && AllergenDetector.matchesWord(normalizedIngName, term))
+                        || (!normalizedIngNorm.isBlank() && AllergenDetector.matchesWord(normalizedIngNorm, term))) {
+                    return false;
+                }
+            }
+
+            Set<String> detectedAllergenCodes = AllergenDetector.detectAllergenCodes(name, norm);
+            for (String detectedCode : detectedAllergenCodes) {
+                if (userAllergyCodes.contains(detectedCode)) {
+                    return false;
+                }
+            }
+
+            if (allergenNode.asBoolean(false) && detectedAllergenCodes.isEmpty()) {
+                log.warn("Excluding recipe id={}, title='{}': ingredient '{}' has unverified allergen flag",
+                        recipe.path("id").asLong(-1), recipe.path("title").asText(), name);
+                return false;
+            }
         }
         return true;
     }

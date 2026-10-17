@@ -20,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class MealPlanService {
@@ -102,6 +103,7 @@ public class MealPlanService {
 
         JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=100", null)).path("content");
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
+        ArrayNode safeRecipes = validator.safeCandidates(allRecipes, allergies, List.of());
         ArrayNode candidates = validator.safeCandidates(allRecipes, allergies, available);
         String prompt = "Chọn một recipe thay thế từ danh sách thật, khác ID " + request.currentRecipeId()
                 + ", phù hợp mục tiêu " + entity.getGoal()
@@ -112,7 +114,10 @@ public class MealPlanService {
         if (request.currentRecipeId() != null && replacementId == request.currentRecipeId()) {
             throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
         }
-        ensureRecipeExists(candidates, replacementId);
+        JsonNode replacementRecipe = findRecipe(candidates, replacementId);
+        if (!validator.isAllergySafe(replacementRecipe, allergies)) {
+            throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
+        }
 
         boolean replaced = false;
         for (JsonNode day : root.path("days")) {
@@ -128,7 +133,7 @@ public class MealPlanService {
             if (replaced) break;
         }
         if (!replaced) throw new AppException(ErrorCode.INVALID_REQUEST);
-        validator.validateAndEnrich(root, candidates, allergies, target);
+        validator.validateAndEnrich(root, safeRecipes, allergies, target);
         root.withObject("constraints").set("allergies", allergies.deepCopy());
         entity.replaceJson(root.toString());
         return view(entity);
@@ -157,6 +162,11 @@ public class MealPlanService {
             var spec = http.get().uri(url);
             if (jwt != null) spec = spec.header(HttpHeaders.AUTHORIZATION, "Bearer " + jwt);
             return spec.retrieve().body(JsonNode.class);
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().value() == 404 && url.contains("/health-records/latest")) {
+                throw new AppException(ErrorCode.HEALTH_RECORD_REQUIRED, exception);
+            }
+            throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE, exception);
         } catch (Exception exception) {
             throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE, exception);
         }
@@ -184,8 +194,8 @@ public class MealPlanService {
         catch (Exception exception) { throw new AppException(ErrorCode.INVALID_REQUEST, exception); }
     }
 
-    private void ensureRecipeExists(JsonNode recipes, long id) {
-        for (JsonNode recipe : recipes) if (recipe.path("id").asLong() == id) return;
+    private JsonNode findRecipe(JsonNode recipes, long id) {
+        for (JsonNode recipe : recipes) if (recipe.path("id").asLong() == id) return recipe;
         throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
     }
 

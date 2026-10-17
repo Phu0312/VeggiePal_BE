@@ -20,9 +20,9 @@ class ChatServiceTest {
         GuestSessionService guestSessions=mock(GuestSessionService.class);
         ChatService service=new ChatService(mock(ChatConversationRepository.class),mock(ChatMessageRepository.class),quota,
                 new QuotaProperties(3,50,12,4000),groq,new ModelProperties("chat-model","m","r","p","v","w"),usage,guestSessions);
-        var result=service.guest("abcdefghijklmnop","127.0.0.1","  protein?  ");
+        var result=service.guest("abcdefghijklmnop","  protein?  ");
         assertEquals("answer",result.answer());assertEquals(2,result.remainingRequests());assertEquals(10,result.promptTokens());
-        verify(guestSessions).requireValid("abcdefghijklmnop","127.0.0.1");
+        verify(guestSessions).requireValid("abcdefghijklmnop");
         verify(usage).success(eq(null),eq("guest:abcdefghijklmnop"),eq("CHAT"),eq("chat-model"),any(),anyLong());
     }
 }
