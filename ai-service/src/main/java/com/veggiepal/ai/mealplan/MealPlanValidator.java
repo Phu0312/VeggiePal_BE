@@ -14,11 +14,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 
 @Component
 public class MealPlanValidator {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MealPlanValidator.class);
     private static final Set<String> REQUIRED_MEALS = Set.of("BREAKFAST", "LUNCH", "DINNER");
     private final ObjectMapper mapper;
 
@@ -30,15 +32,17 @@ public class MealPlanValidator {
         if (!recipes.isArray()) throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
         ArrayNode safe = mapper.createArrayNode();
         for (JsonNode recipe : recipes) {
-            if (isVegan(recipe) && isAllergySafe(recipe, allergies)) safe.add(recipe);
+            if (isVegan(recipe) && isAllergySafe(recipe, allergies) && canCalculateMacro(recipe)) {
+                safe.add(recipe);
+            }
         }
-        if (safe.isEmpty()) throw new AppException(ErrorCode.INVALID_REQUEST);
+        if (safe.isEmpty()) throw new AppException(ErrorCode.NO_VALID_RECIPES);
 
         Set<String> available = normalized(availableIngredients);
         if (available.isEmpty()) return safe;
         ArrayNode matching = mapper.createArrayNode();
         for (JsonNode recipe : safe) if (containsAvailableIngredient(recipe, available)) matching.add(recipe);
-        if (matching.isEmpty()) throw new AppException(ErrorCode.INVALID_REQUEST);
+        if (matching.isEmpty()) throw new AppException(ErrorCode.NO_VALID_RECIPES);
         return matching;
     }
 
@@ -96,35 +100,69 @@ public class MealPlanValidator {
         }
     }
 
+    public boolean canCalculateMacro(JsonNode recipe) {
+        return tryCalculateMacro(recipe).isPresent();
+    }
+
+    public Optional<Macro> tryCalculateMacro(JsonNode recipe) {
+        if (recipe == null) return Optional.empty();
+        BigDecimal servings = safeDecimal(recipe.path("servings"));
+        if (servings == null || servings.signum() <= 0) {
+            log.warn("Excluding recipe id={}, title='{}': invalid servings",
+                    recipe.path("id").asLong(-1), recipe.path("title").asText());
+            return Optional.empty();
+        }
+        JsonNode ingredients = recipe.path("ingredients");
+        if (!ingredients.isArray() || ingredients.isEmpty()) {
+            log.warn("Excluding recipe id={}, title='{}': empty ingredients",
+                    recipe.path("id").asLong(-1), recipe.path("title").asText());
+            return Optional.empty();
+        }
+        Macro result = new Macro();
+        for (JsonNode ingredient : ingredients) {
+            BigDecimal cal = safeDecimal(ingredient.path("caloriesPer100g"));
+            BigDecimal pro = safeDecimal(ingredient.path("proteinPer100g"));
+            BigDecimal carbs = safeDecimal(ingredient.path("carbsPer100g"));
+            BigDecimal fat = safeDecimal(ingredient.path("fatPer100g"));
+            if (cal == null || pro == null || carbs == null || fat == null
+                    || cal.signum() < 0 || pro.signum() < 0 || carbs.signum() < 0 || fat.signum() < 0) {
+                log.warn("Excluding recipe id={}, title='{}': invalid or missing nutrition data for ingredient '{}'",
+                        recipe.path("id").asLong(-1), recipe.path("title").asText(), ingredient.path("ingredientName").asText());
+                return Optional.empty();
+            }
+            BigDecimal quantity = safeDecimal(ingredient.path("quantity"));
+            String unit = ingredient.path("unit").asText();
+            String name = ingredient.path("ingredientName").asText();
+            String norm = ingredient.path("normalizedName").asText();
+            Optional<BigDecimal> gramsOpt = IngredientUnitConverter.toGrams(quantity, unit, name, norm);
+            if (gramsOpt.isEmpty()) {
+                log.warn("Excluding recipe id={}, title='{}': cannot convert unit '{}' for ingredient '{}'",
+                        recipe.path("id").asLong(-1), recipe.path("title").asText(), unit, name);
+                return Optional.empty();
+            }
+            BigDecimal grams = gramsOpt.get();
+            BigDecimal factor = grams.divide(new BigDecimal("100"), 8, RoundingMode.HALF_UP)
+                    .divide(servings, 8, RoundingMode.HALF_UP);
+            result.calories = result.calories.add(cal.multiply(factor));
+            result.protein = result.protein.add(pro.multiply(factor));
+            result.carbohydrate = result.carbohydrate.add(carbs.multiply(factor));
+            result.fat = result.fat.add(fat.multiply(factor));
+        }
+        return Optional.of(result);
+    }
+
     private ObjectNode nutritionFor(JsonNode recipe) {
         return macroFor(recipe).toJson(mapper);
     }
 
     private Macro macroFor(JsonNode recipe) {
-        BigDecimal servings = decimal(recipe.path("servings"));
-        if (servings.signum() <= 0) throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
-        Macro result = new Macro();
-        JsonNode ingredients = recipe.path("ingredients");
-        if (!ingredients.isArray() || ingredients.isEmpty()) throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
-        for (JsonNode ingredient : ingredients) {
-            BigDecimal grams = grams(ingredient.path("quantity"), ingredient.path("unit").asText());
-            BigDecimal factor = grams.divide(new BigDecimal("100"), 8, RoundingMode.HALF_UP)
-                    .divide(servings, 8, RoundingMode.HALF_UP);
-            result.calories = result.calories.add(decimal(ingredient.path("caloriesPer100g")).multiply(factor));
-            result.protein = result.protein.add(decimal(ingredient.path("proteinPer100g")).multiply(factor));
-            result.carbohydrate = result.carbohydrate.add(decimal(ingredient.path("carbsPer100g")).multiply(factor));
-            result.fat = result.fat.add(decimal(ingredient.path("fatPer100g")).multiply(factor));
-        }
-        return result;
+        return tryCalculateMacro(recipe)
+                .orElseThrow(() -> new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE));
     }
 
-    private BigDecimal grams(JsonNode quantityNode, String unit) {
-        BigDecimal quantity = decimal(quantityNode);
-        return switch (unit.trim().toUpperCase(Locale.ROOT)) {
-            case "G", "GRAM", "GRAMS" -> quantity;
-            case "KG", "KILOGRAM", "KILOGRAMS" -> quantity.multiply(new BigDecimal("1000"));
-            default -> throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
-        };
+    private BigDecimal safeDecimal(JsonNode node) {
+        if (node == null || !node.isNumber()) return null;
+        return node.decimalValue();
     }
 
     private boolean isVegan(JsonNode recipe) {
