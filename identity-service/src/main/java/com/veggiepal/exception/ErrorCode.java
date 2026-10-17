@@ -44,7 +44,9 @@ public enum ErrorCode {
 
     AVATAR_TOO_LARGE(1016, "Avatar must not exceed 2MB", HttpStatus.BAD_REQUEST),
 
-    INVALID_REQUEST(1018, "Invalid request data", HttpStatus.BAD_REQUEST);
+    INVALID_REQUEST(1018, "Invalid request data", HttpStatus.BAD_REQUEST),
+
+    GOOGLE_TOKEN_INVALID(1019, "Google sign-in failed", HttpStatus.UNAUTHORIZED);
 
     ErrorCode(
             int code,

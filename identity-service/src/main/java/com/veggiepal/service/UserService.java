@@ -1,9 +1,13 @@
 package com.veggiepal.service;
 
+import java.util.UUID;
+
 import com.veggiepal.dto.request.LoginRequest;
 import com.veggiepal.dto.response.LoginResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import com.veggiepal.dto.request.RegisterRequest;
 import com.veggiepal.dto.response.RegisterResponse;
@@ -30,6 +34,7 @@ public class UserService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     JwtService jwtService;
+    GoogleTokenVerifier googleTokenVerifier;
 
     public RegisterResponse createUser(RegisterRequest request) {
 
@@ -78,11 +83,66 @@ public class UserService {
             );
         }
 
-        String token =
-                jwtService.generateToken(user);
+        return toLoginResponse(user);
+    }
+
+    public LoginResponse loginWithGoogle(String idToken) {
+
+        Jwt google = googleTokenVerifier.verify(idToken);
+        String email = google.getClaimAsString("email");
+
+        if (!Boolean.TRUE.equals(google.getClaimAsBoolean("email_verified")) || !StringUtils.hasText(email)) {
+            throw new AppException(ErrorCode.GOOGLE_TOKEN_INVALID);
+        }
+
+        String normalizedEmail = email.trim().toLowerCase();
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .map(this::linkGoogleAccount)
+                .orElseGet(() -> createGoogleUser(normalizedEmail, google));
+
+        return toLoginResponse(user);
+    }
+
+    // Google proved who owns this email, so a password set by whoever registered it first must stop working.
+    private User linkGoogleAccount(User user) {
+
+        if (Boolean.TRUE.equals(user.getEmailVerified())) {
+            return user;
+        }
+
+        user.setPasswordHash(randomPasswordHash());
+        user.setEmailVerified(true);
+        if (user.getStatus() == UserStatus.PENDING) {
+            user.setStatus(UserStatus.ACTIVE);
+        }
+        userRepository.save(user);
+        return user;
+    }
+
+    private User createGoogleUser(String email, Jwt google) {
+
+        String name = google.getClaimAsString("name");
+
+        return userRepository.save(User.builder()
+                .email(email)
+                .fullName(StringUtils.hasText(name) ? name.trim() : email.substring(0, email.indexOf('@')))
+                .avatarUrl(google.getClaimAsString("picture"))
+                .passwordHash(randomPasswordHash())
+                .role(Role.USER)
+                .status(UserStatus.ACTIVE)
+                .emailVerified(true)
+                .build());
+    }
+
+    private String randomPasswordHash() {
+        return passwordEncoder.encode(UUID.randomUUID().toString());
+    }
+
+    private LoginResponse toLoginResponse(User user) {
 
         return LoginResponse.builder()
-                .accessToken(token)
+                .accessToken(jwtService.generateToken(user))
                 .userId(user.getId())
                 .email(user.getEmail())
                 .fullName(user.getFullName())

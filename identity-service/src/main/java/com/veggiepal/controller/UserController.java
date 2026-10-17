@@ -8,6 +8,7 @@ import com.veggiepal.dto.request.RegisterRequest;
 import com.veggiepal.dto.response.ApiResponse;
 import com.veggiepal.dto.response.RegisterResponse;
 import com.veggiepal.dto.request.LoginRequest;
+import com.veggiepal.dto.request.GoogleLoginRequest;
 import com.veggiepal.dto.response.LoginResponse;
 import com.veggiepal.service.UserService;
 
@@ -50,6 +51,18 @@ public class UserController {
         return ApiResponse
                 .<LoginResponse>builder()
                 .result(userService.login(request))
+                .build();
+    }
+
+    @Operation(
+            summary = "Login with a Google ID token"
+    )
+    @PostMapping("/google")
+    ApiResponse<LoginResponse> loginWithGoogle(@RequestBody @Valid GoogleLoginRequest request) {
+
+        return ApiResponse
+                .<LoginResponse>builder()
+                .result(userService.loginWithGoogle(request.getIdToken()))
                 .build();
     }
 }
