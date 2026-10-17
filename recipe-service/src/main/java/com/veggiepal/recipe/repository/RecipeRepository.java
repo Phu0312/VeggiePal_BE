@@ -14,8 +14,16 @@ import com.veggiepal.recipe.enums.RecipeStatus;
 public interface RecipeRepository
         extends JpaRepository<Recipe, Long> {
 
+    boolean existsByTitle(String title);
+
     Page<Recipe> findByUserId(
             Long userId,
+            Pageable pageable
+    );
+
+    Page<Recipe> findByUserIdAndStatusNot(
+            Long userId,
+            RecipeStatus status,
             Pageable pageable
     );
 

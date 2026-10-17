@@ -185,7 +185,7 @@ public class RecipeService {
         int safeSize =
                 Math.min(
                         Math.max(size, 1),
-                        100
+                        200
                 );
 
         Pageable pageable =
@@ -237,8 +237,9 @@ public class RecipeService {
 
         Page<Recipe> recipePage =
                 recipeRepository
-                        .findByUserId(
+                        .findByUserIdAndStatusNot(
                                 userId,
+                                RecipeStatus.ARCHIVED,
                                 pageable
                         );
 
@@ -429,7 +430,11 @@ public class RecipeService {
                 admin
         );
 
-        recipeRepository.delete(
+        recipe.setStatus(
+                RecipeStatus.ARCHIVED
+        );
+
+        recipeRepository.save(
                 recipe
         );
     }
