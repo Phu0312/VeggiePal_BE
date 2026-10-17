@@ -23,10 +23,14 @@ public class GuestSession {
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
-    GuestSession(String id, String ipHash, LocalDateTime createdAt, LocalDateTime expiresAt) {
+    public GuestSession(String id, String ipHash, LocalDateTime createdAt, LocalDateTime expiresAt) {
         this.id = id;
         this.ipHash = ipHash;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;
+    }
+
+    public GuestSession(String id, LocalDateTime createdAt, LocalDateTime expiresAt) {
+        this(id, "guest", createdAt, expiresAt);
     }
 }

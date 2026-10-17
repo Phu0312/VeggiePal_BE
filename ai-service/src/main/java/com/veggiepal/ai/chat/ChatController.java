@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/ai/chat")
@@ -17,13 +16,16 @@ import jakarta.servlet.http.HttpServletRequest;
 public class ChatController {
     private final ChatService service;
     private final GuestSessionService guestSessions;
-    @PostMapping("/guest-sessions") ApiResponse<GuestSessionResponse> createGuestSession(HttpServletRequest request) {
-        GuestSession session = guestSessions.create(request.getRemoteAddr());
+
+    @PostMapping("/guest-sessions")
+    ApiResponse<GuestSessionResponse> createGuestSession() {
+        GuestSession session = guestSessions.create();
         return ApiResponse.success(new GuestSessionResponse(session.getId(), session.getExpiresAt()));
     }
-    @PostMapping("/guest") ApiResponse<ChatReply> guest(HttpServletRequest servletRequest,
-            @RequestBody @Valid GuestChatRequest request) {
-        return ApiResponse.success(service.guest(request.guestSession(), servletRequest.getRemoteAddr(), request.message()));
+
+    @PostMapping("/guest")
+    ApiResponse<ChatReply> guest(@RequestBody @Valid GuestChatRequest request) {
+        return ApiResponse.success(service.guest(request.guestSession(), request.message()));
     }
     @PostMapping ApiResponse<ChatReply> chat(@AuthenticationPrincipal Jwt jwt, @RequestBody @Valid ChatRequest request) {
         return ApiResponse.success(service.member(CurrentUser.id(jwt), request));
