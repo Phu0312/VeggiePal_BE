@@ -24,6 +24,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class MealPlanService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MealPlanService.class);
     private final MealPlanRepository repository;
     private final RestClient http;
     private final String recipeUrl;
@@ -54,7 +55,7 @@ public class MealPlanService {
     @Transactional
     public MealPlanResponse generate(Long userId, String jwt, GenerateRequest request) {
         validator.validateTarget(request.dailyNutritionTarget());
-        JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=100", null)).path("content");
+        JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
         JsonNode health = result(get(nutritionUrl + "/nutrition/me/health-records/latest", jwt));
         ArrayNode candidates = validator.safeCandidates(allRecipes, allergies, request.availableIngredients());
@@ -69,7 +70,23 @@ public class MealPlanService {
                 """.formatted(request.healthGoal(), request.preferences(), request.availableIngredients(), health,
                 allergies, request.dailyNutritionTarget(), json(promptRecipes));
 
-        ObjectNode plan = object(call(userId, prompt));
+        ObjectNode plan;
+        try {
+            JsonNode aiNode = call(userId, prompt);
+            plan = (aiNode instanceof ObjectNode on) ? on : mapper.createObjectNode();
+        } catch (AppException ex) {
+            if (ex.getErrorCode() == ErrorCode.QUOTA_EXCEEDED
+                    || ex.getErrorCode() == ErrorCode.UNAUTHENTICATED
+                    || ex.getErrorCode() == ErrorCode.GROQ_NOT_CONFIGURED) {
+                throw ex;
+            }
+            log.warn("Groq plan generation failed with error {}, falling back to deterministic planner.", ex.getErrorCode(), ex);
+            plan = mapper.createObjectNode();
+        } catch (Exception ex) {
+            log.warn("Groq plan generation failed with unexpected error, falling back to deterministic planner.", ex);
+            plan = mapper.createObjectNode();
+        }
+
         validator.validateAndEnrich(plan, candidates, allergies, request.dailyNutritionTarget());
         ObjectNode constraints = plan.putObject("constraints");
         constraints.set("preferences", mapper.valueToTree(nullToEmpty(request.preferences())));
@@ -101,7 +118,7 @@ public class MealPlanService {
                 ? null : mapper.convertValue(constraints.path("dailyNutritionTarget"), NutritionTarget.class);
         validator.validateTarget(target);
 
-        JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=100", null)).path("content");
+        JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
         ArrayNode safeRecipes = validator.safeCandidates(allRecipes, allergies, List.of());
         ArrayNode candidates = validator.safeCandidates(allRecipes, allergies, available);
@@ -109,14 +126,26 @@ public class MealPlanService {
                 + ", phù hợp mục tiêu " + entity.getGoal()
                 + ". Trả duy nhất JSON {\"recipeId\":1,\"note\":\"...\"}. Recipes: "
                 + json(validator.promptCandidates(candidates));
-        JsonNode replacement = call(userId, prompt);
-        long replacementId = replacement.path("recipeId").asLong(-1);
-        if (request.currentRecipeId() != null && replacementId == request.currentRecipeId()) {
-            throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
+
+        long replacementId = -1;
+        String note = "Món ăn thay thế dinh dưỡng";
+        try {
+            JsonNode replacement = call(userId, prompt);
+            replacementId = replacement.path("recipeId").asLong(-1);
+            if (replacement.hasNonNull("note") && !replacement.path("note").asText().isBlank()) {
+                note = replacement.path("note").asText();
+            }
+        } catch (Exception ex) {
+            log.warn("AI recipe replacement failed, selecting best deterministic alternative.", ex);
         }
-        JsonNode replacementRecipe = findRecipe(candidates, replacementId);
-        if (!validator.isAllergySafe(replacementRecipe, allergies)) {
-            throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
+
+        Long currentId = request.currentRecipeId();
+        boolean validReplacement = replacementId > 0
+                && (currentId == null || replacementId != currentId)
+                && isCandidateSafe(candidates, allergies, replacementId);
+
+        if (!validReplacement) {
+            replacementId = selectAlternativeReplacement(candidates, allergies, currentId);
         }
 
         boolean replaced = false;
@@ -126,7 +155,7 @@ public class MealPlanService {
                 if (!meal.path("mealType").asText().equalsIgnoreCase(request.mealType())) continue;
                 ObjectNode object = (ObjectNode) meal;
                 object.put("recipeId", replacementId);
-                object.put("note", replacement.path("note").asText());
+                object.put("note", note);
                 replaced = true;
                 break;
             }
@@ -197,6 +226,28 @@ public class MealPlanService {
     private JsonNode findRecipe(JsonNode recipes, long id) {
         for (JsonNode recipe : recipes) if (recipe.path("id").asLong() == id) return recipe;
         throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
+    }
+
+    private boolean isCandidateSafe(JsonNode candidates, JsonNode allergies, long id) {
+        if (!candidates.isArray()) return false;
+        for (JsonNode c : candidates) {
+            if (c.path("id").asLong() == id) {
+                return validator.isAllergySafe(c, allergies);
+            }
+        }
+        return false;
+    }
+
+    private long selectAlternativeReplacement(JsonNode candidates, JsonNode allergies, Long currentId) {
+        if (candidates.isArray()) {
+            for (JsonNode c : candidates) {
+                long id = c.path("id").asLong();
+                if ((currentId == null || id != currentId) && validator.isAllergySafe(c, allergies)) {
+                    return id;
+                }
+            }
+        }
+        throw new AppException(ErrorCode.NO_VALID_RECIPES);
     }
 
     private MealPlan owned(Long userId, Long id) {

@@ -15,6 +15,7 @@ public enum ErrorCode {
     FILE_TOO_LARGE(6009, "Uploaded file is too large", HttpStatus.PAYLOAD_TOO_LARGE),
     HEALTH_RECORD_REQUIRED(6010, "Vui lòng cập nhật chiều cao và cân nặng trong hồ sơ sức khỏe trước khi lập thực đơn.", HttpStatus.BAD_REQUEST),
     NO_VALID_RECIPES(6011, "Không tìm thấy công thức món ăn phù hợp với yêu cầu dinh dưỡng và dị ứng.", HttpStatus.BAD_REQUEST),
+    NUTRITION_TARGET_UNATTAINABLE(6012, "Mục tiêu dinh dưỡng không thể đáp ứng với các món ăn hiện có.", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED(6999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
     public final int code;

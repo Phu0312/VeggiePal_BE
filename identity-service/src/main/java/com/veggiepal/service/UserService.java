@@ -49,7 +49,7 @@ public class UserService {
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
-        user.setStatus(UserStatus.PENDING);
+        user.setStatus(UserStatus.ACTIVE);
         user.setEmailVerified(false);
 
         userRepository.save(user);
