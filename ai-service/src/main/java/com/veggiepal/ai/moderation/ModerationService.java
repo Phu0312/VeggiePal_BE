@@ -44,7 +44,19 @@ public class ModerationService {
             if (decision==Decision.REJECTED && confidence.compareTo(new BigDecimal("0.85"))<0) decision=Decision.REVIEW_REQUIRED;
             List<String> categories=mapper.convertValue(json.path("categories"), mapper.getTypeFactory().constructCollectionType(List.class,String.class));
             String reason=json.path("reason").asText(null);
-            ModerationCase saved=repository.save(new ModerationCase(request.contentType().name(),request.externalContentId(),request.authorId(),decision.name(),String.join(",",categories),reason,confidence));
+            String type = request.contentType().name();
+            String joinedCategories = String.join(",", categories);
+            ModerationCase item = request.externalContentId() == null || request.authorId() == null
+                    ? null
+                    : repository.findFirstByContentTypeAndExternalContentIdAndAuthorIdAndReviewedAtIsNullOrderByCreatedAtDesc(
+                            type, request.externalContentId(), request.authorId()).orElse(null);
+            if (item == null) {
+                item = new ModerationCase(type, request.externalContentId(), request.authorId(), request.text(),
+                        decision.name(), joinedCategories, reason, confidence);
+            } else {
+                item.refresh(request.text(), decision.name(), joinedCategories, reason, confidence);
+            }
+            ModerationCase saved=repository.save(item);
             return view(saved);
         } catch (AppException exception) {
             usage.failure(callerId,"user:"+callerId,"MODERATION",models.moderation(),elapsed(start),exception); throw exception;
@@ -57,13 +69,17 @@ public class ModerationService {
     @Transactional
     public ModerationResponse review(Long adminId, Long id, ReviewRequest request, String bearerToken) {
         if (request.decision()==Decision.REVIEW_REQUIRED) throw new AppException(ErrorCode.INVALID_REQUEST);
-        ModerationCase item=repository.findById(id).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        ModerationCase item=repository.findForReview(id).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        if (!item.isPending()) throw new AppException(ErrorCode.MODERATION_CASE_STALE);
         ownerClient.apply(item.getContentType(), item.getExternalContentId(), item.getAuthorId(), request.decision(), bearerToken);
         item.review(adminId,request.decision().name(),request.reason()); return view(item);
     }
     private ModerationResponse view(ModerationCase item) {
         List<String> categories=item.getCategories()==null||item.getCategories().isBlank()?List.of():List.of(item.getCategories().split(","));
-        return new ModerationResponse(item.getId(),Decision.valueOf(item.getDecision()),categories,item.getReason(),item.getConfidence(),item.getCreatedAt());
+        return new ModerationResponse(item.getId(), ContentType.valueOf(item.getContentType()),
+                item.getExternalContentId(), item.getAuthorId(), item.getContentText(),
+                Decision.valueOf(item.getDecision()), categories, item.getReason(), item.getConfidence(),
+                item.getReviewedBy(), item.getReviewedAt(), item.getCreatedAt());
     }
     private String cleanJson(String raw) { return raw.replaceFirst("(?s)^```(?:json)?\\s*","").replaceFirst("\\s*```$","").trim(); }
     private long elapsed(long start) { return (System.nanoTime()-start)/1_000_000; }

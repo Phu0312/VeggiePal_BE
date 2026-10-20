@@ -62,7 +62,8 @@ import com.veggiepal.blog.moderation.ModerationResult;
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:mysql://localhost:${DB_PORT:3306}/veggiepal_blog_it?createDatabaseIfNotExist=true",
-        "spring.jpa.show-sql=false"
+        "spring.jpa.show-sql=false",
+        "jwt.secret=veggiepal-secret-key-must-be-at-least-32-characters"
 })
 class BlogServiceIntegrationTests {
 

@@ -12,9 +12,9 @@ public enum ErrorCode {
 
     INVALID_KEY(1001, "Invalid validation key", HttpStatus.BAD_REQUEST),
 
-    UNAUTHENTICATED(1002, "Unauthenticated", HttpStatus.UNAUTHORIZED),
+    UNAUTHENTICATED(1008, "Unauthenticated", HttpStatus.UNAUTHORIZED),
 
-    UNAUTHORIZED(1003, "You do not have permission", HttpStatus.FORBIDDEN),
+    UNAUTHORIZED(1009, "You do not have permission", HttpStatus.FORBIDDEN),
 
     // Ingredient
     INGREDIENT_NAME_REQUIRED(4000, "Ingredient name is required", HttpStatus.BAD_REQUEST),
@@ -45,7 +45,15 @@ public enum ErrorCode {
 
     RECIPE_ALREADY_PUBLISHED(4103, "Recipe already published", HttpStatus.BAD_REQUEST),
 
-    INGREDIENT_NOT_ACTIVE(4104, "Ingredient is not active", HttpStatus.BAD_REQUEST);
+    INGREDIENT_NOT_ACTIVE(4104, "Ingredient is not active", HttpStatus.BAD_REQUEST),
+
+    DUPLICATE_RECIPE_INGREDIENT(4105, "A recipe cannot contain the same ingredient more than once", HttpStatus.BAD_REQUEST),
+
+    DUPLICATE_RECIPE_STEP(4106, "Recipe step numbers must be unique", HttpStatus.BAD_REQUEST),
+
+    INVALID_RECIPE_UNIT(4107, "Ingredient unit is not supported", HttpStatus.BAD_REQUEST),
+
+    INVALID_RECIPE_STATUS_TRANSITION(4108, "Recipe is not in a state that allows this action", HttpStatus.BAD_REQUEST);
 
     ErrorCode(
             int code,

@@ -14,6 +14,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -59,7 +61,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(
-            HttpSecurity httpSecurity
+            HttpSecurity httpSecurity,
+            JwtDecoder jwtDecoder
     ) throws Exception {
 
         httpSecurity
@@ -77,7 +80,7 @@ public class SecurityConfig {
                 .oauth2ResourceServer(
                         oauth2 -> oauth2
                                 .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                                .bearerTokenResolver(publicEndpointAwareBearerTokenResolver())
+                                .bearerTokenResolver(publicEndpointAwareBearerTokenResolver(jwtDecoder))
                                 .authenticationEntryPoint(securityExceptionHandler)
                                 .accessDeniedHandler(securityExceptionHandler)
                 )
@@ -123,13 +126,25 @@ public class SecurityConfig {
     }
 
     // Public endpoints ignore the Authorization header, so a stale token cannot block them.
-    private BearerTokenResolver publicEndpointAwareBearerTokenResolver() {
+    private BearerTokenResolver publicEndpointAwareBearerTokenResolver(JwtDecoder jwtDecoder) {
 
         DefaultBearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
         List<RequestMatcher> publicMatchers = publicMatchers();
 
-        return request -> publicMatchers.stream().anyMatch(matcher -> matcher.matches(request))
-                ? null
-                : defaultResolver.resolve(request);
+        return request -> {
+            String token = defaultResolver.resolve(request);
+            if (token == null || publicMatchers.stream().noneMatch(matcher -> matcher.matches(request))) {
+                return token;
+            }
+
+            // Public reads remain usable with an expired/malformed token, but a valid token is
+            // retained so an owner can read their own non-public draft through the same URL.
+            try {
+                jwtDecoder.decode(token);
+                return token;
+            } catch (JwtException | IllegalArgumentException exception) {
+                return null;
+            }
+        };
     }
 }

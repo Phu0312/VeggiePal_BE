@@ -34,17 +34,17 @@ public class ChatService {
     private final ModelProperties models;
     private final UsageService usage;
     private final GuestSessionService guestSessions;
+    private final ChatPersistenceService persistence;
 
-    public ChatReply guest(String guestSession, String text) {
-        guestSessions.requireValid(guestSession);
-        String principal = "guest:" + guestSession;
+    public ChatReply guest(String guestSession, String text, String clientIp) {
+        GuestSession session = guestSessions.requireValid(guestSession, clientIp);
+        String principal = "guest-ip:" + session.getIpHash();
         int remaining = quota.reserveChat(principal, true);
         var prompts = List.of(new GroqRequest.Message("system", SYSTEM_PROMPT), new GroqRequest.Message("user", text.trim()));
         var result = call(null, principal, prompts);
         return new ChatReply(null, result.content(), remaining, result.promptTokens(), result.completionTokens());
     }
 
-    @Transactional
     public ChatReply member(Long userId, ChatRequest request) {
         String principal = "user:" + userId;
         int remaining = quota.reserveChat(principal, false);
@@ -59,10 +59,7 @@ public class ChatService {
         history.forEach(m -> prompts.add(new GroqRequest.Message(m.getRole(), m.getContent())));
         prompts.add(new GroqRequest.Message("user", request.message().trim()));
         var result = call(userId, principal, prompts);
-        messages.save(new ChatMessage(conversation, principal, "user", request.message().trim(), result.promptTokens(), 0));
-        messages.save(new ChatMessage(conversation, principal, "assistant", result.content(), 0, result.completionTokens()));
-        conversation.touch();
-        return new ChatReply(conversation.getId(), result.content(), remaining, result.promptTokens(), result.completionTokens());
+        return persistence.saveExchange(conversation, principal, request.message().trim(), result, remaining);
     }
 
     private GroqClient.GroqResult call(Long userId, String principal, List<GroqRequest.Message> prompts) {

@@ -437,6 +437,27 @@ class BlogServiceTest {
     }
 
     @Test
+    void getBlog_ownerCanReadDraftWithoutIncrementingViews() {
+        Blog draft = blog(ContentStatus.DRAFT);
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(draft));
+
+        BlogResponse response = blogService.getBlog(10L, AUTHOR_ID, false);
+
+        assertThat(response.getStatus()).isEqualTo(ContentStatus.DRAFT);
+        verify(blogRepository, never()).incrementViewCount(any());
+    }
+
+    @Test
+    void getBlog_guestCannotDiscoverDraft() {
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.DRAFT)));
+
+        assertThatThrownBy(() -> blogService.getBlog(10L, null, false))
+                .isInstanceOf(AppException.class)
+                .extracting(ex -> ((AppException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.BLOG_NOT_EXISTED);
+    }
+
+    @Test
     void getRelatedBlogs_excludesItselfAndCapsAtFive() {
         Blog published = blog(ContentStatus.PUBLISHED);
         when(blogRepository.findByIdAndStatus(10L, ContentStatus.PUBLISHED))

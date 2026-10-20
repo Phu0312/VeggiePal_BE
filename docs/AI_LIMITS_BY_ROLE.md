@@ -35,9 +35,9 @@ Hệ thống quản lý định mức sử dụng thông qua bảng cơ sở d�
 
 | Tiêu chí / Giới hạn | GUEST (Khách vãng lai) | MEMBER (Thành viên - `USER`) | ADMIN (Quản trị viên) | INTERNAL / SYSTEM |
 |---|:---:|:---:|:---:|:---:|
-| **Cơ chế Định danh (Principal Key)** | `guest:{sessionId}` (UUID v4) | `user:{userId}` (từ JWT claim) | `user:{adminId}` (từ JWT claim) | Token tác giả hoặc Admin |
+| **Cơ chế Định danh (Principal Key)** | `guest-ip:{ipHash}` | `user:{userId}` (từ JWT claim) | `user:{adminId}` (từ JWT claim) | Token tác giả hoặc Admin |
 | **Yêu cầu Xác thực (Auth Scheme)** | Không (Public + Session UUID) | Bearer JWT (`ROLE_USER`) | Bearer JWT (`ROLE_ADMIN`) | Bearer Token nội bộ |
-| **Số lượt Chatbot / Ngày (Daily Requests)** | **3 lượt** / session / ngày | **50 lượt** / ngày | **50 lượt** / ngày (khi dùng chat) | *Không áp dụng* |
+| **Số lượt Chatbot / Ngày (Daily Requests)** | **3 lượt** / IP hash / ngày | **50 lượt** / ngày | **50 lượt** / ngày (khi dùng chat) | *Không áp dụng* |
 | **Ngân sách Token / Ngày (Token Budget)** | *Theo lượt chat* | **50,000 tokens** / ngày | **50,000 tokens** / ngày | *Không áp dụng* |
 | **Số Session tối đa / IP / Ngày** | **3 sessions** / ngày / IP | *Không giới hạn* (Dựa vào User) | *Không giới hạn* | *Không giới hạn* |
 | **Thời hạn sống của Session (TTL)** | **24 giờ** | Theo hạn JWT (24 giờ) | Theo hạn JWT (24 giờ) | Theo phiên gọi API |
@@ -66,7 +66,7 @@ Actor **Guest** là đối tượng người dùng chưa tạo tài khoản ho�
 ### 3.2. Giới hạn Tương tác Chatbot Dùng thử
 - **Điểm bắt đầu:** `POST /ai/chat/guest` (kèm `guestSession` và `message`).
 - **Xác thực phiên:** Hệ thống đối chiếu `sessionId` trong bảng `ai_guest_sessions`, kiểm tra thời gian hết hạn (`expiresAt > now()`) và khớp băm IP hiện tại. Nếu sai lệch hoặc giả mạo IP sẽ trả về lỗi `6001 UNAUTHENTICATED`.
-- **Định mức câu hỏi:** Tối đa **3 câu hỏi / ngày** cho mỗi guest session ([`ai.chat.guest-daily-limit = 3`](file:///d:/project/VeggiePal/VeganApp_BE/ai-service/src/main/resources/application.properties#L38)).
+- **Định mức câu hỏi:** Tối đa **3 câu hỏi / ngày** cho mỗi IP hash, dù tạo thêm session ([`ai.chat.guest-daily-limit = 3`](file:///d:/project/VeggiePal/VeganApp_BE/ai-service/src/main/resources/application.properties#L38)).
 - **Độ dài câu hỏi:** Tối đa **4,000 ký tự** (`@Size(max=4000)`).
 - **Định dạng Session ID:** Bắt buộc tuân theo biểu thức chính quy Regex: `^[A-Za-z0-9_-]{16,100}$`.
 
@@ -110,7 +110,7 @@ Actor **Member** là người dùng đã xác thực danh tính qua Bearer JWT (
   - `max_tokens`: `1,500 tokens`.
 
 ### 4.3. Giới hạn Xử lý & Trích xuất Video Công thức (`/ai/videos`)
-- **Dung lượng file tải lên:** Tối đa **100MB** (`104,857,600 bytes`, cấu hình qua [`ai.video.max-file-bytes`](file:///d:/project/VeggiePal/VeganApp_BE/ai-service/src/main/resources/application.properties#L48) và Multipart của Gateway). Vượt quá sẽ trả về lỗi `6009 FILE_TOO_LARGE`.
+- **Dung lượng file tải lên:** Tối đa **100MB** (`104,857,600 bytes`). AI Service sở hữu cả `ai.video.max-file-bytes` và giới hạn multipart `100MB/105MB`; Gateway stream body và không parse multipart. Vượt quá sẽ trả về lỗi `6009 FILE_TOO_LARGE`.
 - **Thời lượng video tối đa:** Tối đa **1,800 giây (30 phút)** ([`ai.video.max-duration-seconds = 1800`](file:///d:/project/VeggiePal/VeganApp_BE/ai-service/src/main/resources/application.properties#L49)), được kiểm tra nghiêm ngặt qua công cụ dòng lệnh `ffprobe`.
 - **Định dạng file:** Bắt buộc có MIME-type bắt đầu bằng `video/`.
 - **Thời gian chờ tiến trình (Timeouts):**
@@ -181,7 +181,7 @@ Toàn bộ các ngưỡng giới hạn trên có thể tùy biến khi triển k
 
 | Tên Biến Môi trường (.env) | Tên Property trong Spring | Giá trị Mặc định | Ý nghĩa & Phạm vi áp dụng |
 |---|---|:---:|---|
-| `AI_GUEST_DAILY_LIMIT` | `ai.chat.guest-daily-limit` | `3` | Số lượt chat tối đa trong ngày của 1 Guest Session. |
+| `AI_GUEST_DAILY_LIMIT` | `ai.chat.guest-daily-limit` | `3` | Số lượt chat tối đa trong ngày của một IP hash, dùng chung giữa các session. |
 | `AI_MEMBER_DAILY_LIMIT` | `ai.chat.member-daily-limit` | `50` | Số lượt chat tối đa trong ngày của mỗi Member (`user:{id}`). |
 | `AI_DAILY_TOKEN_LIMIT` | `ai.token.daily-limit` | `50000` | Giới hạn tổng số tokens (prompt + completion) / ngày / user. |
 | `AI_GUEST_MAX_SESSIONS_PER_IP_PER_DAY` | `ai.guest.max-sessions-per-ip-per-day` | `3` | Số lượng phiên chat dùng thử tối đa cho 1 địa chỉ IP / ngày. |

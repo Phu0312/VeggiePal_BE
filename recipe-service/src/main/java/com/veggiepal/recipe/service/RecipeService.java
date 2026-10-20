@@ -1,7 +1,9 @@
 package com.veggiepal.recipe.service;
 
 import java.time.LocalDateTime;
+import java.text.Normalizer;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 import org.springframework.data.domain.*;
@@ -36,6 +38,18 @@ import lombok.experimental.FieldDefaults;
 )
 public class RecipeService {
 
+    private static final Set<String> SUPPORTED_UNITS = Set.of(
+            "g", "gram", "grams", "gr", "gam",
+            "kg", "kilogram", "kilograms", "kilo",
+            "mg", "milligram", "milligrams",
+            "ml", "milliliter", "milliliters", "mililit",
+            "l", "liter", "liters", "lit",
+            "muong canh", "thia canh", "tbsp", "tablespoon",
+            "muong ca phe", "thia ca phe", "tsp", "teaspoon",
+            "qua", "trai", "cu", "bap", "tep", "cay", "mieng", "bia", "la",
+            "piece", "pieces", "pcs"
+    );
+
     RecipeRepository recipeRepository;
     IngredientRepository ingredientRepository;
     RecipeMapper recipeMapper;
@@ -46,9 +60,7 @@ public class RecipeService {
             RecipeRequest request
     ) {
 
-        validateDuplicateIngredients(
-                request
-        );
+        validateRecipeItems(request);
 
         Recipe recipe = Recipe
                 .builder()
@@ -85,26 +97,7 @@ public class RecipeService {
                 : request.getIngredients()
         ) {
 
-            Ingredient ingredient =
-                    ingredientRepository
-                            .findById(
-                                    item.getIngredientId()
-                            )
-                            .orElseThrow(
-                                    () ->
-                                            new AppException(
-                                                    ErrorCode
-                                                            .INGREDIENT_NOT_EXISTED
-                                            )
-                            );
-
-            if (!Boolean.TRUE.equals(
-                    ingredient.getActive()
-            )) {
-                throw new AppException(
-                        ErrorCode.INGREDIENT_NOT_ACTIVE
-                );
-            }
+            Ingredient ingredient = requireActiveIngredient(item.getIngredientId());
 
             RecipeIngredient recipeIngredient =
                     RecipeIngredient
@@ -116,9 +109,7 @@ public class RecipeService {
                                     item.getQuantity()
                             )
                             .unit(
-                                    item.getUnit()
-                                            .trim()
-                                            .toUpperCase()
+                                    normalizeAndValidateUnit(item.getUnit())
                             )
                             .note(
                                     trimToNull(
@@ -164,8 +155,11 @@ public class RecipeService {
             Long id
     ) {
 
-        Recipe recipe =
-                findById(id);
+        Recipe recipe = findById(id);
+
+        if (recipe.getStatus() == RecipeStatus.DRAFT || recipe.getStatus() == RecipeStatus.HIDDEN) {
+            throw new AppException(ErrorCode.RECIPE_NOT_EXISTED);
+        }
 
         return recipeMapper
                 .toRecipeResponse(recipe);
@@ -265,9 +259,8 @@ public class RecipeService {
                 admin
         );
 
-        validateDuplicateIngredients(
-                request
-        );
+        ensureMutable(recipe);
+        validateRecipeItems(request);
 
         recipe.setTitle(
                 request.getTitle().trim()
@@ -298,24 +291,18 @@ public class RecipeService {
         );
 
         recipe.getIngredients().clear();
+        recipe.getSteps().clear();
+
+        // Hibernate may schedule inserts before orphan deletes. Flush the removals first so
+        // replacing an ingredient or step with the same unique key cannot produce HTTP 500.
+        recipeRepository.flush();
 
         for (
                 RecipeIngredientRequest item
                 : request.getIngredients()
         ) {
 
-            Ingredient ingredient =
-                    ingredientRepository
-                            .findById(
-                                    item.getIngredientId()
-                            )
-                            .orElseThrow(
-                                    () ->
-                                            new AppException(
-                                                    ErrorCode
-                                                            .INGREDIENT_NOT_EXISTED
-                                            )
-                            );
+            Ingredient ingredient = requireActiveIngredient(item.getIngredientId());
 
             RecipeIngredient recipeIngredient =
                     RecipeIngredient
@@ -327,9 +314,7 @@ public class RecipeService {
                                     item.getQuantity()
                             )
                             .unit(
-                                    item.getUnit()
-                                            .trim()
-                                            .toUpperCase()
+                                    normalizeAndValidateUnit(item.getUnit())
                             )
                             .note(
                                     trimToNull(
@@ -342,8 +327,6 @@ public class RecipeService {
                     recipeIngredient
             );
         }
-
-        recipe.getSteps().clear();
 
         for (
                 RecipeStepRequest item
@@ -388,6 +371,8 @@ public class RecipeService {
                 admin
         );
 
+        ensureMutable(recipe);
+
         if (
                 recipe.getStatus()
                         == RecipeStatus.PUBLISHED
@@ -429,6 +414,8 @@ public class RecipeService {
                 userId,
                 admin
         );
+
+        ensureMutable(recipe);
 
         recipe.setStatus(
                 RecipeStatus.ARCHIVED
@@ -475,9 +462,7 @@ public class RecipeService {
         }
     }
 
-    private void validateDuplicateIngredients(
-            RecipeRequest request
-    ) {
+    private void validateRecipeItems(RecipeRequest request) {
 
         Set<Long> ingredientIds =
                 new HashSet<>();
@@ -495,10 +480,44 @@ public class RecipeService {
 
                 throw new AppException(
                         ErrorCode
-                                .INGREDIENT_NAME_DUPLICATED
+                                .DUPLICATE_RECIPE_INGREDIENT
                 );
             }
         }
+
+        Set<Integer> stepNumbers = new HashSet<>();
+        for (RecipeStepRequest item : request.getSteps()) {
+            if (!stepNumbers.add(item.getStepNumber())) {
+                throw new AppException(ErrorCode.DUPLICATE_RECIPE_STEP);
+            }
+        }
+    }
+
+    private Ingredient requireActiveIngredient(Long ingredientId) {
+        Ingredient ingredient = ingredientRepository.findById(ingredientId)
+                .orElseThrow(() -> new AppException(ErrorCode.INGREDIENT_NOT_EXISTED));
+        if (!Boolean.TRUE.equals(ingredient.getActive())) {
+            throw new AppException(ErrorCode.INGREDIENT_NOT_ACTIVE);
+        }
+        return ingredient;
+    }
+
+    private void ensureMutable(Recipe recipe) {
+        if (recipe.getStatus() == RecipeStatus.ARCHIVED || recipe.getStatus() == RecipeStatus.HIDDEN) {
+            throw new AppException(ErrorCode.INVALID_RECIPE_STATUS_TRANSITION);
+        }
+    }
+
+    private String normalizeAndValidateUnit(String rawUnit) {
+        String normalized = Normalizer.normalize(rawUnit.trim().toLowerCase(Locale.ROOT), Normalizer.Form.NFD)
+                .replaceAll("\\p{M}+", "")
+                .replace('đ', 'd')
+                .replace('_', ' ')
+                .replaceAll("\\s+", " ");
+        if (!SUPPORTED_UNITS.contains(normalized)) {
+            throw new AppException(ErrorCode.INVALID_RECIPE_UNIT);
+        }
+        return rawUnit.trim().toUpperCase(Locale.ROOT);
     }
 
     private PageResponse<RecipeResponse>

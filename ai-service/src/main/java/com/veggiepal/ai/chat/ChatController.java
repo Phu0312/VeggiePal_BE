@@ -5,6 +5,7 @@ import java.util.List;
 import com.veggiepal.ai.common.ApiResponse;
 import com.veggiepal.ai.security.CurrentUser;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -16,16 +17,18 @@ import org.springframework.web.bind.annotation.*;
 public class ChatController {
     private final ChatService service;
     private final GuestSessionService guestSessions;
+    private final ClientIpResolver clientIpResolver;
 
     @PostMapping("/guest-sessions")
-    ApiResponse<GuestSessionResponse> createGuestSession() {
-        GuestSession session = guestSessions.create();
+    ApiResponse<GuestSessionResponse> createGuestSession(HttpServletRequest request) {
+        GuestSession session = guestSessions.create(clientIpResolver.resolve(request));
         return ApiResponse.success(new GuestSessionResponse(session.getId(), session.getExpiresAt()));
     }
 
     @PostMapping("/guest")
-    ApiResponse<ChatReply> guest(@RequestBody @Valid GuestChatRequest request) {
-        return ApiResponse.success(service.guest(request.guestSession(), request.message()));
+    ApiResponse<ChatReply> guest(@RequestBody @Valid GuestChatRequest request, HttpServletRequest servletRequest) {
+        return ApiResponse.success(service.guest(request.guestSession(), request.message(),
+                clientIpResolver.resolve(servletRequest)));
     }
     @PostMapping ApiResponse<ChatReply> chat(@AuthenticationPrincipal Jwt jwt, @RequestBody @Valid ChatRequest request) {
         return ApiResponse.success(service.member(CurrentUser.id(jwt), request));

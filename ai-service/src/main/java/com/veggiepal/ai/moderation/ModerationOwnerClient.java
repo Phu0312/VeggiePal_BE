@@ -10,6 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Component
 public class ModerationOwnerClient {
@@ -49,6 +50,14 @@ public class ModerationOwnerClient {
                     .body(Map.of("decision", decision.name(), "authorId", authorId))
                     .retrieve()
                     .toBodilessEntity();
+        } catch (RestClientResponseException exception) {
+            if (exception.getStatusCode().value() == 404) {
+                throw new AppException(ErrorCode.MODERATION_TARGET_NOT_FOUND, exception);
+            }
+            if (exception.getStatusCode().value() == 409) {
+                throw new AppException(ErrorCode.MODERATION_CASE_STALE, exception);
+            }
+            throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE, exception);
         } catch (RestClientException exception) {
             throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE, exception);
         }
