@@ -10,17 +10,85 @@ import java.math.BigDecimal;
 
 public final class MealPlanDtos {
     private MealPlanDtos() {}
-    public record GenerateRequest(@NotBlank @Size(max=160) String name,@NotBlank @Size(max=500) String healthGoal,
-                                  @Size(max=20) List<@Size(max=100) String> preferences,
-                                  @Size(max=30) List<@Size(max=100) String> availableIngredients,
-                                  @Valid NutritionTarget dailyNutritionTarget) {}
+
+    public record GenerateRequest(
+            @NotBlank @Size(max=160) String name,
+            @NotBlank @Size(max=500) String healthGoal,
+            @Size(max=20) List<@Size(max=100) String> preferences,
+            @Size(max=30) List<@Size(max=100) String> availableIngredients,
+            @Valid NutritionTarget dailyNutritionTarget) {}
+
     public record NutritionTarget(
             @DecimalMin("0") BigDecimal minCalories, @DecimalMin("0") BigDecimal maxCalories,
             @DecimalMin("0") BigDecimal minProtein, @DecimalMin("0") BigDecimal maxProtein,
             @DecimalMin("0") BigDecimal minCarbohydrate, @DecimalMin("0") BigDecimal maxCarbohydrate,
             @DecimalMin("0") BigDecimal minFat, @DecimalMin("0") BigDecimal maxFat) {}
-    public record ReplaceMealRequest(@NotBlank String day,@NotBlank String mealType,Long currentRecipeId) {}
+
+    public record ReplaceMealRequest(
+            @NotBlank String day,
+            @NotBlank String mealType,
+            Long currentRecipeId) {}
+
     // plan is a Map, not a JsonNode: Spring MVC writes with Jackson 3, which serializes
     // this service's Jackson 2 JsonNode as a bean ({"array":false,"nodeType":...}) instead of its JSON.
-    public record MealPlanResponse(Long id,String name,String goal,Object plan,LocalDateTime createdAt,LocalDateTime updatedAt) {}
+    public record MealPlanResponse(
+            Long id,
+            String name,
+            String goal,
+            Object plan,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt,
+            Integer version,
+            Boolean isFavorite) {
+        public MealPlanResponse(Long id, String name, String goal, Object plan, LocalDateTime createdAt, LocalDateTime updatedAt) {
+            this(id, name, goal, plan, createdAt, updatedAt, 1, false);
+        }
+
+        public MealPlanResponse(Long id, String name, String goal, Object plan, LocalDateTime createdAt, LocalDateTime updatedAt, Integer version) {
+            this(id, name, goal, plan, createdAt, updatedAt, version, false);
+        }
+    }
+
+    public record MealPlanVersionResponse(
+            Long id,
+            Long mealPlanId,
+            Integer version,
+            String name,
+            String goal,
+            Object plan,
+            String changeSummary,
+            LocalDateTime createdAt) {}
+
+    public record UpdateFromHealthRequest(
+            Boolean confirm,
+            String changeSummary,
+            @Valid NutritionTarget customTarget) {}
+
+    public record UpdateFromHealthResponse(
+            boolean confirmed,
+            String message,
+            NutritionTarget recalculatedTarget,
+            Object currentPlan,
+            Object proposedPlan,
+            MealPlanResponse updatedMealPlan) {}
+
+    public record ManualEditRequest(
+            Boolean preview,
+            String changeSummary,
+            List<@Valid MealEditItem> edits) {}
+
+    public record MealEditItem(
+            @NotBlank String day,
+            @NotBlank String mealType,
+            String action,
+            Long recipeId,
+            @DecimalMin(value = "0.01", message = "SERVING_MULTIPLIER_INVALID")
+            BigDecimal servingMultiplier,
+            String note) {}
+
+    public record MealPlanEditResponse(
+            boolean preview,
+            String message,
+            Object plan,
+            MealPlanResponse updatedMealPlan) {}
 }

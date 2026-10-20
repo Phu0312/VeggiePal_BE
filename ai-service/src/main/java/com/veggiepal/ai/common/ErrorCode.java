@@ -17,6 +17,12 @@ public enum ErrorCode {
     NO_VALID_RECIPES(6011, "Không tìm thấy công thức món ăn phù hợp với yêu cầu dinh dưỡng và dị ứng.", HttpStatus.BAD_REQUEST),
     MODERATION_TARGET_NOT_FOUND(6012, "Moderated content no longer exists", HttpStatus.NOT_FOUND),
     MODERATION_CASE_STALE(6013, "Moderation case is no longer pending", HttpStatus.CONFLICT),
+    FAVORITE_ALREADY_EXISTS(6014, "Thực đơn này đã có trong danh sách yêu thích.", HttpStatus.CONFLICT),
+    FAVORITE_NOT_FOUND(6015, "Thực đơn yêu thích không tồn tại.", HttpStatus.NOT_FOUND),
+    ACCESS_DENIED(6016, "Bạn không có quyền truy cập thực đơn này.", HttpStatus.FORBIDDEN),
+    VERSION_NOT_FOUND(6017, "Phiên bản thực đơn không tồn tại.", HttpStatus.NOT_FOUND),
+    RECIPE_NOT_VEGAN(6018, "Món ăn được chọn không phải món thuần chay.", HttpStatus.BAD_REQUEST),
+    RECIPE_CONTAINS_ALLERGEN(6019, "Món ăn chứa thành phần gây dị ứng của bạn.", HttpStatus.BAD_REQUEST),
     UNCATEGORIZED(6999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
     public final int code;
