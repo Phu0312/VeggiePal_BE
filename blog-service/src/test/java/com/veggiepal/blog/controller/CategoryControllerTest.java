@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
@@ -40,6 +41,7 @@ import com.veggiepal.blog.service.CategoryService;
 
 @WebMvcTest(CategoryController.class)
 @Import({SecurityConfig.class, JwtConfig.class, SecurityExceptionHandler.class})
+@TestPropertySource(properties = "jwt.secret=veggiepal-secret-key-must-be-at-least-32-characters")
 class CategoryControllerTest {
 
     @Autowired

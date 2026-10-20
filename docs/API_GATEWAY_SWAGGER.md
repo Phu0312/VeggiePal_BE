@@ -73,11 +73,8 @@ services.recipe.url=${RECIPE_SERVICE_URL:http://localhost:8084}
 services.location.url=${LOCATION_SERVICE_URL:http://localhost:8085}
 services.ai.url=${AI_SERVICE_URL:http://localhost:8086}
 
-# =========================
-# MULTIPART UPLOAD (Video up to 100MB)
-# =========================
-spring.servlet.multipart.max-file-size=100MB
-spring.servlet.multipart.max-request-size=105MB
+# Multipart parsing is intentionally not configured in the Gateway. Request
+# bodies stream to the owning service; each downstream service owns its limit.
 
 # =========================
 # 1. IDENTITY SERVICE (8081)
@@ -260,7 +257,7 @@ springdoc.swagger-ui.urls[5].url=/ai-service/v3/api-docs
    - Các service Identity, Nutrition, Blog, Recipe, Location đều được cấu hình hỗ trợ đồng thời cả server `/api` (cho Gateway) và `/` (cho Local direct), giúp lập trình viên kiểm thử thành công dù chạy qua Gateway hay mở trực tiếp Swagger của từng service.
 6. **Mở rộng CORS và Multipart Upload:**
    - Cập nhật [`CorsConfig.java`](file:///d:/project/VeggiePal/VeganApp_BE/api-gateway/src/main/java/com/veggiepal/gateway/configuration/CorsConfig.java) với `allowedOriginPatterns` bao gồm `http://localhost:*`, `http://127.0.0.1:*`, `https://*`.
-   - Cấu hình `spring.servlet.multipart.max-file-size=100MB` tại Gateway để phục vụ endpoint `/ai/videos/process`.
+   - Gateway không parse multipart; request body được stream đến service sở hữu. AI Service cấu hình `100MB/105MB` cho endpoint video.
 7. **Bổ sung Plugin Dependencies tương thích Java 21 & Spring Boot 4.1.1:**
    - Thêm `maven-common-artifact-filters:3.4.0` và `spring-boot-loader-tools:4.1.1` vào `spring-boot-maven-plugin` của `api-gateway` và `location-service` để loại bỏ triệt để lỗi xung đột `ArtifactsFilter` / `CommandLineUtils`.
 

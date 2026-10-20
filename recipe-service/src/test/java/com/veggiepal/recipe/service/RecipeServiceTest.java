@@ -2,6 +2,7 @@ package com.veggiepal.recipe.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -9,100 +10,141 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.veggiepal.recipe.dto.request.RecipeIngredientRequest;
+import com.veggiepal.recipe.dto.request.RecipeRequest;
+import com.veggiepal.recipe.dto.request.RecipeStepRequest;
+import com.veggiepal.recipe.dto.response.PageResponse;
+import com.veggiepal.recipe.dto.response.RecipeResponse;
+import com.veggiepal.recipe.entity.Ingredient;
+import com.veggiepal.recipe.entity.Recipe;
+import com.veggiepal.recipe.enums.RecipeStatus;
+import com.veggiepal.recipe.exception.AppException;
+import com.veggiepal.recipe.exception.ErrorCode;
+import com.veggiepal.recipe.mapper.RecipeMapper;
+import com.veggiepal.recipe.repository.IngredientRepository;
+import com.veggiepal.recipe.repository.RecipeRepository;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 
-import com.veggiepal.recipe.dto.response.PageResponse;
-import com.veggiepal.recipe.dto.response.RecipeResponse;
-import com.veggiepal.recipe.entity.Recipe;
-import com.veggiepal.recipe.enums.RecipeStatus;
-import com.veggiepal.recipe.mapper.RecipeMapper;
-import com.veggiepal.recipe.repository.IngredientRepository;
-import com.veggiepal.recipe.repository.RecipeRepository;
-
 class RecipeServiceTest {
-
-    private RecipeRepository recipeRepository;
-    private IngredientRepository ingredientRepository;
-    private RecipeMapper recipeMapper;
-    private RecipeService recipeService;
+    private RecipeRepository recipes;
+    private IngredientRepository ingredients;
+    private RecipeMapper mapper;
+    private RecipeService service;
 
     @BeforeEach
     void setUp() {
-        recipeRepository = mock(RecipeRepository.class);
-        ingredientRepository = mock(IngredientRepository.class);
-        recipeMapper = mock(RecipeMapper.class);
-        recipeService = new RecipeService(recipeRepository, ingredientRepository, recipeMapper);
+        recipes = mock(RecipeRepository.class);
+        ingredients = mock(IngredientRepository.class);
+        mapper = mock(RecipeMapper.class);
+        service = new RecipeService(recipes, ingredients, mapper);
     }
 
     @Test
-    void deleteRecipe_softDeletesWithArchivedStatus() {
-        Recipe recipe = Recipe.builder()
-                .id(1L)
-                .userId(100L)
-                .title("Canh chua chay")
-                .status(RecipeStatus.PUBLISHED)
-                .build();
-
-        when(recipeRepository.findById(1L)).thenReturn(Optional.of(recipe));
-        when(recipeRepository.save(any(Recipe.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        recipeService.deleteRecipe(1L, 100L, false);
-
+    void deleteRecipeSoftDeletes() {
+        Recipe recipe = Recipe.builder().id(1L).userId(100L).status(RecipeStatus.PUBLISHED).build();
+        when(recipes.findById(1L)).thenReturn(Optional.of(recipe));
+        service.deleteRecipe(1L, 100L, false);
         assertEquals(RecipeStatus.ARCHIVED, recipe.getStatus());
-        verify(recipeRepository).save(recipe);
-        verify(recipeRepository, never()).delete(any(Recipe.class));
+        verify(recipes).save(recipe);
+        verify(recipes, never()).delete(any());
     }
 
     @Test
-    void getPublishedRecipes_queriesOnlyPublishedStatus() {
-        when(recipeRepository.searchPublished(eq(null), eq(RecipeStatus.PUBLISHED), any(Pageable.class)))
+    void publishedAndOwnListingsApplyStatusRules() {
+        when(recipes.searchPublished(eq(null), eq(RecipeStatus.PUBLISHED), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
-
-        PageResponse<RecipeResponse> result = recipeService.getPublishedRecipes(null, 0, 50);
-
-        assertNotNull(result);
-        verify(recipeRepository).searchPublished(eq(null), eq(RecipeStatus.PUBLISHED), any(Pageable.class));
-    }
-
-    @Test
-    void getMyRecipes_excludesArchivedStatus() {
-        when(recipeRepository.findByUserIdAndStatusNot(eq(100L), eq(RecipeStatus.ARCHIVED), any(Pageable.class)))
+        when(recipes.findByUserIdAndStatusNot(eq(100L), eq(RecipeStatus.ARCHIVED), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
-
-        PageResponse<RecipeResponse> result = recipeService.getMyRecipes(100L, 0, 10);
-
-        assertNotNull(result);
-        verify(recipeRepository).findByUserIdAndStatusNot(eq(100L), eq(RecipeStatus.ARCHIVED), any(Pageable.class));
+        PageResponse<RecipeResponse> published = service.getPublishedRecipes(null, 0, 50);
+        PageResponse<RecipeResponse> own = service.getMyRecipes(100L, 0, 10);
+        assertNotNull(published);
+        assertNotNull(own);
     }
 
     @Test
-    void getRecipe_returnsArchivedRecipeForSavedMealPlans() {
-        Recipe archived = Recipe.builder()
-                .id(2L)
-                .userId(100L)
-                .title("Món cũ đã lưu")
-                .status(RecipeStatus.ARCHIVED)
+    void archivedDetailRemainsAvailableForSavedMealPlans() {
+        Recipe archived = Recipe.builder().id(2L).userId(100L).status(RecipeStatus.ARCHIVED).build();
+        RecipeResponse response = RecipeResponse.builder().id(2L).status(RecipeStatus.ARCHIVED).build();
+        when(recipes.findById(2L)).thenReturn(Optional.of(archived));
+        when(mapper.toRecipeResponse(archived)).thenReturn(response);
+        assertEquals(RecipeStatus.ARCHIVED, service.getRecipe(2L).getStatus());
+    }
+
+    @Test
+    void draftDetailIsNotPublic() {
+        when(recipes.findById(3L)).thenReturn(Optional.of(
+                Recipe.builder().id(3L).userId(100L).status(RecipeStatus.DRAFT).build()));
+        AppException exception = assertThrows(AppException.class, () -> service.getRecipe(3L));
+        assertEquals(ErrorCode.RECIPE_NOT_EXISTED, exception.getErrorCode());
+    }
+
+    @Test
+    void updateFlushesOrphanDeletesBeforeReplacementRows() {
+        Recipe recipe = Recipe.builder().id(1L).userId(100L).status(RecipeStatus.DRAFT).build();
+        when(recipes.findById(1L)).thenReturn(Optional.of(recipe));
+        when(ingredients.findById(9L)).thenReturn(Optional.of(activeIngredient()));
+        when(recipes.save(recipe)).thenReturn(recipe);
+        service.updateRecipe(1L, 100L, false, request("G", 1, 2));
+        verify(recipes).flush();
+        verify(recipes).save(recipe);
+    }
+
+    @Test
+    void duplicateStepNumbersAreRejectedBeforeSave() {
+        AppException exception = assertThrows(AppException.class,
+                () -> service.createRecipe(100L, request("G", 1, 1)));
+        assertEquals(ErrorCode.DUPLICATE_RECIPE_STEP, exception.getErrorCode());
+        verify(recipes, never()).save(any());
+    }
+
+    @Test
+    void unsupportedUnitIsRejected() {
+        when(ingredients.findById(9L)).thenReturn(Optional.of(activeIngredient()));
+        AppException exception = assertThrows(AppException.class,
+                () -> service.createRecipe(100L, request("bucket", 1, 2)));
+        assertEquals(ErrorCode.INVALID_RECIPE_UNIT, exception.getErrorCode());
+    }
+
+    @Test
+    void updateRejectsInactiveIngredient() {
+        Recipe recipe = Recipe.builder().id(1L).userId(100L).status(RecipeStatus.DRAFT).build();
+        when(recipes.findById(1L)).thenReturn(Optional.of(recipe));
+        when(ingredients.findById(9L)).thenReturn(Optional.of(
+                Ingredient.builder().id(9L).active(false).build()));
+        AppException exception = assertThrows(AppException.class,
+                () -> service.updateRecipe(1L, 100L, false, request("G", 1, 2)));
+        assertEquals(ErrorCode.INGREDIENT_NOT_ACTIVE, exception.getErrorCode());
+    }
+
+    @Test
+    void archivedRecipeCannotBeUpdatedOrRepublished() {
+        Recipe recipe = Recipe.builder().id(1L).userId(100L).status(RecipeStatus.ARCHIVED).build();
+        when(recipes.findById(1L)).thenReturn(Optional.of(recipe));
+        assertEquals(ErrorCode.INVALID_RECIPE_STATUS_TRANSITION,
+                assertThrows(AppException.class,
+                        () -> service.updateRecipe(1L, 100L, false, request("G", 1, 2))).getErrorCode());
+        assertEquals(ErrorCode.INVALID_RECIPE_STATUS_TRANSITION,
+                assertThrows(AppException.class,
+                        () -> service.publishRecipe(1L, 100L, false)).getErrorCode());
+    }
+
+    private Ingredient activeIngredient() {
+        return Ingredient.builder().id(9L).active(true).build();
+    }
+
+    private RecipeRequest request(String unit, int firstStep, int secondStep) {
+        return RecipeRequest.builder().title("Recipe").servings(2)
+                .ingredients(List.of(RecipeIngredientRequest.builder()
+                        .ingredientId(9L).quantity(BigDecimal.ONE).unit(unit).build()))
+                .steps(List.of(
+                        RecipeStepRequest.builder().stepNumber(firstStep).instruction("First").build(),
+                        RecipeStepRequest.builder().stepNumber(secondStep).instruction("Second").build()))
                 .build();
-
-        RecipeResponse response = RecipeResponse.builder()
-                .id(2L)
-                .title("Món cũ đã lưu")
-                .status(RecipeStatus.ARCHIVED)
-                .build();
-
-        when(recipeRepository.findById(2L)).thenReturn(Optional.of(archived));
-        when(recipeMapper.toRecipeResponse(archived)).thenReturn(response);
-
-        RecipeResponse result = recipeService.getRecipe(2L);
-
-        assertNotNull(result);
-        assertEquals(RecipeStatus.ARCHIVED, result.getStatus());
-        assertEquals("Món cũ đã lưu", result.getTitle());
     }
 }

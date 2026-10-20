@@ -199,7 +199,7 @@ class BlogControllerTest {
 
     @Test
     void getPublishedBlog_withoutToken_isPublic() throws Exception {
-        when(blogService.getPublishedBlog(10L))
+        when(blogService.getBlog(10L, null, false))
                 .thenReturn(BlogResponse.builder().id(10L).viewCount(42).build());
 
         mockMvc.perform(get("/blogs/10"))

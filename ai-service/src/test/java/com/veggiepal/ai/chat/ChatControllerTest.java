@@ -1,6 +1,6 @@
 package com.veggiepal.ai.chat;
 
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,7 +18,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class ChatControllerTest {
-
     private MockMvc mockMvc;
     private ChatService chatService;
     private GuestSessionService guestSessions;
@@ -28,53 +27,48 @@ class ChatControllerTest {
     void setUp() {
         chatService = mock(ChatService.class);
         guestSessions = mock(GuestSessionService.class);
+        ClientIpResolver clientIpResolver = mock(ClientIpResolver.class);
+        when(clientIpResolver.resolve(any())).thenReturn("203.0.113.10");
         mapper = new ObjectMapper();
-
-        ChatController controller = new ChatController(chatService, guestSessions);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(
+                new ChatController(chatService, guestSessions, clientIpResolver)).build();
     }
 
     @Test
-    void createGuestSessionReturnsUuidAndExpiresAt() throws Exception {
+    void createGuestSessionUsesResolvedClientIp() throws Exception {
         String sessionId = UUID.randomUUID().toString();
         LocalDateTime expires = LocalDateTime.now().plusHours(24);
-        GuestSession session = new GuestSession(sessionId, LocalDateTime.now(), expires);
-
-        when(guestSessions.create()).thenReturn(session);
+        when(guestSessions.create("203.0.113.10"))
+                .thenReturn(new GuestSession(sessionId, "hash", LocalDateTime.now(), expires));
 
         mockMvc.perform(post("/ai/chat/guest-sessions"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1000))
                 .andExpect(jsonPath("$.result.guestSession").value(sessionId));
 
-        verify(guestSessions).create();
+        verify(guestSessions).create("203.0.113.10");
     }
 
     @Test
-    void guestChatCallsServiceAndReturnsReply() throws Exception {
+    void guestChatPassesResolvedClientIp() throws Exception {
         String sessionId = UUID.randomUUID().toString();
-        ChatDtos.ChatReply reply = new ChatDtos.ChatReply(null, "Xin chào! VeggiePal sẵn sàng tư vấn.", 2, 10, 15);
-        when(chatService.guest(eq(sessionId), eq("Tôi muốn ăn chay")))
-                .thenReturn(reply);
+        ChatDtos.ChatReply reply = new ChatDtos.ChatReply(null, "answer", 2, 10, 15);
+        when(chatService.guest(sessionId, "vegan protein", "203.0.113.10")).thenReturn(reply);
 
-        ChatDtos.GuestChatRequest request = new ChatDtos.GuestChatRequest(sessionId, "Tôi muốn ăn chay");
-
+        ChatDtos.GuestChatRequest request = new ChatDtos.GuestChatRequest(sessionId, "vegan protein");
         mockMvc.perform(post("/ai/chat/guest")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.code").value(1000))
-                .andExpect(jsonPath("$.result.answer").value("Xin chào! VeggiePal sẵn sàng tư vấn."))
+                .andExpect(jsonPath("$.result.answer").value("answer"))
                 .andExpect(jsonPath("$.result.remainingRequests").value(2));
 
-        verify(chatService).guest(sessionId, "Tôi muốn ăn chay");
+        verify(chatService).guest(sessionId, "vegan protein", "203.0.113.10");
     }
 
     @Test
     void guestChatRejectsInvalidSessionFormat() throws Exception {
-        // Less than 16 chars violates @Pattern(regexp="^[A-Za-z0-9_-]{16,100}$")
         ChatDtos.GuestChatRequest request = new ChatDtos.GuestChatRequest("too-short", "Hello");
-
         mockMvc.perform(post("/ai/chat/guest")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(mapper.writeValueAsString(request)))

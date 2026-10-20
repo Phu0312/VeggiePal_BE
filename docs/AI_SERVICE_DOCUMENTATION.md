@@ -167,7 +167,7 @@ Các trường null của `ApiResponse` bị bỏ qua. DTO lồng bên trong v�
 - Session được gắn với SHA-256 hash của remote address và pepper bí mật; session lấy từ địa chỉ khác bị từ chối.
 - Mỗi địa chỉ được tạo tối đa 3 session/ngày theo mặc định.
 - Quota mặc định 3 request/ngày.
-- Không lưu nội dung hội thoại; chỉ lưu quota theo principal `guest:<guestSession>` và usage log.
+- Không lưu nội dung hội thoại; quota dùng principal `guest-ip:<ipHash>` nên tạo session mới không reset lượt, và usage log không lưu IP thật.
 - Mỗi request là một lượt độc lập, không có lịch sử nhiều lượt cho guest.
 
 **Member**
@@ -397,7 +397,7 @@ Các ID tham chiếu sang user/blog/recipe/video chỉ là scalar; database AI k
 
 ### 6.2 Quota và transaction
 
-- Principal member: `user:<userId>`; guest: `guest:<guestSession>`.
+- Principal member: `user:<userId>`; guest: `guest-ip:<ipHash>`.
 - Quota chat được reserve trong transaction `REQUIRES_NEW`, dùng pessimistic lock với row đã tồn tại.
 - Request count tăng **trước** khi gọi Groq, nên một lần gọi AI thất bại vẫn tiêu tốn lượt request.
 - Token được cộng sau lần gọi thành công, theo feature.
@@ -405,6 +405,7 @@ Các ID tham chiếu sang user/blog/recipe/video chỉ là scalar; database AI k
 - Chat gọi `reserveChat`; mọi feature AI gọi `checkTokenBudget` trước Groq. Request quota riêng vẫn chỉ áp dụng cho Chat.
 - Việc provision quota row dùng native atomic upsert rồi pessimistic lock, tránh race tạo row đầu tiên giữa nhiều instance.
 - `synchronized` chỉ tuần tự hóa trong một JVM; khóa database mới là cơ chế phối hợp trên row đã tồn tại.
+- Các lời gọi Groq/downstream chạy ngoài transaction JPA dài; chat chỉ mở transaction ngắn để lưu conversation và cặp message sau khi AI trả về.
 
 Ngày quota dùng `LocalDate.now()` của JVM; cần đồng nhất timezone khi triển khai nhiều instance.
 
@@ -967,7 +968,7 @@ Không ghi token thật vào collection được commit. JWT lấy từ luồng 
 
 1. `POST {{aiBaseUrl}}/ai/chat/guest-sessions`, không body/Authorization; lưu `result.guestSession`.
 2. `POST {{aiBaseUrl}}/ai/chat/guest` với session vừa cấp.
-3. Gọi 3 lần với cùng session: thành công; lần thứ 4 trong cùng ngày kỳ vọng HTTP 429/code 6003.
+3. Gọi tổng cộng 3 lần từ cùng địa chỉ, kể cả đổi session: thành công; lần thứ 4 trong cùng ngày kỳ vọng HTTP 429/code 6003.
 4. Dùng session tự đặt, hết hạn hoặc từ địa chỉ khác: kỳ vọng 401/code 6001.
 5. `POST {{aiBaseUrl}}/ai/chat` với Bearer `{{memberToken}}`; lưu `result.conversationId`.
 6. Gửi lượt hai với ID vừa lưu, sau đó gọi list/detail và xác minh thứ tự message.

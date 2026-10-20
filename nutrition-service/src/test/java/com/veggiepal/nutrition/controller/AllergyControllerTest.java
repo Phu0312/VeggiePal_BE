@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -53,6 +54,15 @@ class AllergyControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result[0].code").value("GLUTEN"))
                 .andExpect(jsonPath("$.result[0].category").value("GRAIN"));
+    }
+
+    @Test
+    void getAllergens_isPublicAndIgnoresStaleToken() throws Exception {
+        when(allergyService.getAllAllergens()).thenReturn(List.of());
+
+        mockMvc.perform(get("/nutrition/allergens")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer expired-or-malformed"))
+                .andExpect(status().isOk());
     }
 
     @Test

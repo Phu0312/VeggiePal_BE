@@ -26,9 +26,10 @@ class GuestSessionServiceTest {
         GuestSessionRepository repository = mock(GuestSessionRepository.class);
         when(repository.save(any(GuestSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24));
+        when(repository.countByIpHashAndCreatedAtGreaterThanEqual(any(), any())).thenReturn(0L);
+        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24), "pepper", 3);
         LocalDateTime before = LocalDateTime.now();
-        GuestSession created = service.create();
+        GuestSession created = service.create("203.0.113.10");
         LocalDateTime after = LocalDateTime.now();
 
         assertNotNull(created);
@@ -46,13 +47,15 @@ class GuestSessionServiceTest {
     @Test
     void requireValidPassesForActiveSession() {
         GuestSessionRepository repository = mock(GuestSessionRepository.class);
-        GuestSession activeSession = new GuestSession(UUID.randomUUID().toString(),
-                LocalDateTime.now(), LocalDateTime.now().plusHours(24));
+        when(repository.save(any(GuestSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(repository.countByIpHashAndCreatedAtGreaterThanEqual(any(), any())).thenReturn(0L);
+        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24), "pepper", 3);
+        GuestSession activeSession = service.create("203.0.113.10");
         when(repository.findByIdAndExpiresAtAfter(eq(activeSession.getId()), any(LocalDateTime.class)))
                 .thenReturn(Optional.of(activeSession));
 
-        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24));
-        assertDoesNotThrow(() -> service.requireValid(activeSession.getId()));
+        assertDoesNotThrow(() -> service.requireValid(activeSession.getId(), "203.0.113.10"));
+        assertThrows(AppException.class, () -> service.requireValid(activeSession.getId(), "203.0.113.11"));
     }
 
     @Test
@@ -61,8 +64,8 @@ class GuestSessionServiceTest {
         when(repository.findByIdAndExpiresAtAfter(eq("unknown-id"), any(LocalDateTime.class)))
                 .thenReturn(Optional.empty());
 
-        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24));
-        assertThrows(AppException.class, () -> service.requireValid("unknown-id"));
+        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24), "pepper", 3);
+        assertThrows(AppException.class, () -> service.requireValid("unknown-id", "203.0.113.10"));
     }
 
     @Test
@@ -71,7 +74,16 @@ class GuestSessionServiceTest {
         when(repository.findByIdAndExpiresAtAfter(eq("expired-id"), any(LocalDateTime.class)))
                 .thenReturn(Optional.empty());
 
-        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24));
-        assertThrows(AppException.class, () -> service.requireValid("expired-id"));
+        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24), "pepper", 3);
+        assertThrows(AppException.class, () -> service.requireValid("expired-id", "203.0.113.10"));
+    }
+
+    @Test
+    void createRejectsSessionRotationAfterConfiguredDailyLimit() {
+        GuestSessionRepository repository = mock(GuestSessionRepository.class);
+        when(repository.countByIpHashAndCreatedAtGreaterThanEqual(any(), any())).thenReturn(3L);
+        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24), "pepper", 3);
+
+        assertThrows(AppException.class, () -> service.create("203.0.113.10"));
     }
 }

@@ -15,6 +15,8 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -86,5 +88,25 @@ class ModerationOwnerClientTest {
         AppException ex = assertThrows(AppException.class, () ->
                 client.apply("BLOG", 42L, 7L, ModerationDtos.Decision.REJECTED, "admin-token"));
         assertEquals(ErrorCode.DOWNSTREAM_UNAVAILABLE, ex.getErrorCode());
+    }
+
+    @Test
+    void applyMapsDeletedTargetToNotFound() {
+        when(responseSpec.toBodilessEntity()).thenThrow(new HttpClientErrorException(HttpStatus.NOT_FOUND));
+
+        AppException ex = assertThrows(AppException.class, () ->
+                client.apply("BLOG", 42L, 7L, ModerationDtos.Decision.REJECTED, "admin-token"));
+
+        assertEquals(ErrorCode.MODERATION_TARGET_NOT_FOUND, ex.getErrorCode());
+    }
+
+    @Test
+    void applyMapsChangedOwnerToStaleCase() {
+        when(responseSpec.toBodilessEntity()).thenThrow(new HttpClientErrorException(HttpStatus.CONFLICT));
+
+        AppException ex = assertThrows(AppException.class, () ->
+                client.apply("BLOG", 42L, 7L, ModerationDtos.Decision.REJECTED, "admin-token"));
+
+        assertEquals(ErrorCode.MODERATION_CASE_STALE, ex.getErrorCode());
     }
 }

@@ -267,6 +267,26 @@ public class BlogService {
         return response;
     }
 
+    @Transactional
+    public BlogResponse getBlog(Long id, Long requesterId, boolean admin) {
+        Blog blog = blogRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.BLOG_NOT_EXISTED));
+
+        if (blog.getStatus() == ContentStatus.PUBLISHED) {
+            blogRepository.incrementViewCount(id);
+            BlogResponse response = blogMapper.toBlogResponse(blog);
+            response.setViewCount(blog.getViewCount() + 1);
+            return response;
+        }
+
+        if (requesterId == null || (!admin && !blog.getAuthorId().equals(requesterId))) {
+            // Do not disclose that a private, rejected, pending or banned post exists.
+            throw new AppException(ErrorCode.BLOG_NOT_EXISTED);
+        }
+
+        return blogMapper.toBlogResponse(blog);
+    }
+
     @Transactional(readOnly = true)
     public List<BlogSummaryResponse> getRelatedBlogs(Long id) {
 

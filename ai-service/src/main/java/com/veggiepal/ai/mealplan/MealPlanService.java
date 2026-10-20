@@ -52,7 +52,6 @@ public class MealPlanService {
         this.validator = validator;
     }
 
-    @Transactional
     public MealPlanResponse generate(Long userId, String jwt, GenerateRequest request) {
         validator.validateTarget(request.dailyNutritionTarget());
         JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
@@ -107,7 +106,6 @@ public class MealPlanService {
 
     public MealPlanResponse get(Long userId, Long id) { return view(owned(userId, id)); }
 
-    @Transactional
     public MealPlanResponse replace(Long userId, Long id, String jwt, ReplaceMealRequest request) {
         MealPlan entity = owned(userId, id);
         ObjectNode root = object(read(entity.getPlanJson()));
@@ -166,6 +164,7 @@ public class MealPlanService {
         validator.validateAndEnrich(root, safeRecipes, allergies, target);
         root.withObject("constraints").set("allergies", allergies.deepCopy());
         entity.replaceJson(root.toString());
+        repository.save(entity);
         return view(entity);
     }
 
