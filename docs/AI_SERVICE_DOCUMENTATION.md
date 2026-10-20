@@ -602,7 +602,16 @@ Trả mảng `ModerationResponse` chỉ gồm case `REVIEW_REQUIRED`, theo thờ
 }
 ```
 
-`decision` khi admin review chỉ được dùng `APPROVED` hoặc `REJECTED`.
+`decision` khi admin review có thể dùng `APPROVED`, `REJECTED`, hoặc `DISMISSED`.
+
+- Nếu nội dung gốc đã bị xóa bên domain service (ví dụ Blog/Comment đã xóa), hệ thống sẽ tự động chuyển case thành `DISMISSED` với reason tương ứng và gỡ bỏ khỏi hàng đợi chờ duyệt, tránh kẹt vĩnh viễn trong hàng đợi.
+
+#### DELETE `/ai/admin/moderation/10?reason=...`
+
+Bỏ qua hoặc đóng case mồ côi mà không cần thực thi callback xuống domain service:
+- Quyền yêu cầu: `ROLE_ADMIN`.
+- Cập nhật case sang `DISMISSED` kèm ghi nhận `reviewedBy` và `reviewedAt`.
+- Trả về `ModerationResponse` đã đóng.
 
 ### 7.5 Recommendation API
 
@@ -678,7 +687,17 @@ Response `plan` có JSON do model trả và đã qua kiểm tra cấu trúc:
 ```
 
 Response thực tế có đủ 7 phần tử trong `days`; ví dụ được rút gọn để dễ đọc.
-`dailyNutritionTarget` là tùy chọn. Nếu truyền, mọi khoảng min/max phải hợp lệ và từng ngày phải thỏa mục tiêu sau phép tính của Backend.
+
+Khi `dailyNutritionTarget` được cung cấp, backend tự động tính toán tổng dinh dưỡng của từng ngày (`nutritionTotals`), áp dụng dung sai cấu hình (`ai.meal-plan.target-tolerance-ratio`, mặc định 15%), và trả về cờ kiểm tra cùng sai số chi tiết:
+- `days[].targetMet`: kiểu `boolean`, mang giá trị `true` nếu mọi chỉ số nằm trong khoảng dung sai cho phép, `false` nếu có chỉ số bị lệch.
+- `days[].targetDeviations`: object chi tiết các chỉ số không đạt mục tiêu (nếu `targetMet` là `false`), cấu trúc:
+  ```json
+  "targetDeviations": {
+    "calories": { "actual": 1320.00, "min": 1500.00, "max": 2200.00 },
+    "protein": { "actual": 45.00, "min": 60.00, "max": 140.00 }
+  }
+  ```
+- Các chỉ số được theo dõi gồm: `calories`, `protein`, `carbohydrate`, `fat`. Mỗi metric chứa `actual`, `min` (nếu có yêu cầu min), và `max` (nếu có yêu cầu max).
 
 #### GET `/ai/meal-plans`
 
@@ -912,9 +931,21 @@ Trả `guestChatRequestsPerDay`, `memberChatRequestsPerDay`, `dailyTokenLimit`, 
 | 502 | 6007 | AI trả JSON/cấu trúc không hợp lệ |
 | 422 | 6008 | Video/FFmpeg/transcription/extraction thất bại |
 | 413 | 6009 | File video vượt giới hạn |
+| 400 | 6010 | Thiếu hồ sơ sức khỏe (cần chiều cao, cân nặng để tính năng lượng) |
+| 400 | 6011 | Không tìm thấy công thức món ăn phù hợp với yêu cầu dị ứng/vegan |
+| 404 | 6012 | Nội dung kiểm duyệt không còn tồn tại trên domain service (`MODERATION_TARGET_NOT_FOUND`) |
+| 409 | 6013 | Case kiểm duyệt đã được xử lý xong từ trước (`MODERATION_CASE_STALE`) |
+| 409 | 6014 | Thực đơn đã có trong danh sách yêu thích |
+| 404 | 6015 | Thực đơn yêu thích không tồn tại |
+| 403 | 6016 | Không có quyền truy cập thực đơn |
+| 404 | 6017 | Phiên bản thực đơn không tồn tại |
+| 400 | 6018 | Món ăn được chọn không phải món thuần chay |
+| 400 | 6019 | Món ăn chứa thành phần gây dị ứng của người dùng |
 | 500 | 6999 | Lỗi không phân loại |
 
-Lưu ý: code `6002` đang được dùng cho cả HTTP 403 và 404; client phải đọc đồng thời HTTP status và body.
+Lưu ý:
+- Mã lỗi `6012` trong backend là `MODERATION_TARGET_NOT_FOUND` (404), còn `6013` là `MODERATION_CASE_STALE` (409).
+- Không có lỗi `NUTRITION_TARGET_UNATTAINABLE` do backend thiết kế linh hoạt trả kết quả kèm cờ `targetMet` và `targetDeviations` thay vì chặn luồng của người dùng.
 
 ## 8. Cấu hình
 
@@ -950,6 +981,7 @@ File: `ai-service/src/main/resources/application.properties`.
 | `AI_CHAT_MAX_HISTORY` | `12` | Số message lịch sử gửi model |
 | `AI_CHAT_MAX_INPUT_CHARS` | `4000` | Property đã bind; validation hiện vẫn cố định `@Size(max=4000)` |
 | `AI_DAILY_TOKEN_LIMIT` | `50000` | Tổng token/ngày/principal |
+| `AI_TRUSTED_PROXIES` | `127.0.0.1,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16` | Danh sách trusted proxy IP/CIDR cho `ClientIpResolver` |
 | `FFMPEG_PATH` | `ffmpeg` | Lệnh/đường dẫn FFmpeg |
 | `FFPROBE_PATH` | `ffprobe` | Lệnh/đường dẫn FFprobe |
 | `AI_VIDEO_MAX_BYTES` | `104857600` | Kích thước file tối đa |
@@ -1143,6 +1175,7 @@ Trong Postman chọn Body → form-data → key `file`, type **File**.
 - History bị giới hạn; input chat tối đa 4.000 ký tự.
 - Model có `max_completion_tokens` riêng: chat 700, moderation 350, recommendation 500, meal plan 1.800, video extraction 1.200.
 - Recommendation bỏ qua Groq nếu không có candidate.
+- **Lưu ý về Quota khách và mạng dùng chung (NAT/Shared IP):** Quota khách (3 session/IP/ngày và 3 lượt chat/IP/ngày) được tính theo IP client (đã được lọc qua `ClientIpForwardingFilter` và `ClientIpResolver` với danh sách trusted proxies). Khi nhiều người dùng kết nối từ cùng một IP công cộng (ví dụ chung Wi-Fi trường học, văn phòng hoặc cùng test demo trong một mạng LAN/NAT), họ sẽ dùng chung hạn mức này. Đây là quyết định sản phẩm có chủ đích để bảo vệ chi phí token Groq AI. Người dùng cần đăng nhập thành viên để nhận hạn mức riêng (50 lượt chat/ngày).
 
 Daily token limit hiện không phải hard-stop trước mọi feature: Chat kiểm tra trước, còn moderation/recommendation/meal plan/video extraction chỉ cộng token sau khi gọi thành công.
 

@@ -85,6 +85,49 @@ class RecipeServiceTest {
     }
 
     @Test
+    void draftDetailIsReadableByOwner() {
+        Recipe draft = Recipe.builder().id(3L).userId(100L).status(RecipeStatus.DRAFT).build();
+        RecipeResponse response = RecipeResponse.builder().id(3L).status(RecipeStatus.DRAFT).build();
+        when(recipes.findById(3L)).thenReturn(Optional.of(draft));
+        when(mapper.toRecipeResponse(draft)).thenReturn(response);
+        assertEquals(RecipeStatus.DRAFT, service.getRecipe(3L, 100L, false).getStatus());
+    }
+
+    @Test
+    void draftDetailIsReadableByAdmin() {
+        Recipe draft = Recipe.builder().id(3L).userId(100L).status(RecipeStatus.DRAFT).build();
+        RecipeResponse response = RecipeResponse.builder().id(3L).status(RecipeStatus.DRAFT).build();
+        when(recipes.findById(3L)).thenReturn(Optional.of(draft));
+        when(mapper.toRecipeResponse(draft)).thenReturn(response);
+        assertEquals(RecipeStatus.DRAFT, service.getRecipe(3L, 999L, true).getStatus());
+    }
+
+    @Test
+    void draftDetailIsHiddenFromOtherUser() {
+        Recipe draft = Recipe.builder().id(3L).userId(100L).status(RecipeStatus.DRAFT).build();
+        when(recipes.findById(3L)).thenReturn(Optional.of(draft));
+        AppException exception = assertThrows(AppException.class, () -> service.getRecipe(3L, 999L, false));
+        assertEquals(ErrorCode.RECIPE_NOT_EXISTED, exception.getErrorCode());
+    }
+
+    @Test
+    void hiddenDetailIsReadableByOwnerAndAdmin_hiddenFromOthers() {
+        Recipe hidden = Recipe.builder().id(4L).userId(100L).status(RecipeStatus.HIDDEN).build();
+        RecipeResponse response = RecipeResponse.builder().id(4L).status(RecipeStatus.HIDDEN).build();
+        when(recipes.findById(4L)).thenReturn(Optional.of(hidden));
+        when(mapper.toRecipeResponse(hidden)).thenReturn(response);
+
+        assertEquals(RecipeStatus.HIDDEN, service.getRecipe(4L, 100L, false).getStatus());
+        assertEquals(RecipeStatus.HIDDEN, service.getRecipe(4L, 999L, true).getStatus());
+
+        AppException exOther = assertThrows(AppException.class, () -> service.getRecipe(4L, 999L, false));
+        assertEquals(ErrorCode.RECIPE_NOT_EXISTED, exOther.getErrorCode());
+
+        AppException exGuest = assertThrows(AppException.class, () -> service.getRecipe(4L, null, false));
+        assertEquals(ErrorCode.RECIPE_NOT_EXISTED, exGuest.getErrorCode());
+    }
+
+    @Test
     void updateFlushesOrphanDeletesBeforeReplacementRows() {
         Recipe recipe = Recipe.builder().id(1L).userId(100L).status(RecipeStatus.DRAFT).build();
         when(recipes.findById(1L)).thenReturn(Optional.of(recipe));
