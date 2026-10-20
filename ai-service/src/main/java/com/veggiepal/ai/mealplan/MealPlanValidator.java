@@ -26,10 +26,10 @@ import org.springframework.stereotype.Component;
 public class MealPlanValidator {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(MealPlanValidator.class);
     private static final Set<String> REQUIRED_MEALS = Set.of("BREAKFAST", "LUNCH", "DINNER");
-    private static final List<String> STANDARD_DAYS = List.of(
+    public static final List<String> STANDARD_DAYS = List.of(
             "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"
     );
-    private static final List<String> STANDARD_MEALS = List.of(
+    public static final List<String> STANDARD_MEALS = List.of(
             "BREAKFAST", "LUNCH", "DINNER"
     );
 
@@ -362,7 +362,7 @@ public class MealPlanValidator {
         return macroFor(recipe).toJson(mapper);
     }
 
-    private Macro macroFor(JsonNode recipe) {
+    public Macro macroFor(JsonNode recipe) {
         return tryCalculateMacro(recipe)
                 .orElseThrow(() -> new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE));
     }
@@ -372,7 +372,7 @@ public class MealPlanValidator {
         return node.decimalValue();
     }
 
-    private boolean isVegan(JsonNode recipe) {
+    public boolean isVegan(JsonNode recipe) {
         JsonNode ingredients = recipe.path("ingredients");
         if (!ingredients.isArray() || ingredients.isEmpty()) return false;
         for (JsonNode ingredient : ingredients) if (!ingredient.path("vegan").asBoolean(false)) return false;
@@ -464,7 +464,7 @@ public class MealPlanValidator {
 
     // A day that misses the target is flagged, not rejected: one off metric on one day used to fail
     // the whole 7-day plan. Stale flags are cleared first because replace() re-runs this on a stored plan.
-    private void markTarget(ObjectNode dayNode, Macro value, MealPlanDtos.NutritionTarget target) {
+    public void markTarget(ObjectNode dayNode, Macro value, MealPlanDtos.NutritionTarget target) {
         dayNode.remove(List.of("targetMet", "targetDeviations"));
         if (target == null) return;
         BigDecimal tol = BigDecimal.valueOf(toleranceRatio);

@@ -700,6 +700,91 @@ Trả một `MealPlanResponse`; ID không tồn tại hoặc không thuộc user
 
 Trả toàn bộ `MealPlanResponse` sau khi cập nhật.
 
+#### POST `/ai/meal-plans/{id}/favorite`
+
+Thêm thực đơn vào danh sách yêu thích của người dùng:
+- Yêu cầu đăng nhập (`Bearer JWT`).
+- Kiểm tra quyền sở hữu (người dùng không thể yêu thích thực đơn của người khác -> 403 `ACCESS_DENIED`).
+- Chống trùng lặp: Nếu đã yêu thích trước đó, trả lỗi 409 `FAVORITE_ALREADY_EXISTS`.
+- Trả về `MealPlanResponse` với `isFavorite: true`.
+
+#### DELETE `/ai/meal-plans/{id}/favorite` hoặc POST `/ai/meal-plans/{id}/unfavorite`
+
+Bỏ yêu thích thực đơn:
+- Nếu thực đơn chưa có trong danh sách yêu thích, trả 404 `FAVORITE_NOT_FOUND`.
+- Trả `ApiResponse<Void>` với code 1000.
+
+#### GET `/ai/meal-plans/favorites?page=0&size=10`
+
+Lấy danh sách thực đơn yêu thích của người dùng kèm phân trang:
+- Response trả envelope `PageResponse<MealPlanResponse>` (chứa `content`, `page`, `size`, `totalElements`, `totalPages`, `first`, `last`).
+- Mọi item đều có `isFavorite: true`.
+
+#### GET `/ai/meal-plans/favorites/{id}`
+
+Lấy chi tiết một thực đơn yêu thích. Trả 404 nếu không nằm trong danh sách yêu thích của user.
+
+#### POST `/ai/meal-plans/{id}/update-from-health`
+
+Cập nhật thực đơn dựa trên chỉ số sức khỏe mới nhất (chiều cao, cân nặng, BMI):
+```json
+{
+  "confirm": false,
+  "changeSummary": "Cập nhật theo chỉ số BMI mới"
+}
+```
+- Nếu `confirm: false` (hoặc null): Trả về bản xem trước `UpdateFromHealthResponse` với `confirmed: false`, mục tiêu dinh dưỡng mới được tính toán (`recalculatedTarget`), và cấu trúc thực đơn đề xuất (`proposedPlan`). Không lưu DB và không tăng version.
+- Nếu `confirm: true`: Lưu trữ phiên bản hiện tại vào bảng `ai_meal_plan_versions`, tăng `version` trên thực đơn, cập nhật và lưu JSON thực đơn mới với các ràng buộc sở thích và dị ứng được bảo toàn.
+
+#### POST `/ai/meal-plans/{id}/edit` & POST `/ai/meal-plans/{id}/preview-edit`
+
+Chỉnh sửa thủ công thực đơn (thay món, thêm bữa, xóa bữa, đổi khẩu phần):
+```json
+{
+  "preview": false,
+  "changeSummary": "Thay thế bữa tối thứ Hai bằng canh chua và tăng khẩu phần lên 1.5",
+  "edits": [
+    {
+      "day": "MONDAY",
+      "mealType": "DINNER",
+      "action": "REPLACE",
+      "recipeId": 45,
+      "servingMultiplier": 1.5,
+      "note": "Canh chua chay thanh mát"
+    },
+    {
+      "day": "MONDAY",
+      "mealType": "SNACK",
+      "action": "ADD",
+      "recipeId": 12,
+      "servingMultiplier": 1.0,
+      "note": "Bữa phụ chiều"
+    }
+  ]
+}
+```
+- Hành động hỗ trợ: `REPLACE`, `ADD`, `REMOVE`, `UPDATE_SERVING`.
+- Tự động tính toán xác định lại dinh dưỡng Calo, Protein, Carbs, Fat cho từng bữa và tổng ngày (`nutritionTotals`).
+- Tự động kiểm tra và cập nhật `targetMet` và `targetDeviations` theo dung sai cho từng ngày.
+- Kiểm tra an toàn: Chỉ chấp nhận Recipe thuần chay (`isVegan = true`) và không chứa chất gây dị ứng của người dùng.
+- Hỗ trợ `preview: true` (hoặc gọi qua endpoint `/preview-edit`) để xem trước mà không ghi vào MySQL.
+- Khi lưu (`preview: false`), tự động lưu snapshot phiên bản cũ vào `ai_meal_plan_versions` và tăng `version`.
+
+#### GET `/ai/meal-plans/{id}/versions`
+
+Lấy lịch sử các phiên bản đã lưu của thực đơn (`List<MealPlanVersionResponse>`), sắp xếp từ mới nhất đến cũ nhất.
+
+#### GET `/ai/meal-plans/{id}/versions/{version}`
+
+Lấy chi tiết đầy đủ của một phiên bản cụ thể trong quá khứ.
+
+#### Hợp đồng dữ liệu dinh dưỡng FE (Nutrition Contract)
+- `plan.days[].targetMet`: boolean (`true` khi mọi chỉ số calo/protein/carbs/fat nằm trong biên độ dung sai 15%).
+- `plan.days[].targetDeviations`: Object ghi nhận độ lệch khi `targetMet == false`:
+  `targetDeviations.{calories|protein|carbohydrate|fat}.{actual, min, max}`.
+- `plan.days[].meals[].servingMultiplier`: Hệ số khẩu phần (mặc định 1.0 nếu không có).
+- `plan.days[].nutritionTotals`: `{calories, protein, carbohydrate, fat}`.
+
 ### 7.7 Video Processing API
 
 #### POST `/ai/videos/process`
