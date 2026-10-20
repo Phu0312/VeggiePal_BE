@@ -68,11 +68,38 @@ public class ModerationService {
     public List<ModerationResponse> pending() { return repository.findByDecisionOrderByCreatedAtAsc(Decision.REVIEW_REQUIRED.name()).stream().map(this::view).toList(); }
     @Transactional
     public ModerationResponse review(Long adminId, Long id, ReviewRequest request, String bearerToken) {
-        if (request.decision()==Decision.REVIEW_REQUIRED) throw new AppException(ErrorCode.INVALID_REQUEST);
-        ModerationCase item=repository.findForReview(id).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        if (request.decision() == Decision.REVIEW_REQUIRED) throw new AppException(ErrorCode.INVALID_REQUEST);
+        ModerationCase item = repository.findForReview(id).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         if (!item.isPending()) throw new AppException(ErrorCode.MODERATION_CASE_STALE);
-        ownerClient.apply(item.getContentType(), item.getExternalContentId(), item.getAuthorId(), request.decision(), bearerToken);
-        item.review(adminId,request.decision().name(),request.reason()); return view(item);
+
+        if (request.decision() == Decision.DISMISSED) {
+            item.review(adminId, Decision.DISMISSED.name(), request.reason() != null ? request.reason() : "Dismissed by admin");
+            return view(item);
+        }
+
+        try {
+            ownerClient.apply(item.getContentType(), item.getExternalContentId(), item.getAuthorId(), request.decision(), bearerToken);
+            item.review(adminId, request.decision().name(), request.reason());
+        } catch (AppException ex) {
+            if (ex.getErrorCode() == ErrorCode.MODERATION_TARGET_NOT_FOUND) {
+                // The target content was deleted in blog-service (404). Close and dismiss the orphan case
+                // so it leaves the queue instead of staying stuck in REVIEW_REQUIRED.
+                item.review(adminId, Decision.DISMISSED.name(),
+                        request.reason() != null ? request.reason() : "Target content no longer exists (404)");
+            } else {
+                // Transient failure (DOWNSTREAM_UNAVAILABLE) or other error: rethrow to rollback transaction so admin can retry
+                throw ex;
+            }
+        }
+        return view(item);
+    }
+
+    @Transactional
+    public ModerationResponse dismiss(Long adminId, Long id, String reason) {
+        ModerationCase item = repository.findForReview(id).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        if (!item.isPending()) throw new AppException(ErrorCode.MODERATION_CASE_STALE);
+        item.review(adminId, Decision.DISMISSED.name(), reason != null && !reason.isBlank() ? reason : "Dismissed by admin");
+        return view(item);
     }
     private ModerationResponse view(ModerationCase item) {
         List<String> categories=item.getCategories()==null||item.getCategories().isBlank()?List.of():List.of(item.getCategories().split(","));

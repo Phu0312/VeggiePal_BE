@@ -61,16 +61,18 @@ public class RecipeController {
     }
 
     @GetMapping("/{id}")
-    ApiResponse<RecipeResponse>
-    getRecipe(
+    ApiResponse<RecipeResponse> getRecipe(
+            @AuthenticationPrincipal Jwt jwt,
             @PathVariable Long id
     ) {
-
         return ApiResponse
                 .<RecipeResponse>builder()
                 .result(
-                        recipeService
-                                .getRecipe(id)
+                        recipeService.getRecipe(
+                                id,
+                                jwt == null ? null : CurrentUser.id(jwt),
+                                jwt != null && CurrentUser.isAdmin(jwt)
+                        )
                 )
                 .build();
     }

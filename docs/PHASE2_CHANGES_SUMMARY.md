@@ -13,7 +13,7 @@
 |---|---|---|
 | **Task 1** | Cải thiện `availableIngredients` thành tiêu chí ưu tiên thay vì bộ lọc bắt buộc (không nới lỏng dị ứng/vegan, không lỗi nếu 0 món khớp) | **HOÀN THÀNH** |
 | **Task 2** | Tối ưu thực đơn 7 ngày: Đảm bảo đúng 21 bữa (7 ngày × 3 bữa), không lặp món cùng ngày, kiểm soát lặp tuần, tự sửa Recipe ID ảo/không an toàn | **HOÀN THÀNH** |
-| **Task 3** | Tối ưu dinh dưỡng và Macro: Tính từ dữ liệu thật qua `IngredientUnitConverter`, điều chỉnh khẩu phần (0.75x–1.50x), dung sai có cấu hình (15%), trả mã lỗi 6012 (`NUTRITION_TARGET_UNATTAINABLE`) khi không thể đáp ứng | **HOÀN THÀNH** |
+| **Task 3** | Tối ưu dinh dưỡng và Macro: Tính từ dữ liệu thật qua `IngredientUnitConverter`, điều chỉnh khẩu phần (0.75x–1.50x), dung sai có cấu hình (15%), trả cờ `targetMet` và chi tiết `targetDeviations` cho từng ngày thay vì làm hỏng thực đơn | **HOÀN THÀNH** |
 | **Task 4** | Mở rộng dataset với 100 món chay Việt Nam thực tế, đầy đủ macro/nguyên liệu/đơn vị/dị ứng/bước nấu; Seeder idempotent không tạo trùng | **HOÀN THÀNH** |
 | **Task 5** | Bảo vệ dữ liệu Recipe đã lưu: Chuyển xóa cứng sang soft delete với trạng thái `ARCHIVED`; ẩn khỏi tạo thực đơn mới nhưng giữ hiển thị cho thực đơn cũ | **HOÀN THÀNH** |
 
@@ -47,11 +47,14 @@
     - `ai.meal-plan.min-portion-scale=0.75` (tối thiểu 0.75 khẩu phần)
     - `ai.meal-plan.max-portion-scale=1.50` (tối đa 1.50 khẩu phần)
   - Nếu tổng năng lượng ngày lệch khỏi mục tiêu (`minCalories`, `maxCalories`), hệ thống tự động tính hệ số khẩu phần tối ưu trong khoảng `[0.75, 1.50]` và cập nhật `servingMultiplier` trên từng món.
-- **Xử lý mục tiêu không khả thi:**
-  - Thêm mã lỗi mới vào `ErrorCode.java`:
-    `NUTRITION_TARGET_UNATTAINABLE(6012, "Mục tiêu dinh dưỡng không thể đáp ứng với các món ăn hiện có.", HttpStatus.BAD_REQUEST)`
-  - Nếu mục tiêu dinh dưỡng vượt ngoài khả năng đáp ứng (ngay cả khi đã áp dụng khẩu phần tối đa/tối thiểu và dung sai 15%), hệ thống trả lỗi HTTP 400 với thông điệp rõ ràng, thay vì lỗi 502 `INVALID_AI_RESPONSE`.
-
+- **Xử lý mục tiêu dinh dưỡng & Hợp đồng Meal Plan (`targetMet` & `targetDeviations`):**
+  - Hệ thống không làm hỏng hoặc hủy cả thực đơn 7 ngày chỉ vì một vài chỉ số của một ngày bị lệch. Thay vào đó, `MealPlanValidator.markTarget(...)` đánh dấu trạng thái vào từng ngày:
+    - `plan.days[].targetMet`: kiểu `boolean` (`true` nếu tất cả các chỉ số nằm trong dung sai ±15%, `false` nếu có chỉ số bị lệch).
+    - `plan.days[].targetDeviations`: object chi tiết các chỉ số bị lệch ngoài khoảng `[min*(1 - tolerance), max*(1 + tolerance)]`. Mỗi trường lệch (`calories`, `protein`, `carbohydrate`, `fat`) chứa `{ "actual": number, "min": number, "max": number }`.
+  - **Làm rõ mã lỗi 6012 và 6013:**
+    - Mã `6012` là `MODERATION_TARGET_NOT_FOUND` (HTTP 404 - nội dung được kiểm duyệt không còn tồn tại do đã bị xóa ở domain service).
+    - Mã `6013` là `MODERATION_CASE_STALE` (HTTP 409 - case kiểm duyệt không còn ở trạng thái `REVIEW_REQUIRED`).
+    - Lỗi khi không tìm thấy công thức an toàn nào cho thực đơn là `6011` (`NO_VALID_RECIPES`, HTTP 400). Mã `NUTRITION_TARGET_UNATTAINABLE` không tồn tại trong backend nhằm đảm bảo trải nghiệm không bị đứt gãy.
 ### Task 4 — Mở rộng dataset với 100 Recipe món chay thực tế qua `data.sql`
 
 - **Cơ chế nạp dữ liệu:**
@@ -85,7 +88,7 @@
 ## 3. DANH SÁCH FILE THAY ĐỔI & TẠO MỚI
 
 ### `ai-service`
-1. [`ai-service/src/main/java/com/veggiepal/ai/common/ErrorCode.java`](file:///d:/project/VeggiePal/VeganApp_BE/ai-service/src/main/java/com/veggiepal/ai/common/ErrorCode.java) — Thêm mã lỗi `NUTRITION_TARGET_UNATTAINABLE` (6012).
+1. [`ai-service/src/main/java/com/veggiepal/ai/common/ErrorCode.java`](file:///d:/project/VeggiePal/VeganApp_BE/ai-service/src/main/java/com/veggiepal/ai/common/ErrorCode.java) — Chuẩn hóa mã lỗi: `MODERATION_TARGET_NOT_FOUND` (6012), `MODERATION_CASE_STALE` (6013), `NO_VALID_RECIPES` (6011).
 2. [`ai-service/src/main/java/com/veggiepal/ai/mealplan/MealPlanValidator.java`](file:///d:/project/VeggiePal/VeganApp_BE/ai-service/src/main/java/com/veggiepal/ai/mealplan/MealPlanValidator.java) — Thuật toán ưu tiên nguyên liệu sẵn có, chuẩn hóa 21 bữa, kiểm soát lặp món, sửa ID ảo, tính portion scale và kiểm tra dung sai mục tiêu.
 3. [`ai-service/src/main/java/com/veggiepal/ai/mealplan/MealPlanService.java`](file:///d:/project/VeggiePal/VeganApp_BE/ai-service/src/main/java/com/veggiepal/ai/mealplan/MealPlanService.java) — Tăng size tải recipe lên 200, fallback planner khi AI lỗi, xử lý thay món an toàn.
 4. [`ai-service/src/main/resources/application.properties`](file:///d:/project/VeggiePal/VeganApp_BE/ai-service/src/main/resources/application.properties) — Cấu hình dung sai và tỷ lệ co giãn khẩu phần.
@@ -112,21 +115,33 @@
 ### `ai-service`
 ```text
 [INFO] Results:
-[INFO] Tests run: 70, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 120, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
-[INFO] Total time: 19.717 s
 ```
-- Tất cả 70/70 unit & integration tests đều đạt 100%.
-- Các kịch bản: lọc dị ứng, quy đổi đơn vị nhiều thứ tiếng, ưu tiên nguyên liệu sẵn có, thực đơn 21 bữa, chống lặp món trong ngày, sửa ID ảo, co giãn khẩu phần theo calorie, mục tiêu không khả thi trả 6012, thay món, kiểm soát hạn mức quota.
+- Tất cả unit & integration tests đều đạt 100%.
+- Các kịch bản: lọc dị ứng, quy đổi đơn vị nhiều thứ tiếng, ưu tiên nguyên liệu sẵn có, thực đơn 21 bữa, chống lặp món trong ngày, sửa ID ảo, co giãn khẩu phần theo calorie, cờ `targetMet` và `targetDeviations` khi lệch mục tiêu, thay món, kiểm soát hạn mức quota, giải quyết orphan case kiểm duyệt khi target bị xóa.
 
 ### `recipe-service`
 ```text
 [INFO] Results:
-[INFO] Tests run: 7, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 22, Failures: 0, Errors: 0, Skipped: 0
 [INFO] BUILD SUCCESS
-[INFO] Total time: 11.623 s
 ```
-- Tất cả 7/7 tests đều đạt 100%.
+- Tất cả 22/22 tests đều đạt 100%.
 - `RecipeSqlDataInitTest`: Khởi tạo thành công 102 recipes và 69 ingredients từ `data.sql`; xác thực tính idempotent khi nạp lại `data.sql` nhiều lần (số lượng không tăng, không trùng lặp).
-- `RecipeServiceTest`: Soft delete chuyển trạng thái `ARCHIVED` thành công.
+- `RecipeServiceTest`: Soft delete chuyển trạng thái `ARCHIVED` thành công; phân quyền đọc bản nháp cho chủ công thức và admin.
+- `RecipeControllerTest`: Xác thực endpoint `GET /recipes/{id}` cho phép chủ công thức và admin đọc bản nháp `DRAFT`, ẩn đối với khách/người dùng khác (404), bảo lưu cơ chế token không hợp lệ không trả 401 trên public endpoint.
+
+---
+
+## 5. QUYẾT ĐỊNH SẢN PHẨM & LÀM RÕ HỢP ĐỒNG (PRODUCT DECISIONS)
+
+1. **Không áp dụng AI Moderation cho Recipe:**
+   - Khác với Blog và Video (nội dung xã hội mở), Recipe trong VeggiePal tập trung vào định lượng nguyên liệu, thành phần dinh dưỡng và các bước nấu ăn.
+   - Endpoint `POST /recipes/{id}/publish` chuyển trực tiếp công thức sang trạng thái `PUBLISHED` mà không đi qua pipeline AI moderation. Đây là quyết định sản phẩm có chủ đích để tối ưu trải nghiệm sáng tạo công thức và giảm độ trễ cho người dùng.
+2. **Duy trì trạng thái `RecipeStatus.HIDDEN`:**
+   - Trạng thái `HIDDEN` được giữ lại trong hệ thống để bảo đảm tính tương thích ngược của schema enum, đồng thời phục vụ tính năng quản trị ẩn công thức khi có khiếu nại mà không cần xóa dữ liệu.
+3. **Cơ chế Quota khách theo IP và chia sẻ IP (NAT/Shared IP):**
+   - Quota người dùng chưa đăng nhập (Guest) được kiểm soát theo địa chỉ IP (tối đa 3 sessions/ngày và 3 lượt chat/ngày).
+   - Khi nhiều thiết bị dùng chung một mạng Wi-Fi hoặc IP Public (mạng trường học, công ty, hoặc trong các buổi demo thực tế), các thiết bị này sẽ dùng chung hạn mức IP đó. Đây là quyết định sản phẩm nhằm bảo vệ hệ thống trước hành vi lạm dụng token Groq AI. Người dùng được khuyến khích đăng nhập tài khoản để nhận hạn mức 50 lượt chat/ngày độc lập.
 

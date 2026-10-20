@@ -77,6 +77,86 @@ class ModerationServiceTest {
         assertEquals("new reason", response.reason());
     }
 
+    @Test
+    void deletedTarget404ClosesOrphanCaseInsteadOfStayingReviewRequired() {
+        ModerationRepository repository = mock(ModerationRepository.class);
+        ModerationOwnerClient owner = mock(ModerationOwnerClient.class);
+        ModerationCase item = new ModerationCase("BLOG", 42L, 7L, "deleted content", "REVIEW_REQUIRED", "spam",
+                "needs review", new BigDecimal("0.7"));
+        when(repository.findForReview(10L)).thenReturn(Optional.of(item));
+
+        // When blog-service returns 404, ownerClient throws MODERATION_TARGET_NOT_FOUND
+        org.mockito.Mockito.doThrow(new AppException(ErrorCode.MODERATION_TARGET_NOT_FOUND))
+                .when(owner).apply("BLOG", 42L, 7L, Decision.APPROVED, "admin-token");
+
+        ModerationService service = service(repository, mock(GroqClient.class), owner);
+
+        var response = service.review(1L, 10L, new ReviewRequest(Decision.APPROVED, "approve attempt"), "admin-token");
+
+        assertEquals(Decision.DISMISSED, response.decision());
+        assertEquals(false, item.isPending(), "Orphan case must not remain pending");
+        assertEquals(1L, item.getReviewedBy());
+        org.junit.jupiter.api.Assertions.assertNotNull(item.getReviewedAt());
+    }
+
+    @Test
+    void transientDownstreamFailurePreservesRetryAndDoesNotDismissCase() {
+        ModerationRepository repository = mock(ModerationRepository.class);
+        ModerationOwnerClient owner = mock(ModerationOwnerClient.class);
+        ModerationCase item = new ModerationCase("BLOG", 42L, 7L, "content", "REVIEW_REQUIRED", "spam",
+                "needs review", new BigDecimal("0.7"));
+        when(repository.findForReview(10L)).thenReturn(Optional.of(item));
+
+        // When blog-service has transient error, ownerClient throws DOWNSTREAM_UNAVAILABLE
+        org.mockito.Mockito.doThrow(new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE))
+                .when(owner).apply("BLOG", 42L, 7L, Decision.APPROVED, "admin-token");
+
+        ModerationService service = service(repository, mock(GroqClient.class), owner);
+
+        AppException ex = assertThrows(AppException.class, () ->
+                service.review(1L, 10L, new ReviewRequest(Decision.APPROVED, "approve attempt"), "admin-token"));
+
+        assertEquals(ErrorCode.DOWNSTREAM_UNAVAILABLE, ex.getErrorCode());
+        assertEquals(true, item.isPending(), "Transient failure must preserve pending state for retry");
+        org.junit.jupiter.api.Assertions.assertNull(item.getReviewedAt());
+    }
+
+    @Test
+    void adminCanExplicitlyDismissOrphanCase() {
+        ModerationRepository repository = mock(ModerationRepository.class);
+        ModerationOwnerClient owner = mock(ModerationOwnerClient.class);
+        ModerationCase item = new ModerationCase("BLOG", 42L, 7L, "orphan content", "REVIEW_REQUIRED", "spam",
+                "needs review", new BigDecimal("0.7"));
+        when(repository.findForReview(10L)).thenReturn(Optional.of(item));
+
+        ModerationService service = service(repository, mock(GroqClient.class), owner);
+
+        var response = service.dismiss(1L, 10L, "Orphan case dismissal");
+
+        assertEquals(Decision.DISMISSED, response.decision());
+        assertEquals(false, item.isPending());
+        assertEquals(1L, item.getReviewedBy());
+        org.mockito.Mockito.verifyNoInteractions(owner);
+    }
+
+    @Test
+    void adminCanSubmitDismissDecisionInReviewRequest() {
+        ModerationRepository repository = mock(ModerationRepository.class);
+        ModerationOwnerClient owner = mock(ModerationOwnerClient.class);
+        ModerationCase item = new ModerationCase("BLOG", 42L, 7L, "orphan content", "REVIEW_REQUIRED", "spam",
+                "needs review", new BigDecimal("0.7"));
+        when(repository.findForReview(10L)).thenReturn(Optional.of(item));
+
+        ModerationService service = service(repository, mock(GroqClient.class), owner);
+
+        var response = service.review(1L, 10L, new ReviewRequest(Decision.DISMISSED, "Manual dismiss"), "admin-token");
+
+        assertEquals(Decision.DISMISSED, response.decision());
+        assertEquals(false, item.isPending());
+        assertEquals(1L, item.getReviewedBy());
+        org.mockito.Mockito.verifyNoInteractions(owner);
+    }
+
     private ModerationService service(ModerationRepository repository, GroqClient groq, ModerationOwnerClient owner) {
         return new ModerationService(repository, groq,
                 new ModelProperties("c", "m", "r", "p", "v", "w"), new ObjectMapper(),

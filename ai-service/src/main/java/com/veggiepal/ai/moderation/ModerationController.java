@@ -22,4 +22,8 @@ public class ModerationController {
             @PathVariable Long id,@RequestBody @Valid ReviewRequest request) {
         return ApiResponse.success(service.review(CurrentUser.id(jwt),id,request,jwt.getTokenValue()));
     }
+    @DeleteMapping("/ai/admin/moderation/{id}") ApiResponse<ModerationResponse> dismiss(@AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id, @RequestParam(required = false) String reason) {
+        return ApiResponse.success(service.dismiss(CurrentUser.id(jwt), id, reason));
+    }
 }

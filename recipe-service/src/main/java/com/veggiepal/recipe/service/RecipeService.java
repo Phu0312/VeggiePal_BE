@@ -154,11 +154,21 @@ public class RecipeService {
     public RecipeResponse getRecipe(
             Long id
     ) {
+        return getRecipe(id, null, false);
+    }
 
+    @Transactional(readOnly = true)
+    public RecipeResponse getRecipe(
+            Long id,
+            Long requesterId,
+            boolean admin
+    ) {
         Recipe recipe = findById(id);
 
         if (recipe.getStatus() == RecipeStatus.DRAFT || recipe.getStatus() == RecipeStatus.HIDDEN) {
-            throw new AppException(ErrorCode.RECIPE_NOT_EXISTED);
+            if (requesterId == null || (!admin && !recipe.getUserId().equals(requesterId))) {
+                throw new AppException(ErrorCode.RECIPE_NOT_EXISTED);
+            }
         }
 
         return recipeMapper
