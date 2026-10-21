@@ -223,6 +223,7 @@ public class MealPlanService {
         favoriteRepository.delete(favorite);
     }
 
+    @Transactional(readOnly = true)
     public PageResponse<MealPlanResponse> listFavorites(Long userId, int page, int size) {
         if (favoriteRepository == null) {
             return PageResponse.<MealPlanResponse>builder()
@@ -247,6 +248,7 @@ public class MealPlanService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
     public MealPlanResponse getFavoriteDetail(Long userId, Long mealPlanId) {
         if (favoriteRepository == null) throw new AppException(ErrorCode.FAVORITE_NOT_FOUND);
         MealPlanFavorite favorite = favoriteRepository.findByUserIdAndMealPlanId(userId, mealPlanId)
@@ -509,6 +511,7 @@ public class MealPlanService {
         return new MealPlanEditResponse(false, "Chỉnh sửa thực đơn thành công", mapper.convertValue(root, Object.class), view(entity));
     }
 
+    @Transactional(readOnly = true)
     public List<MealPlanVersionResponse> listVersions(Long userId, Long mealPlanId) {
         owned(userId, mealPlanId);
         if (versionRepository == null) return List.of();
@@ -517,6 +520,7 @@ public class MealPlanService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public MealPlanVersionResponse getVersion(Long userId, Long mealPlanId, Integer version) {
         owned(userId, mealPlanId);
         if (versionRepository == null) throw new AppException(ErrorCode.VERSION_NOT_FOUND);
