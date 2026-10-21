@@ -13,6 +13,7 @@ import com.veggiepal.ai.common.PageResponse;
 import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -75,7 +76,8 @@ class MealPlanUpgradeServiceTest {
                 usage,
                 validator,
                 favoriteRepository,
-                versionRepository
+                versionRepository,
+                mock(PremiumQuotaService.class)
         );
     }
 

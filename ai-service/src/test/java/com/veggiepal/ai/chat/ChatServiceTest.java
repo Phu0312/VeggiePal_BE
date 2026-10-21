@@ -9,6 +9,7 @@ import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.monitoring.UsageService;
 import com.veggiepal.ai.quota.QuotaProperties;
 import com.veggiepal.ai.quota.QuotaService;
+import com.veggiepal.ai.quota.PremiumQuotaService;
 import org.junit.jupiter.api.Test;
 
 class ChatServiceTest {
@@ -21,7 +22,7 @@ class ChatServiceTest {
         when(guestSessions.requireValid("abcdefghijklmnop", "203.0.113.10"))
                 .thenReturn(new GuestSession("abcdefghijklmnop", "ip-hash", java.time.LocalDateTime.now(), java.time.LocalDateTime.now().plusHours(1)));
         ChatService service=new ChatService(mock(ChatConversationRepository.class),mock(ChatMessageRepository.class),quota,
-                new QuotaProperties(3,50,12,4000),groq,new ModelProperties("chat-model","m","r","p","v","w"),usage,
+                mock(PremiumQuotaService.class),new QuotaProperties(3,50,12,4000),groq,new ModelProperties("chat-model","m","r","p","v","w"),usage,
                 guestSessions, mock(ChatPersistenceService.class));
         var result=service.guest("abcdefghijklmnop","  protein?  ", "203.0.113.10");
         assertEquals("answer",result.answer());assertEquals(2,result.remainingRequests());assertEquals(10,result.promptTokens());

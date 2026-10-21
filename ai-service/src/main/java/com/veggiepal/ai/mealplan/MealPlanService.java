@@ -14,6 +14,7 @@ import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.groq.dto.GroqRequest;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
@@ -46,6 +47,7 @@ public class MealPlanService {
     private final MealPlanValidator validator;
     private final MealPlanFavoriteRepository favoriteRepository;
     private final MealPlanVersionRepository versionRepository;
+    private final PremiumQuotaService premiumQuota;
 
     @Autowired
     public MealPlanService(MealPlanRepository repository,
@@ -55,7 +57,8 @@ public class MealPlanService {
             GroqClient groq, ModelProperties models, ObjectMapper mapper, UsageService usage,
             MealPlanValidator validator,
             MealPlanFavoriteRepository favoriteRepository,
-            MealPlanVersionRepository versionRepository) {
+            MealPlanVersionRepository versionRepository,
+            PremiumQuotaService premiumQuota) {
         this.repository = repository;
         this.http = http;
         this.recipeUrl = recipeUrl;
@@ -67,6 +70,7 @@ public class MealPlanService {
         this.validator = validator;
         this.favoriteRepository = favoriteRepository;
         this.versionRepository = versionRepository;
+        this.premiumQuota = premiumQuota;
     }
 
     public MealPlanService(MealPlanRepository repository,
@@ -74,11 +78,12 @@ public class MealPlanService {
             String recipeUrl,
             String nutritionUrl,
             GroqClient groq, ModelProperties models, ObjectMapper mapper, UsageService usage,
-            MealPlanValidator validator) {
-        this(repository, http, recipeUrl, nutritionUrl, groq, models, mapper, usage, validator, null, null);
+            MealPlanValidator validator, PremiumQuotaService premiumQuota) {
+        this(repository, http, recipeUrl, nutritionUrl, groq, models, mapper, usage, validator, null, null, premiumQuota);
     }
 
     public MealPlanResponse generate(Long userId, String jwt, GenerateRequest request) {
+        premiumQuota.reserveMealPlan(userId);
         validator.validateTarget(request.dailyNutritionTarget());
         JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));

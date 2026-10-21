@@ -35,6 +35,19 @@ public class QuotaService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public int reserveFeature(String principalKey, String feature, QuotaPeriod period, int limit) {
+        checkTokenBudget(principalKey);
+        LocalDate today = LocalDate.now();
+        LocalDate periodDate = period == QuotaPeriod.MONTHLY ? today.withDayOfMonth(1) : today;
+        repository.ensureExists(principalKey, feature, periodDate);
+        DailyQuota quota = repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, periodDate)
+                .orElseThrow();
+        if (limit <= 0 || quota.getRequestCount() >= limit) throw new AppException(ErrorCode.QUOTA_EXCEEDED);
+        quota.reserve();
+        return limit - quota.getRequestCount();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void addTokens(String principalKey, String feature, int input, int output) {
         repository.ensureExists(principalKey, feature, LocalDate.now());
         DailyQuota quota = repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, LocalDate.now())
