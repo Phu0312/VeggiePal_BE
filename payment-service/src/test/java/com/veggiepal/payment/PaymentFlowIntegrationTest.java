@@ -52,19 +52,34 @@ class PaymentFlowIntegrationTest {
     @Test
     void checkoutDerivesUserFromJwtAndUsesCatalogPrice() throws Exception {
         when(payOs.createPaymentLink(anyLong(), eq(29_000L), eq("VeggiePal PLUS"), any(), any()))
-                .thenReturn(new PaymentLinkResult("new-link", "https://pay.test/new-link"));
+                .thenReturn(new PaymentLinkResult("new-link", "https://pay.test/new-link", "0002010102123854VIETQR"));
 
         mvc.perform(post("/payments/checkout")
                         .with(jwt().jwt(token -> token.claim("userId", 55L).claim("role", "USER")))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"planCode\":\"PLUS\"}"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.id").isNumber())
+                .andExpect(jsonPath("$.result.orderId").isNumber())
+                .andExpect(jsonPath("$.result.orderCode").isNumber())
+                .andExpect(jsonPath("$.result.planCode").value("PLUS"))
                 .andExpect(jsonPath("$.result.amount").value(29000))
-                .andExpect(jsonPath("$.result.checkoutUrl").value("https://pay.test/new-link"));
+                .andExpect(jsonPath("$.result.status").value("PENDING"))
+                .andExpect(jsonPath("$.result.checkoutUrl").value("https://pay.test/new-link"))
+                .andExpect(jsonPath("$.result.qrCode").value("0002010102123854VIETQR"));
 
         PaymentOrder saved = orders.findAllByUserIdOrderByCreatedAtDesc(55L).getFirst();
         assertThat(saved.getAmount()).isEqualTo(29_000L);
         assertThat(saved.getUserId()).isEqualTo(55L);
+
+        mvc.perform(get("/payments/orders/{id}", saved.getId())
+                        .with(jwt().jwt(token -> token.claim("userId", 55L).claim("role", "USER"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.id").value(saved.getId()))
+                .andExpect(jsonPath("$.result.orderCode").value(saved.getOrderCode()))
+                .andExpect(jsonPath("$.result.status").value("PENDING"))
+                .andExpect(jsonPath("$.result.checkoutUrl").value("https://pay.test/new-link"))
+                .andExpect(jsonPath("$.result.qrCode").isEmpty());
     }
 
     @Test

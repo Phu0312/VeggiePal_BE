@@ -38,12 +38,28 @@ class PaymentServiceTest {
         when(orders.save(any())).thenAnswer(i -> { PaymentOrder o = i.getArgument(0); o.setId(9L); return o; });
         when(payOs.createPaymentLink(123L, 29_000L, "VeggiePal PLUS",
                 "https://app.test/success", "https://app.test/cancel"))
-                .thenReturn(new PaymentLinkResult("link-1", "https://pay.payos.vn/link-1"));
+                .thenReturn(new PaymentLinkResult("link-1", "https://pay.payos.vn/link-1", "0002010102123854VIETQR"));
 
         var result = service.checkout(7L, PlanCode.PLUS);
 
         assertThat(result.amount()).isEqualTo(29_000);
         assertThat(result.status()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(result.checkoutUrl()).isEqualTo("https://pay.payos.vn/link-1");
+        assertThat(result.qrCode()).isEqualTo("0002010102123854VIETQR");
+    }
+
+    @Test
+    void checkout_missingQrCodeRetainsCheckoutUrlFallback() {
+        SubscriptionPlan plus = plan(1L, PlanCode.PLUS, 29_000);
+        when(plans.findByCodeAndActiveTrue(PlanCode.PLUS)).thenReturn(Optional.of(plus));
+        when(codes.next()).thenReturn(123L);
+        when(orders.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(payOs.createPaymentLink(anyLong(), anyLong(), anyString(), anyString(), anyString()))
+                .thenReturn(new PaymentLinkResult("link-1", "https://pay.payos.vn/link-1", null));
+
+        var result = service.checkout(7L, PlanCode.PLUS);
+
+        assertThat(result.qrCode()).isNull();
         assertThat(result.checkoutUrl()).isEqualTo("https://pay.payos.vn/link-1");
     }
 
