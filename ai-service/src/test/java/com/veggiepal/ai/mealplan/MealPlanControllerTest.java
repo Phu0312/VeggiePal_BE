@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -41,7 +42,7 @@ class MealPlanControllerTest {
                 .thenReturn(List.of(new MealPlan(7L, "Tuần này", "Ăn lành mạnh", planJson)));
         MealPlanService service = new MealPlanService(repository, mock(RestClient.class), "http://recipe",
                 "http://nutrition", mock(GroqClient.class), new ModelProperties("c", "m", "r", "p", "v", "w"),
-                mapper, mock(UsageService.class), new MealPlanValidator(mapper));
+                mapper, mock(UsageService.class), new MealPlanValidator(mapper), mock(PremiumQuotaService.class));
         MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new MealPlanController(service))
                 .setCustomArgumentResolvers(new AuthenticationPrincipalArgumentResolver()).build();
         SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(Jwt.withTokenValue("token")

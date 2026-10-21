@@ -29,4 +29,18 @@ class QuotaServiceTest {
         assertThrows(AppException.class,()->service.reserveChat("user:1",false));
         verify(repository,never()).findByPrincipalKeyAndFeatureAndUsageDate(anyString(),anyString(),any());
     }
+
+    @Test
+    void monthlyFeatureQuotaRejectsAfterConfiguredLimit() {
+        DailyQuotaRepository repository = mock(DailyQuotaRepository.class);
+        DailyQuota row = new DailyQuota("user:1", "MEAL_PLAN", java.time.LocalDate.now().withDayOfMonth(1));
+        when(repository.totalTokens(anyString(), any())).thenReturn(0L);
+        when(repository.findByPrincipalKeyAndFeatureAndUsageDate(anyString(), anyString(), any())).thenReturn(Optional.of(row));
+        QuotaService service = new QuotaService(repository, new QuotaProperties(3, 50, 12, 4000), new TokenProperties(50000));
+
+        service.reserveFeature("user:1", "MEAL_PLAN", QuotaPeriod.MONTHLY, 2);
+        service.reserveFeature("user:1", "MEAL_PLAN", QuotaPeriod.MONTHLY, 2);
+        assertThrows(AppException.class,
+                () -> service.reserveFeature("user:1", "MEAL_PLAN", QuotaPeriod.MONTHLY, 2));
+    }
 }

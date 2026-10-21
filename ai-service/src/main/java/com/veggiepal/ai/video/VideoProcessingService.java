@@ -12,6 +12,7 @@ import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.groq.dto.GroqRequest;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.quota.PremiumQuotaService;
 import com.veggiepal.ai.video.VideoDtos.VideoJobResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -19,16 +20,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class VideoProcessingService {
-    private final VideoJobRepository repository;private final GroqClient groq;private final ModelProperties models;private final ObjectMapper mapper;private final UsageService usage;
+    private final VideoJobRepository repository;private final GroqClient groq;private final ModelProperties models;private final ObjectMapper mapper;private final UsageService usage;private final PremiumQuotaService premiumQuota;
     private final String ffmpeg;private final String ffprobe;private final long maxBytes;private final long maxDurationSeconds;
-    public VideoProcessingService(VideoJobRepository repository,GroqClient groq,ModelProperties models,ObjectMapper mapper,UsageService usage,
+    public VideoProcessingService(VideoJobRepository repository,GroqClient groq,ModelProperties models,ObjectMapper mapper,UsageService usage,PremiumQuotaService premiumQuota,
             @Value("${ai.video.ffmpeg-path}")String ffmpeg,@Value("${ai.video.ffprobe-path:ffprobe}")String ffprobe,
             @Value("${ai.video.max-file-bytes}")long maxBytes,@Value("${ai.video.max-duration-seconds:1800}")long maxDurationSeconds){
-        this.repository=repository;this.groq=groq;this.models=models;this.mapper=mapper;this.usage=usage;this.ffmpeg=ffmpeg;this.ffprobe=ffprobe;
+        this.repository=repository;this.groq=groq;this.models=models;this.mapper=mapper;this.usage=usage;this.premiumQuota=premiumQuota;this.ffmpeg=ffmpeg;this.ffprobe=ffprobe;
         this.maxBytes=maxBytes;this.maxDurationSeconds=maxDurationSeconds;}
     public VideoJobResponse process(Long userId,MultipartFile file){
         if(file.isEmpty()||file.getContentType()==null||!file.getContentType().toLowerCase().startsWith("video/"))throw new AppException(ErrorCode.INVALID_REQUEST);
         if(file.getSize()>maxBytes)throw new AppException(ErrorCode.FILE_TOO_LARGE);
+        premiumQuota.reserveVideo(userId);
         VideoJob job=repository.save(new VideoJob(userId,safeName(file.getOriginalFilename())));Path video=null,audio=null;
         try{video=Files.createTempFile("veggiepal-video-",".upload");audio=Files.createTempFile("veggiepal-audio-",".mp3");file.transferTo(video);validateDuration(video);
             Process process=new ProcessBuilder(ffmpeg,"-y","-loglevel","error","-i",video.toString(),"-vn","-acodec","libmp3lame","-ar","16000","-ac","1",audio.toString()).redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.DISCARD).start();

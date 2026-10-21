@@ -45,6 +45,26 @@ services:
     depends_on:
       - mysql
 
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: veggiepal-payment
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: ${DB_USERNAME:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-12345}
+      JWT_SECRET: ${JWT_SECRET:-veggiepal-secret-key-must-be-at-least-32-characters}
+    depends_on:
+      - mysql
+
 
 
 volumes:

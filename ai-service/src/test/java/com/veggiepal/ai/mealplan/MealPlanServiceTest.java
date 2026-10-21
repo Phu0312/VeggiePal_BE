@@ -19,6 +19,7 @@ import com.veggiepal.ai.common.ErrorCode;
 import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -70,7 +71,8 @@ class MealPlanServiceTest {
                 models,
                 mapper,
                 usage,
-                validator
+                validator,
+                mock(PremiumQuotaService.class)
         );
     }
 
