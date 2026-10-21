@@ -46,7 +46,7 @@ public class PaymentService {
                     "VeggiePal " + plan.getCode(), returnUrl, cancelUrl);
             order.setPaymentLinkId(link.paymentLinkId());
             order.setCheckoutUrl(link.checkoutUrl());
-            return response(orders.save(order));
+            return response(orders.save(order), link.qrCode());
         } catch (PayOsOperationException exception) {
             throw new AppException(ErrorCode.PAYOS_UNAVAILABLE);
         }
@@ -94,7 +94,11 @@ public class PaymentService {
     }
 
     private static PaymentOrderResponse response(PaymentOrder o) {
+        return response(o, null);
+    }
+
+    private static PaymentOrderResponse response(PaymentOrder o, String qrCode) {
         return new PaymentOrderResponse(o.getId(), o.getOrderCode(), o.getPlan().getCode(), o.getAmount(),
-                o.getStatus(), o.getCheckoutUrl(), o.getCreatedAt(), o.getPaidAt());
+                o.getStatus(), o.getCheckoutUrl(), qrCode, o.getCreatedAt(), o.getPaidAt());
     }
 }

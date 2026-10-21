@@ -28,7 +28,7 @@ public class PayOsSdkAdapter implements PayOsGateway {
             var response = payOS.paymentRequests().create(CreatePaymentLinkRequest.builder()
                     .orderCode(orderCode).amount(amount).description(description)
                     .returnUrl(returnUrl).cancelUrl(cancelUrl).build());
-            return new PaymentLinkResult(response.getPaymentLinkId(), response.getCheckoutUrl());
+            return new PaymentLinkResult(response.getPaymentLinkId(), response.getCheckoutUrl(), response.getQrCode());
         } catch (PayOSException | IllegalArgumentException exception) {
             throw new PayOsOperationException(exception);
         } finally {
