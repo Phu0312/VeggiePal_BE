@@ -20,7 +20,8 @@ public class SecurityConfig {
             PathPatternRequestMatcher.withDefaults().matcher("/swagger-ui.html"),
             PathPatternRequestMatcher.withDefaults().matcher("/v3/api-docs/**"),
             PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/payments/plans"),
-            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/payments/webhook/payos")
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/payments/webhook/payos"),
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/internal/subscriptions/{userId}")
     );
 
     @Bean

@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.veggiepal.ai.common.AppException;
@@ -12,6 +13,7 @@ import com.veggiepal.ai.common.ErrorCode;
 import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,7 @@ class VideoProcessingServiceTest {
     private ModelProperties models;
     private ObjectMapper mapper;
     private UsageService usage;
+    private PremiumQuotaService premiumQuota;
     private VideoProcessingService service;
 
     @BeforeEach
@@ -33,12 +36,14 @@ class VideoProcessingServiceTest {
         models = new ModelProperties("c", "m", "r", "p", "v", "w");
         mapper = new ObjectMapper();
         usage = mock(UsageService.class);
+        premiumQuota = mock(PremiumQuotaService.class);
         service = new VideoProcessingService(
                 repository,
                 groq,
                 models,
                 mapper,
                 usage,
+                premiumQuota,
                 "ffmpeg",
                 "ffprobe",
                 50_000_000L,
@@ -65,7 +70,7 @@ class VideoProcessingServiceTest {
     @Test
     void processThrowsFileTooLargeWhenFileSizeExceedsLimit() {
         VideoProcessingService strictService = new VideoProcessingService(
-                repository, groq, models, mapper, usage, "ffmpeg", "ffprobe", 10L, 1800L
+                repository, groq, models, mapper, usage, mock(PremiumQuotaService.class), "ffmpeg", "ffprobe", 10L, 1800L
         );
         MockMultipartFile file = new MockMultipartFile("file", "large.mp4", "video/mp4", new byte[100]);
 
@@ -106,5 +111,16 @@ class VideoProcessingServiceTest {
         var written = json.readTree(json.writeValueAsString(service.get(1L, 10L)));
 
         assertEquals("Vegan Soup", written.path("extraction").path("title").asString());
+    }
+
+    @Test
+    void quotaIsCheckedBeforeCreatingJobOrCallingAiTools() {
+        MockMultipartFile file = new MockMultipartFile("file", "test.mp4", "video/mp4", new byte[] {1});
+        when(premiumQuota.reserveVideo(1L)).thenThrow(new AppException(ErrorCode.QUOTA_EXCEEDED));
+
+        AppException exception = assertThrows(AppException.class, () -> service.process(1L, file));
+
+        assertEquals(ErrorCode.QUOTA_EXCEEDED, exception.getErrorCode());
+        verifyNoInteractions(repository, groq, usage);
     }
 }

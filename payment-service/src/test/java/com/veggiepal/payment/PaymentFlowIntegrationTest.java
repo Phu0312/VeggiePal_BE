@@ -116,4 +116,18 @@ class PaymentFlowIntegrationTest {
         assertThat(orders.count()).isZero();
         assertThat(subscriptions.count()).isZero();
     }
+
+    @Test
+    void internalSubscriptionRequiresServiceTokenAndReturnsEffectivePlan() throws Exception {
+        mvc.perform(get("/internal/subscriptions/77"))
+                .andExpect(status().isUnauthorized());
+
+        mvc.perform(get("/internal/subscriptions/77")
+                        .header("X-Internal-Service-Token", "test-internal-service-token-at-least-32-characters"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.planCode").value("FREE"))
+                .andExpect(jsonPath("$.result.chatPerDay").value(5))
+                .andExpect(jsonPath("$.result.mealPlansPerMonth").value(2))
+                .andExpect(jsonPath("$.result.videosPerMonth").value(0));
+    }
 }

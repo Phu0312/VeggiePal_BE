@@ -12,6 +12,7 @@ import com.veggiepal.ai.groq.dto.GroqRequest;
 import com.veggiepal.ai.monitoring.UsageService;
 import com.veggiepal.ai.quota.QuotaProperties;
 import com.veggiepal.ai.quota.QuotaService;
+import com.veggiepal.ai.quota.PremiumQuotaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class ChatService {
     private final ChatConversationRepository conversations;
     private final ChatMessageRepository messages;
     private final QuotaService quota;
+    private final PremiumQuotaService premiumQuota;
     private final QuotaProperties quotaProperties;
     private final GroqClient groq;
     private final ModelProperties models;
@@ -47,7 +49,7 @@ public class ChatService {
 
     public ChatReply member(Long userId, ChatRequest request) {
         String principal = "user:" + userId;
-        int remaining = quota.reserveChat(principal, false);
+        int remaining = premiumQuota.reserveChat(userId);
         ChatConversation conversation = request.conversationId() == null
                 ? conversations.save(new ChatConversation(userId, title(request.message())))
                 : conversations.findByIdAndUserId(request.conversationId(), userId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
