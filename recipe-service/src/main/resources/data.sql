@@ -1,6 +1,18 @@
 -- ============================================================
 -- VEGGIEPAL RECIPE SERVICE - SAMPLE DATA
 -- ============================================================
+-- Chạy mỗi lần khởi động; mọi câu lệnh chạy lại nhiều lần vẫn ra cùng kết quả.
+-- Mỗi nguyên liệu có đúng một trạng thái (sống / khô / tươi / chín), ghi trong description,
+-- và dòng nguyên liệu của món trỏ tới nguyên liệu đúng trạng thái lúc cân.
+-- Chỉ dùng cú pháp mà cả MySQL và H2 (test của recipe-service, MODE=MySQL) chạy được.
+-- Thêm mới: INSERT ... WHERE NOT EXISTS.
+-- Sửa nguyên liệu có sẵn: câu INSERT ... WHERE NOT EXISTS của nó mang giá trị mới,
+--   ngay sau là UPDATE ingredients SET ... WHERE normalized_name = '...'.
+-- Sửa khối lượng/note dòng có sẵn: câu INSERT của dòng mang giá trị mới, ngay sau là
+--   UPDATE recipe_ingredients SET ... WHERE recipe_id IN (SELECT ...) AND ingredient_id = (SELECT ...).
+-- Bỏ một dòng: DELETE ... WHERE recipe_id IN (SELECT ...) AND ingredient_id = (SELECT ...)
+--   trong mục 6. DATA FIXES (không dùng DELETE ... JOIN).
+-- Số liệu đối chiếu: docs/nutrition-audit/2026-10-21-recipe-nutrition-audit.md
 
 
 -- ============================================================
@@ -26,7 +38,7 @@ INSERT INTO ingredients
 SELECT
     'Đậu hũ',
     'dau hu',
-    'Đậu hũ làm từ đậu nành',
+    'Đậu hũ trắng làm từ đậu nành, tươi (chưa chiên)',
     76,
     8.1,
     1.9,
@@ -42,6 +54,9 @@ SELECT
     FROM ingredients
     WHERE normalized_name = 'dau hu'
 );
+UPDATE ingredients
+SET description = 'Đậu hũ trắng làm từ đậu nành, tươi (chưa chiên)', calories_per_100g = 76, protein_per_100g = 8.1, carbs_per_100g = 1.9, fat_per_100g = 4.8, fiber_per_100g = 0.3
+WHERE normalized_name = 'dau hu';
 
 
 INSERT INTO ingredients
@@ -63,7 +78,7 @@ INSERT INTO ingredients
 SELECT
     'Gạo lứt',
     'gao lut',
-    'Gạo lứt nguyên cám',
+    'Gạo lứt nguyên cám, sống (chưa nấu)',
     370,
     7.9,
     77.2,
@@ -79,6 +94,9 @@ SELECT
     FROM ingredients
     WHERE normalized_name = 'gao lut'
 );
+UPDATE ingredients
+SET description = 'Gạo lứt nguyên cám, sống (chưa nấu)', calories_per_100g = 370, protein_per_100g = 7.9, carbs_per_100g = 77.2, fat_per_100g = 2.9, fiber_per_100g = 3.5
+WHERE normalized_name = 'gao lut';
 
 
 INSERT INTO ingredients
@@ -137,7 +155,7 @@ INSERT INTO ingredients
 SELECT
     'Bông cải xanh',
     'bong cai xanh',
-    'Bông cải xanh giàu chất xơ',
+    'Bông cải xanh tươi giàu chất xơ',
     34,
     2.8,
     6.6,
@@ -153,6 +171,9 @@ SELECT
     FROM ingredients
     WHERE normalized_name = 'bong cai xanh'
 );
+UPDATE ingredients
+SET description = 'Bông cải xanh tươi giàu chất xơ', calories_per_100g = 34, protein_per_100g = 2.8, carbs_per_100g = 6.6, fat_per_100g = 0.4, fiber_per_100g = 2.6
+WHERE normalized_name = 'bong cai xanh';
 
 
 INSERT INTO ingredients
@@ -211,7 +232,7 @@ INSERT INTO ingredients
 SELECT
     'Đậu gà',
     'dau ga',
-    'Đậu gà giàu protein thực vật',
+    'Đậu gà đã luộc chín, giàu protein thực vật',
     164,
     8.9,
     27.4,
@@ -227,6 +248,9 @@ SELECT
     FROM ingredients
     WHERE normalized_name = 'dau ga'
 );
+UPDATE ingredients
+SET description = 'Đậu gà đã luộc chín, giàu protein thực vật', calories_per_100g = 164, protein_per_100g = 8.9, carbs_per_100g = 27.4, fat_per_100g = 2.6, fiber_per_100g = 7.6
+WHERE normalized_name = 'dau ga';
 
 
 INSERT INTO ingredients
@@ -248,7 +272,7 @@ INSERT INTO ingredients
 SELECT
     'Bơ',
     'bo',
-    'Quả bơ giàu chất béo không bão hòa',
+    'Quả bơ tươi giàu chất béo không bão hòa',
     160,
     2.0,
     8.5,
@@ -264,6 +288,9 @@ SELECT
     FROM ingredients
     WHERE normalized_name = 'bo'
 );
+UPDATE ingredients
+SET description = 'Quả bơ tươi giàu chất béo không bão hòa', calories_per_100g = 160, protein_per_100g = 2.0, carbs_per_100g = 8.5, fat_per_100g = 14.7, fiber_per_100g = 6.7
+WHERE normalized_name = 'bo';
 
 
 INSERT INTO ingredients
@@ -285,7 +312,7 @@ INSERT INTO ingredients
 SELECT
     'Rau chân vịt',
     'rau chan vit',
-    'Rau chân vịt giàu vitamin và khoáng chất',
+    'Rau chân vịt tươi giàu vitamin và khoáng chất',
     23,
     2.9,
     3.6,
@@ -301,6 +328,9 @@ SELECT
     FROM ingredients
     WHERE normalized_name = 'rau chan vit'
 );
+UPDATE ingredients
+SET description = 'Rau chân vịt tươi giàu vitamin và khoáng chất', calories_per_100g = 23, protein_per_100g = 2.9, carbs_per_100g = 3.6, fat_per_100g = 0.4, fiber_per_100g = 2.2
+WHERE normalized_name = 'rau chan vit';
 
 
 -- ============================================================
@@ -474,6 +504,9 @@ WHERE r.title = 'Cơm gạo lứt đậu hũ'
     WHERE ri.recipe_id = r.id
       AND ri.ingredient_id = i.id
 );
+
+
+-- Dầu thực vật 15g: ở đầu mục 5 (cần 'dau an' của mục 4)
 
 
 -- ============================================================
@@ -813,80 +846,134 @@ WHERE r.title = 'Salad đậu gà và bơ'
 -- ============================================================
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Gạo thơm', 'gao thom', 'Gạo thơm hạt dài dẻo ngọt', 130, 2.7, 28.2, 0.3, 0.4, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Gạo thơm', 'gao thom', 'Gạo thơm hạt dài, sống (chưa nấu)', 365, 7.1, 80.0, 0.7, 1.3, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'gao thom');
+UPDATE ingredients
+SET description = 'Gạo thơm hạt dài, sống (chưa nấu)', calories_per_100g = 365, protein_per_100g = 7.1, carbs_per_100g = 80.0, fat_per_100g = 0.7, fiber_per_100g = 1.3
+WHERE normalized_name = 'gao thom';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Bún tươi', 'bun tuoi', 'Bún sợi tươi làm từ gạo', 110, 1.7, 25.7, 0.2, 0.5, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Bún tươi', 'bun tuoi', 'Bún sợi tươi làm từ gạo, đã chín (dùng ngay)', 108, 1.8, 24.0, 0.2, 1.0, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'bun tuoi');
+UPDATE ingredients
+SET description = 'Bún sợi tươi làm từ gạo, đã chín (dùng ngay)', calories_per_100g = 108, protein_per_100g = 1.8, carbs_per_100g = 24.0, fat_per_100g = 0.2, fiber_per_100g = 1.0
+WHERE normalized_name = 'bun tuoi';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Bánh phở', 'banh pho', 'Bánh phở tươi mềm dai', 123, 2.2, 27.5, 0.3, 0.4, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Bánh phở', 'banh pho', 'Bánh phở tươi mềm dai, đã chín (dùng ngay)', 108, 1.8, 24.0, 0.2, 1.0, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'banh pho');
+UPDATE ingredients
+SET description = 'Bánh phở tươi mềm dai, đã chín (dùng ngay)', calories_per_100g = 108, protein_per_100g = 1.8, carbs_per_100g = 24.0, fat_per_100g = 0.2, fiber_per_100g = 1.0
+WHERE normalized_name = 'banh pho';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Bánh mì lúa mì', 'banh mi', 'Bánh mì Việt Nam vỏ giòn ruột mềm', 265, 9, 49, 3.2, 2.7, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Bánh mì lúa mì', 'banh mi', 'Bánh mì ổ Việt Nam vỏ giòn ruột mềm (thành phẩm đã nướng)', 272, 10.8, 51.9, 2.4, 2.2, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'banh mi');
+UPDATE ingredients
+SET description = 'Bánh mì ổ Việt Nam vỏ giòn ruột mềm (thành phẩm đã nướng)', calories_per_100g = 272, protein_per_100g = 10.8, carbs_per_100g = 51.9, fat_per_100g = 2.4, fiber_per_100g = 2.2
+WHERE normalized_name = 'banh mi';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Hủ tiếu', 'hu tieu', 'Sợi hủ tiếu dai ngon', 135, 1.5, 31, 0.2, 0.3, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Hủ tiếu', 'hu tieu', 'Sợi hủ tiếu tươi dai ngon, đã chín (dùng ngay)', 108, 1.8, 24.0, 0.2, 1.0, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'hu tieu');
+UPDATE ingredients
+SET description = 'Sợi hủ tiếu tươi dai ngon, đã chín (dùng ngay)', calories_per_100g = 108, protein_per_100g = 1.8, carbs_per_100g = 24.0, fat_per_100g = 0.2, fiber_per_100g = 1.0
+WHERE normalized_name = 'hu tieu';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Miến dong', 'mien dong', 'Miến dong nguyên chất dai giòn', 140, 0.7, 34, 0.1, 0.5, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Miến dong', 'mien dong', 'Miến dong nguyên chất, khô (chưa ngâm)', 351, 0.2, 86.1, 0.1, 0.5, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'mien dong');
+UPDATE ingredients
+SET description = 'Miến dong nguyên chất, khô (chưa ngâm)', calories_per_100g = 351, protein_per_100g = 0.2, carbs_per_100g = 86.1, fat_per_100g = 0.1, fiber_per_100g = 0.5
+WHERE normalized_name = 'mien dong';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Mì sợi lúa mì', 'mi soi', 'Mì sợi chay làm từ bột mì', 138, 4.5, 28, 1.1, 1.2, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Mì sợi lúa mì', 'mi soi', 'Mì sợi chay làm từ bột mì, không trứng, khô (chưa nấu)', 356, 11.4, 74.1, 0.8, 4.3, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'mi soi');
+UPDATE ingredients
+SET description = 'Mì sợi chay làm từ bột mì, không trứng, khô (chưa nấu)', calories_per_100g = 356, protein_per_100g = 11.4, carbs_per_100g = 74.1, fat_per_100g = 0.8, fiber_per_100g = 4.3
+WHERE normalized_name = 'mi soi';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Nui gạo', 'nui', 'Nui gạo luộc mềm', 131, 2.5, 29, 0.3, 0.6, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Nui gạo', 'nui', 'Nui gạo, khô (chưa luộc)', 364, 6.0, 80.2, 0.6, 1.6, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nui');
+UPDATE ingredients
+SET description = 'Nui gạo, khô (chưa luộc)', calories_per_100g = 364, protein_per_100g = 6.0, carbs_per_100g = 80.2, fat_per_100g = 0.6, fiber_per_100g = 1.6
+WHERE normalized_name = 'nui';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Gạo nếp', 'gao nep', 'Gạo nếp cái hoa vàng dẻo thơm', 140, 3, 31.5, 0.3, 0.8, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Gạo nếp', 'gao nep', 'Gạo nếp cái hoa vàng dẻo thơm, sống (chưa nấu)', 370, 6.8, 81.7, 0.6, 2.8, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'gao nep');
+UPDATE ingredients
+SET description = 'Gạo nếp cái hoa vàng dẻo thơm, sống (chưa nấu)', calories_per_100g = 370, protein_per_100g = 6.8, carbs_per_100g = 81.7, fat_per_100g = 0.6, fiber_per_100g = 2.8
+WHERE normalized_name = 'gao nep';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Yến mạch', 'yen mach', 'Yến mạch nguyên cám giàu xơ', 389, 16.9, 66.3, 6.9, 10.6, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Yến mạch', 'yen mach', 'Yến mạch cán nguyên cám giàu xơ, khô (chưa nấu)', 389, 16.9, 66.3, 6.9, 10.6, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'yen mach');
+UPDATE ingredients
+SET description = 'Yến mạch cán nguyên cám giàu xơ, khô (chưa nấu)', calories_per_100g = 389, protein_per_100g = 16.9, carbs_per_100g = 66.3, fat_per_100g = 6.9, fiber_per_100g = 10.6
+WHERE normalized_name = 'yen mach';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Đậu hũ non', 'dau hu non', 'Đậu hũ non mịn mềm từ đậu nành', 55, 5.5, 1.5, 3, 0.2, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Đậu hũ non', 'dau hu non', 'Đậu hũ non mịn mềm từ đậu nành, tươi', 61, 7.2, 1.2, 3.7, 0.2, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau hu non');
+UPDATE ingredients
+SET description = 'Đậu hũ non mịn mềm từ đậu nành, tươi', calories_per_100g = 61, protein_per_100g = 7.2, carbs_per_100g = 1.2, fat_per_100g = 3.7, fiber_per_100g = 0.2
+WHERE normalized_name = 'dau hu non';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Tàu hũ ky đậu nành', 'tau hu ky', 'Váng đậu nành chiên giòn hoặc nấu canh', 400, 45, 15, 20, 2, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Tàu hũ ky đậu nành', 'tau hu ky', 'Váng đậu nành (tàu hũ ky) khô, chiên giòn hoặc nấu canh', 400, 45.0, 15.0, 20.0, 2.0, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'tau hu ky');
+UPDATE ingredients
+SET description = 'Váng đậu nành (tàu hũ ky) khô, chiên giòn hoặc nấu canh', calories_per_100g = 400, protein_per_100g = 45.0, carbs_per_100g = 15.0, fat_per_100g = 20.0, fiber_per_100g = 2.0
+WHERE normalized_name = 'tau hu ky';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Đậu lăng đỏ', 'dau lang do', 'Đậu lăng đỏ giàu đạm thực vật', 116, 9, 20.1, 0.4, 7.9, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Đậu lăng đỏ', 'dau lang do', 'Đậu lăng đỏ hạt khô (chưa nấu)', 358, 23.9, 63.1, 2.2, 10.8, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau lang do');
+UPDATE ingredients
+SET description = 'Đậu lăng đỏ hạt khô (chưa nấu)', calories_per_100g = 358, protein_per_100g = 23.9, carbs_per_100g = 63.1, fat_per_100g = 2.2, fiber_per_100g = 10.8
+WHERE normalized_name = 'dau lang do';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Đậu xanh', 'dau xanh', 'Đậu xanh cà vỏ thanh nhiệt', 105, 7, 19, 0.4, 7.6, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Đậu xanh', 'dau xanh', 'Đậu xanh cà vỏ hạt khô (chưa nấu)', 347, 23.9, 62.6, 1.2, 16.3, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau xanh');
+UPDATE ingredients
+SET description = 'Đậu xanh cà vỏ hạt khô (chưa nấu)', calories_per_100g = 347, protein_per_100g = 23.9, carbs_per_100g = 62.6, fat_per_100g = 1.2, fiber_per_100g = 16.3
+WHERE normalized_name = 'dau xanh';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Đậu đỏ', 'dau do', 'Đậu đỏ bùi thơm', 128, 7.5, 22.8, 0.5, 7.3, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Đậu đỏ', 'dau do', 'Đậu đỏ (đậu adzuki) đã ninh chín, bùi thơm', 128, 7.5, 24.8, 0.1, 7.3, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau do');
+UPDATE ingredients
+SET description = 'Đậu đỏ (đậu adzuki) đã ninh chín, bùi thơm', calories_per_100g = 128, protein_per_100g = 7.5, carbs_per_100g = 24.8, fat_per_100g = 0.1, fiber_per_100g = 7.3
+WHERE normalized_name = 'dau do';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Đậu phộng rang', 'dau phong', 'Lạc đậu phộng rang thơm', 567, 25.8, 16.1, 49.2, 8.5, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Đậu phộng', 'dau phong', 'Đậu phộng (lạc) nhân sống, chưa rang', 567, 25.8, 16.1, 49.2, 8.5, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau phong');
+UPDATE ingredients
+SET name = 'Đậu phộng', description = 'Đậu phộng (lạc) nhân sống, chưa rang', calories_per_100g = 567, protein_per_100g = 25.8, carbs_per_100g = 16.1, fat_per_100g = 49.2, fiber_per_100g = 8.5
+WHERE normalized_name = 'dau phong';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Đậu que', 'dau que', 'Đậu cô ve giòn ngọt', 31, 1.8, 7, 0.2, 2.7, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Đậu que', 'dau que', 'Đậu que (đậu cô ve) tươi giòn ngọt', 31, 1.8, 7.0, 0.2, 2.7, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau que');
+UPDATE ingredients
+SET description = 'Đậu que (đậu cô ve) tươi giòn ngọt', calories_per_100g = 31, protein_per_100g = 1.8, carbs_per_100g = 7.0, fat_per_100g = 0.2, fiber_per_100g = 2.7
+WHERE normalized_name = 'dau que';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
 SELECT 'Đậu Hà Lan', 'dau ha lan', 'Đậu Hà Lan ngọt tươi', 81, 5.4, 14.5, 0.4, 5.7, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau ha lan');
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Hạt điều', 'hat dieu', 'Hạt điều bùi béo giàu dinh dưỡng', 553, 18.2, 30.2, 43.8, 3.3, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Hạt điều', 'hat dieu', 'Hạt điều nhân sống (chưa rang), bùi béo', 553, 18.2, 30.2, 43.8, 3.3, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'hat dieu');
+UPDATE ingredients
+SET description = 'Hạt điều nhân sống (chưa rang), bùi béo', calories_per_100g = 553, protein_per_100g = 18.2, carbs_per_100g = 30.2, fat_per_100g = 43.8, fiber_per_100g = 3.3
+WHERE normalized_name = 'hat dieu';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
 SELECT 'Hạt sen tươi', 'hat sen', 'Hạt sen tươi thanh mát bổ dưỡng', 89, 4.1, 17.3, 0.5, 2.5, TRUE, FALSE, TRUE, NOW(), NOW()
@@ -897,169 +984,363 @@ SELECT 'Nấm rơm', 'nam rom', 'Nấm rơm tươi ngọt nước', 31, 3.8, 3.2
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nam rom');
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Nấm đùi gà', 'nam dui ga', 'Nấm đùi gà dày thịt dai ngon', 35, 3.3, 5, 0.8, 2.3, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Nấm đùi gà', 'nam dui ga', 'Nấm đùi gà tươi dày thịt dai ngon', 35, 3.3, 5.0, 0.8, 2.3, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nam dui ga');
+UPDATE ingredients
+SET description = 'Nấm đùi gà tươi dày thịt dai ngon', calories_per_100g = 35, protein_per_100g = 3.3, carbs_per_100g = 5.0, fat_per_100g = 0.8, fiber_per_100g = 2.3
+WHERE normalized_name = 'nam dui ga';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Nấm đông cô', 'nam dong co', 'Nấm đông cô thơm đậm đà', 34, 2.2, 6.8, 0.5, 2.5, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Nấm đông cô', 'nam dong co', 'Nấm đông cô (nấm hương) tươi thơm đậm đà', 34, 2.2, 6.8, 0.5, 2.5, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nam dong co');
+UPDATE ingredients
+SET description = 'Nấm đông cô (nấm hương) tươi thơm đậm đà', calories_per_100g = 34, protein_per_100g = 2.2, carbs_per_100g = 6.8, fat_per_100g = 0.5, fiber_per_100g = 2.5
+WHERE normalized_name = 'nam dong co';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Nấm bào ngư', 'nam bao ngu', 'Nấm bào ngư xám mềm ngọt', 33, 3.3, 6.1, 0.4, 2.3, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Nấm bào ngư', 'nam bao ngu', 'Nấm bào ngư xám tươi mềm ngọt', 33, 3.3, 6.1, 0.4, 2.3, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nam bao ngu');
+UPDATE ingredients
+SET description = 'Nấm bào ngư xám tươi mềm ngọt', calories_per_100g = 33, protein_per_100g = 3.3, carbs_per_100g = 6.1, fat_per_100g = 0.4, fiber_per_100g = 2.3
+WHERE normalized_name = 'nam bao ngu';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Nấm kim châm', 'nam kim cham', 'Nấm kim châm giòn ngọt', 37, 2.7, 7.8, 0.3, 2.7, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Nấm kim châm', 'nam kim cham', 'Nấm kim châm tươi giòn ngọt', 37, 2.7, 7.8, 0.3, 2.7, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nam kim cham');
+UPDATE ingredients
+SET description = 'Nấm kim châm tươi giòn ngọt', calories_per_100g = 37, protein_per_100g = 2.7, carbs_per_100g = 7.8, fat_per_100g = 0.3, fiber_per_100g = 2.7
+WHERE normalized_name = 'nam kim cham';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Nấm mèo mộc nhĩ', 'nam meo', 'Mộc nhĩ nấm mèo giòn giòn', 25, 0.5, 7, 0.1, 5, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Nấm mèo mộc nhĩ', 'nam meo', 'Mộc nhĩ (nấm mèo) tươi, giòn', 25, 0.5, 7.0, 0.1, 5.0, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nam meo');
+UPDATE ingredients
+SET description = 'Mộc nhĩ (nấm mèo) tươi, giòn', calories_per_100g = 25, protein_per_100g = 0.5, carbs_per_100g = 7.0, fat_per_100g = 0.1, fiber_per_100g = 5.0
+WHERE normalized_name = 'nam meo';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Cà tím', 'ca tim', 'Cà tím mềm ngọt', 25, 1, 5.9, 0.2, 3, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Cà tím', 'ca tim', 'Cà tím tươi mềm ngọt', 25, 1.0, 5.9, 0.2, 3.0, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'ca tim');
+UPDATE ingredients
+SET description = 'Cà tím tươi mềm ngọt', calories_per_100g = 25, protein_per_100g = 1.0, carbs_per_100g = 5.9, fat_per_100g = 0.2, fiber_per_100g = 3.0
+WHERE normalized_name = 'ca tim';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Bắp ngô ngọt', 'bap ngot', 'Bắp ngọt tươi', 86, 3.2, 19, 1.2, 2.7, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Bắp ngô ngọt', 'bap ngot', 'Bắp ngọt tươi', 86, 3.3, 18.7, 1.4, 2.0, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'bap ngot');
+UPDATE ingredients
+SET description = 'Bắp ngọt tươi', calories_per_100g = 86, protein_per_100g = 3.3, carbs_per_100g = 18.7, fat_per_100g = 1.4, fiber_per_100g = 2.0
+WHERE normalized_name = 'bap ngot';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
 SELECT 'Bắp cải trắng', 'bap cai', 'Bắp cải tươi giòn', 25, 1.3, 5.8, 0.1, 2.5, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'bap cai');
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Bắp cải tím', 'bap cai tim', 'Bắp cải tím giàu chất chống oxy hóa', 31, 1.4, 7.4, 0.2, 2.1, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Bắp cải tím', 'bap cai tim', 'Bắp cải tím tươi giàu chất chống oxy hóa', 31, 1.4, 7.4, 0.2, 2.1, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'bap cai tim');
+UPDATE ingredients
+SET description = 'Bắp cải tím tươi giàu chất chống oxy hóa', calories_per_100g = 31, protein_per_100g = 1.4, carbs_per_100g = 7.4, fat_per_100g = 0.2, fiber_per_100g = 2.1
+WHERE normalized_name = 'bap cai tim';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Bí đỏ', 'bi do', 'Bí đỏ ngọt bùi', 26, 1, 6.5, 0.1, 0.5, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Bí đỏ', 'bi do', 'Bí đỏ tươi ngọt bùi', 26, 1.0, 6.5, 0.1, 0.5, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'bi do');
+UPDATE ingredients
+SET description = 'Bí đỏ tươi ngọt bùi', calories_per_100g = 26, protein_per_100g = 1.0, carbs_per_100g = 6.5, fat_per_100g = 0.1, fiber_per_100g = 0.5
+WHERE normalized_name = 'bi do';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Khoai tây', 'khoai tay', 'Khoai tây củ bùi béo', 77, 2, 17.5, 0.1, 2.2, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Khoai tây', 'khoai tay', 'Khoai tây củ tươi bùi béo', 77, 2.0, 17.5, 0.1, 2.2, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'khoai tay');
+UPDATE ingredients
+SET description = 'Khoai tây củ tươi bùi béo', calories_per_100g = 77, protein_per_100g = 2.0, carbs_per_100g = 17.5, fat_per_100g = 0.1, fiber_per_100g = 2.2
+WHERE normalized_name = 'khoai tay';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Khoai lang', 'khoai lang', 'Khoai lang ngọt dẻo', 86, 1.6, 20.1, 0.1, 3, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Khoai lang', 'khoai lang', 'Khoai lang củ tươi ngọt dẻo', 86, 1.6, 20.1, 0.1, 3.0, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'khoai lang');
+UPDATE ingredients
+SET description = 'Khoai lang củ tươi ngọt dẻo', calories_per_100g = 86, protein_per_100g = 1.6, carbs_per_100g = 20.1, fat_per_100g = 0.1, fiber_per_100g = 3.0
+WHERE normalized_name = 'khoai lang';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Củ cải trắng', 'cu cai trang', 'Củ cải trắng thanh mát', 18, 0.7, 4.1, 0.1, 1.6, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Củ cải trắng', 'cu cai trang', 'Củ cải trắng tươi thanh mát', 18, 0.7, 4.1, 0.1, 1.6, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'cu cai trang');
+UPDATE ingredients
+SET description = 'Củ cải trắng tươi thanh mát', calories_per_100g = 18, protein_per_100g = 0.7, carbs_per_100g = 4.1, fat_per_100g = 0.1, fiber_per_100g = 1.6
+WHERE normalized_name = 'cu cai trang';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Củ sen', 'cu sen', 'Củ sen giòn ngọt bổ máu', 74, 2.6, 17.2, 0.1, 4.9, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Củ sen', 'cu sen', 'Củ sen tươi giòn ngọt bổ máu', 74, 2.6, 17.2, 0.1, 4.9, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'cu sen');
+UPDATE ingredients
+SET description = 'Củ sen tươi giòn ngọt bổ máu', calories_per_100g = 74, protein_per_100g = 2.6, carbs_per_100g = 17.2, fat_per_100g = 0.1, fiber_per_100g = 4.9
+WHERE normalized_name = 'cu sen';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Khổ qua', 'kho qua', 'Khổ qua mướp đắng mát gan', 17, 1, 3.7, 0.2, 2.8, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Khổ qua', 'kho qua', 'Khổ qua (mướp đắng) tươi mát gan', 17, 1.0, 3.7, 0.2, 2.8, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'kho qua');
+UPDATE ingredients
+SET description = 'Khổ qua (mướp đắng) tươi mát gan', calories_per_100g = 17, protein_per_100g = 1.0, carbs_per_100g = 3.7, fat_per_100g = 0.2, fiber_per_100g = 2.8
+WHERE normalized_name = 'kho qua';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Mướp hương', 'muop huong', 'Mướp hương thơm mát', 16, 0.9, 3.5, 0.1, 1.1, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Mướp hương', 'muop huong', 'Mướp hương tươi thơm mát', 20, 1.2, 4.4, 0.2, 1.1, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'muop huong');
+UPDATE ingredients
+SET description = 'Mướp hương tươi thơm mát', calories_per_100g = 20, protein_per_100g = 1.2, carbs_per_100g = 4.4, fat_per_100g = 0.2, fiber_per_100g = 1.1
+WHERE normalized_name = 'muop huong';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Rau muống', 'rau muong', 'Rau muống giòn ngọt', 19, 3, 2.1, 0.2, 1, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Rau muống', 'rau muong', 'Rau muống tươi giòn ngọt', 19, 2.6, 3.1, 0.2, 2.1, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'rau muong');
+UPDATE ingredients
+SET description = 'Rau muống tươi giòn ngọt', calories_per_100g = 19, protein_per_100g = 2.6, carbs_per_100g = 3.1, fat_per_100g = 0.2, fiber_per_100g = 2.1
+WHERE normalized_name = 'rau muong';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Rau ngót', 'rau ngot', 'Rau ngót mát lành', 35, 5.3, 3.4, 0.5, 2.5, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Rau ngót', 'rau ngot', 'Rau ngót tươi mát lành', 35, 5.3, 3.4, 0.5, 2.5, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'rau ngot');
+UPDATE ingredients
+SET description = 'Rau ngót tươi mát lành', calories_per_100g = 35, protein_per_100g = 5.3, carbs_per_100g = 3.4, fat_per_100g = 0.5, fiber_per_100g = 2.5
+WHERE normalized_name = 'rau ngot';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Rau mồng tơi', 'rau mong toi', 'Rau mồng tơi tươi mát', 14, 1.4, 2.5, 0.2, 1.5, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Rau mồng tơi', 'rau mong toi', 'Rau mồng tơi tươi mát', 19, 1.8, 3.4, 0.3, 1.5, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'rau mong toi');
+UPDATE ingredients
+SET description = 'Rau mồng tơi tươi mát', calories_per_100g = 19, protein_per_100g = 1.8, carbs_per_100g = 3.4, fat_per_100g = 0.3, fiber_per_100g = 1.5
+WHERE normalized_name = 'rau mong toi';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Cải thìa', 'cai thia', 'Cải thìa giòn ngọt', 13, 1.5, 2.2, 0.2, 1, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Cải thìa', 'cai thia', 'Cải thìa tươi giòn ngọt', 13, 1.5, 2.2, 0.2, 1.0, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'cai thia');
+UPDATE ingredients
+SET description = 'Cải thìa tươi giòn ngọt', calories_per_100g = 13, protein_per_100g = 1.5, carbs_per_100g = 2.2, fat_per_100g = 0.2, fiber_per_100g = 1.0
+WHERE normalized_name = 'cai thia';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Cải bẹ xanh', 'cai be xanh', 'Cải bẹ xanh cay nồng ấm bụng', 27, 2.7, 4.7, 0.4, 3.2, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Cải bẹ xanh', 'cai be xanh', 'Cải bẹ xanh tươi cay nồng ấm bụng', 27, 2.7, 4.7, 0.4, 3.2, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'cai be xanh');
+UPDATE ingredients
+SET description = 'Cải bẹ xanh tươi cay nồng ấm bụng', calories_per_100g = 27, protein_per_100g = 2.7, carbs_per_100g = 4.7, fat_per_100g = 0.4, fiber_per_100g = 3.2
+WHERE normalized_name = 'cai be xanh';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
 SELECT 'Dọc mùng bạc hà', 'doc mung', 'Dọc mùng tươi giòn cho canh chua', 14, 0.5, 3, 0.1, 1.5, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'doc mung');
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Quả thơm dứa', 'thom', 'Thơm dứa chua ngọt đậm đà', 50, 0.5, 13.1, 0.1, 1.4, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Quả thơm dứa', 'thom', 'Thơm (dứa) tươi chua ngọt đậm đà', 50, 0.5, 13.1, 0.1, 1.4, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'thom');
+UPDATE ingredients
+SET description = 'Thơm (dứa) tươi chua ngọt đậm đà', calories_per_100g = 50, protein_per_100g = 0.5, carbs_per_100g = 13.1, fat_per_100g = 0.1, fiber_per_100g = 1.4
+WHERE normalized_name = 'thom';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Bắp chuối', 'bap chuoi', 'Bắp chuối bào giòn thơm', 23, 1.5, 4, 0.3, 2.5, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Bắp chuối', 'bap chuoi', 'Bắp chuối tươi bào giòn thơm', 23, 1.5, 4.0, 0.3, 2.5, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'bap chuoi');
+UPDATE ingredients
+SET description = 'Bắp chuối tươi bào giòn thơm', calories_per_100g = 23, protein_per_100g = 1.5, carbs_per_100g = 4.0, fat_per_100g = 0.3, fiber_per_100g = 2.5
+WHERE normalized_name = 'bap chuoi';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Ngó sen', 'ngo sen', 'Ngó sen giòn ngọt làm gỏi', 30, 1.2, 6, 0.1, 2, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Ngó sen', 'ngo sen', 'Ngó sen tươi giòn ngọt làm gỏi', 30, 1.2, 6.0, 0.1, 2.0, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'ngo sen');
+UPDATE ingredients
+SET description = 'Ngó sen tươi giòn ngọt làm gỏi', calories_per_100g = 30, protein_per_100g = 1.2, carbs_per_100g = 6.0, fat_per_100g = 0.1, fiber_per_100g = 2.0
+WHERE normalized_name = 'ngo sen';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Củ hũ dừa', 'cu hu dua', 'Củ hũ dừa trắng giòn', 36, 1.8, 6.5, 0.4, 2.3, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Củ hũ dừa', 'cu hu dua', 'Củ hũ dừa tươi trắng giòn', 36, 1.8, 6.5, 0.4, 2.3, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'cu hu dua');
+UPDATE ingredients
+SET description = 'Củ hũ dừa tươi trắng giòn', calories_per_100g = 36, protein_per_100g = 1.8, carbs_per_100g = 6.5, fat_per_100g = 0.4, fiber_per_100g = 2.3
+WHERE normalized_name = 'cu hu dua';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Mít non', 'mit non', 'Mít non kho hoặc xào', 40, 1.5, 8.5, 0.2, 3.5, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Mít non', 'mit non', 'Mít non tươi, dùng kho hoặc xào', 40, 1.5, 8.5, 0.2, 3.5, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'mit non');
+UPDATE ingredients
+SET description = 'Mít non tươi, dùng kho hoặc xào', calories_per_100g = 40, protein_per_100g = 1.5, carbs_per_100g = 8.5, fat_per_100g = 0.2, fiber_per_100g = 3.5
+WHERE normalized_name = 'mit non';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
 SELECT 'Dưa leo', 'dua leo', 'Dưa leo tươi giòn', 15, 0.7, 3.6, 0.1, 0.5, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dua leo');
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Ớt chuông', 'ot chuong', 'Ớt chuông đỏ vàng giòn ngọt', 26, 1, 6, 0.3, 2.1, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Ớt chuông', 'ot chuong', 'Ớt chuông đỏ vàng tươi giòn ngọt', 26, 1.0, 6.0, 0.3, 2.1, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'ot chuong');
+UPDATE ingredients
+SET description = 'Ớt chuông đỏ vàng tươi giòn ngọt', calories_per_100g = 26, protein_per_100g = 1.0, carbs_per_100g = 6.0, fat_per_100g = 0.3, fiber_per_100g = 2.1
+WHERE normalized_name = 'ot chuong';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Cần tây', 'can tay', 'Cần tây thơm giòn', 16, 0.7, 3, 0.2, 1.6, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Cần tây', 'can tay', 'Cần tây tươi thơm giòn', 14, 0.7, 3.0, 0.2, 1.6, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'can tay');
+UPDATE ingredients
+SET description = 'Cần tây tươi thơm giòn', calories_per_100g = 14, protein_per_100g = 0.7, carbs_per_100g = 3.0, fat_per_100g = 0.2, fiber_per_100g = 1.6
+WHERE normalized_name = 'can tay';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Rong biển', 'rong bien', 'Rong biển nấu canh bổ dưỡng', 45, 3, 9.1, 0.6, 0.5, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Rong biển', 'rong bien', 'Rong biển khô (lá nori, rong khô ngâm nở)', 259, 15.3, 46.2, 1.4, 36.7, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'rong bien');
+UPDATE ingredients
+SET description = 'Rong biển khô (lá nori, rong khô ngâm nở)', calories_per_100g = 259, protein_per_100g = 15.3, carbs_per_100g = 46.2, fat_per_100g = 1.4, fiber_per_100g = 36.7
+WHERE normalized_name = 'rong bien';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Hành boa-rô', 'hanh paro', 'Hành poa-rô thơm dịu cho món chay', 32, 1.5, 7, 0.3, 1.8, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Hành boa-rô', 'hanh paro', 'Hành boa-rô (tỏi tây) tươi thơm dịu cho món chay', 61, 1.5, 14.2, 0.3, 1.8, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'hanh paro');
+UPDATE ingredients
+SET description = 'Hành boa-rô (tỏi tây) tươi thơm dịu cho món chay', calories_per_100g = 61, protein_per_100g = 1.5, carbs_per_100g = 14.2, fat_per_100g = 0.3, fiber_per_100g = 1.8
+WHERE normalized_name = 'hanh paro';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Hành tây', 'hanh tay', 'Hành tây củ ngọt dịu', 40, 1.1, 9.3, 0.1, 1.7, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Hành tây', 'hanh tay', 'Hành tây củ tươi ngọt dịu', 40, 1.1, 9.3, 0.1, 1.7, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'hanh tay');
+UPDATE ingredients
+SET description = 'Hành tây củ tươi ngọt dịu', calories_per_100g = 40, protein_per_100g = 1.1, carbs_per_100g = 9.3, fat_per_100g = 0.1, fiber_per_100g = 1.7
+WHERE normalized_name = 'hanh tay';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Gừng tươi', 'gung', 'Gừng già cay ấm', 80, 1.8, 17.8, 0.8, 2, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Gừng tươi', 'gung', 'Gừng tươi (gừng già) cay ấm', 80, 1.8, 17.8, 0.8, 2.0, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'gung');
+UPDATE ingredients
+SET description = 'Gừng tươi (gừng già) cay ấm', calories_per_100g = 80, protein_per_100g = 1.8, carbs_per_100g = 17.8, fat_per_100g = 0.8, fiber_per_100g = 2.0
+WHERE normalized_name = 'gung';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Sả cây', 'sa cay', 'Sả cây băm nhuyễn thơm nồng', 99, 1.8, 25, 0.5, 3, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Sả cây', 'sa cay', 'Sả cây tươi băm nhuyễn thơm nồng', 99, 1.8, 25.0, 0.5, 3.0, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'sa cay');
+UPDATE ingredients
+SET description = 'Sả cây tươi băm nhuyễn thơm nồng', calories_per_100g = 99, protein_per_100g = 1.8, carbs_per_100g = 25.0, fat_per_100g = 0.5, fiber_per_100g = 3.0
+WHERE normalized_name = 'sa cay';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
 SELECT 'Ớt tươi', 'ot', 'Ớt tươi cay nồng', 40, 1.9, 8.8, 0.4, 1.5, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'ot');
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Hạt mè vừng', 'me', 'Mè trắng rang thơm', 573, 17.7, 23.4, 49.7, 11.8, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Hạt mè vừng', 'me', 'Mè (vừng) trắng hạt khô, chưa rang', 573, 17.7, 23.4, 49.7, 11.8, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'me');
+UPDATE ingredients
+SET description = 'Mè (vừng) trắng hạt khô, chưa rang', calories_per_100g = 573, protein_per_100g = 17.7, carbs_per_100g = 23.4, fat_per_100g = 49.7, fiber_per_100g = 11.8
+WHERE normalized_name = 'me';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Nước cốt dừa', 'nuoc cot dua', 'Nước cốt dừa béo ngậy nguyên chất', 197, 2, 2.8, 21.3, 0, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Nước cốt dừa', 'nuoc cot dua', 'Nước cốt dừa đóng hộp béo ngậy nguyên chất', 197, 2.0, 2.8, 21.3, 0.0, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nuoc cot dua');
+UPDATE ingredients
+SET description = 'Nước cốt dừa đóng hộp béo ngậy nguyên chất', calories_per_100g = 197, protein_per_100g = 2.0, carbs_per_100g = 2.8, fat_per_100g = 21.3, fiber_per_100g = 0.0
+WHERE normalized_name = 'nuoc cot dua';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Dầu thực vật', 'dau an', 'Dầu đậu nành hoặc dầu hạt cải', 884, 0, 0, 100, 0, TRUE, FALSE, TRUE, NOW(), NOW()
+SELECT 'Dầu thực vật', 'dau an', 'Dầu đậu nành hoặc dầu hạt cải, thành phẩm', 884, 0, 0, 100, 0, TRUE, FALSE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau an');
+UPDATE ingredients
+SET description = 'Dầu đậu nành hoặc dầu hạt cải, thành phẩm', calories_per_100g = 884, protein_per_100g = 0, carbs_per_100g = 0, fat_per_100g = 100, fiber_per_100g = 0
+WHERE normalized_name = 'dau an';
 
 INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
-SELECT 'Nước tương đậu nành', 'nuoc tuong', 'Nước tương lên men tự nhiên', 53, 5.7, 4.9, 0.6, 0.8, TRUE, TRUE, TRUE, NOW(), NOW()
+SELECT 'Nước tương đậu nành', 'nuoc tuong', 'Nước tương lên men tự nhiên từ đậu nành và lúa mì, thành phẩm', 53, 8.1, 4.9, 0.6, 0.8, TRUE, TRUE, TRUE, NOW(), NOW()
 WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nuoc tuong');
+UPDATE ingredients
+SET description = 'Nước tương lên men tự nhiên từ đậu nành và lúa mì, thành phẩm', calories_per_100g = 53, protein_per_100g = 8.1, carbs_per_100g = 4.9, fat_per_100g = 0.6, fiber_per_100g = 0.8
+WHERE normalized_name = 'nuoc tuong';
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Cơm trắng', 'com trang', 'Cơm gạo trắng đã nấu chín', 130, 2.7, 28.2, 0.3, 0.4, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'com trang');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Bún khô', 'bun kho', 'Bún gạo sợi khô (chưa ngâm, chưa nấu)', 364, 6.0, 80.2, 0.6, 1.6, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'bun kho');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Đậu xanh chín', 'dau xanh chin', 'Đậu xanh cà vỏ đã nấu chín', 105, 7.0, 19.2, 0.4, 7.6, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau xanh chin');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Đậu gà khô', 'dau ga kho', 'Đậu gà hạt khô (chưa ngâm, chưa nấu)', 378, 20.5, 63.0, 6.0, 12.2, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau ga kho');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Nấm đông cô khô', 'nam dong co kho', 'Nấm đông cô (nấm hương) khô, chưa ngâm', 296, 9.6, 75.4, 1.0, 11.5, TRUE, TRUE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nam dong co kho');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Nấm mèo khô', 'nam meo kho', 'Mộc nhĩ (nấm mèo) khô, chưa ngâm', 284, 9.3, 73.0, 0.7, 70.1, TRUE, TRUE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'nam meo kho');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Đậu nành lông', 'dau nanh long', 'Đậu nành lông (edamame) hạt tươi, chưa nấu', 147, 13.0, 11.1, 6.8, 4.2, TRUE, TRUE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'dau nanh long');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Khoai mỡ', 'khoai mo', 'Khoai mỡ (củ mỡ) tươi, chưa nấu', 118, 1.5, 27.9, 0.2, 4.1, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'khoai mo');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Mì ăn liền', 'mi an lien', 'Vắt mì ăn liền đã chiên, khô (chưa nấu)', 440, 10.2, 60.3, 17.6, 2.9, TRUE, TRUE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'mi an lien');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Đường', 'duong', 'Đường cát trắng, thành phẩm', 387, 0.0, 100.0, 0.0, 0.0, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'duong');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Mật mía', 'mat mia', 'Mật mía (rỉ đường mía), thành phẩm', 290, 0.0, 74.7, 0.1, 0.0, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'mat mia');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Bột mì', 'bot mi', 'Bột mì đa dụng, khô', 364, 10.3, 76.3, 1.0, 2.7, TRUE, TRUE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'bot mi');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Bột gạo', 'bot gao', 'Bột gạo tẻ trắng, khô', 366, 6.0, 80.1, 1.4, 2.4, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'bot gao');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Bánh tráng', 'banh trang', 'Bánh tráng gạo, khô (chưa nhúng nước)', 366, 6.0, 80.1, 1.4, 2.4, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'banh trang');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Vỏ hoành thánh', 'vo hoanh thanh', 'Vỏ hoành thánh chay bột mì, tươi (chưa nấu)', 291, 9.8, 57.9, 1.5, 1.8, TRUE, TRUE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'vo hoanh thanh');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Xoài xanh', 'xoai xanh', 'Xoài xanh tươi, đã gọt vỏ bỏ hạt', 60, 0.8, 15.0, 0.4, 1.6, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'xoai xanh');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Đu đủ xanh', 'du du xanh', 'Đu đủ xanh tươi, đã gọt vỏ bỏ hạt', 43, 0.5, 10.8, 0.3, 1.7, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'du du xanh');
+
+INSERT INTO ingredients (name, normalized_name, description, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, vegan, allergen, active, created_at, updated_at)
+SELECT 'Bưởi', 'buoi', 'Tép bưởi tươi, đã bỏ vỏ và màng', 38, 0.8, 9.6, 0.0, 1.0, TRUE, FALSE, TRUE, NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM ingredients WHERE normalized_name = 'buoi');
 
 
 -- ============================================================
 -- 5. 100 VIETNAMESE VEGAN RECIPES (PHASE 2)
 -- ============================================================
+
+-- ------------------------------------------------------------
+-- RECIPE 1 (Cơm gạo lứt đậu hũ): dầu xào, thêm 2026-10.
+-- Đặt ở đây chứ không ở mục 2 vì 'dau an' tạo ở mục 4: DB trống chạy mục 2 trước khi có 'dau an'.
+-- ------------------------------------------------------------
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm gạo lứt đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
 
 -- ------------------------------------------------------------
 -- RECIPE 3: Phở chay nấm đông cô
@@ -1102,6 +1383,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 100, 'GRAM', 'Hầm nước dùng'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'cu cai trang'
+WHERE r.title = 'Phở chay nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Phở chay nấm đông cô'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -1182,6 +1473,16 @@ WHERE r.title = 'Bún bò Huế chay'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún bò Huế chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Phi thơm sả băm với chút ớt bột tạo màu cay thơm.'
 FROM recipes r
@@ -1250,6 +1551,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 50, 'GRAM', 'Cắt hạt lựu'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Cháo nấm hạt sen'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Cháo nấm hạt sen'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -1330,6 +1641,16 @@ WHERE r.title = 'Bánh mì bì chay thính gạo'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 10, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bánh mì bì chay thính gạo'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Chiên vàng sợi đậu hũ rồi trộn đều với miến dong và thính gạo rang.'
 FROM recipes r
@@ -1398,6 +1719,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Cắt lát'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'bo'
+WHERE r.title = 'Bánh mì pate nấm đậu gà'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Bánh mì pate nấm đậu gà'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -1478,6 +1809,16 @@ WHERE r.title = 'Hủ tiếu Nam Vang chay'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Hủ tiếu Nam Vang chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Hầm củ cải và cà rốt lấy nước dùng ngọt thơm.'
 FROM recipes r
@@ -1546,6 +1887,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 80, 'GRAM', 'Cắt nhỏ'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'bong cai xanh'
+WHERE r.title = 'Miến dong xào rau củ chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Miến dong xào rau củ chay'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -1694,6 +2045,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Chẻ đôi'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'nam rom'
+WHERE r.title = 'Bún riêu cua chay đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Bún riêu cua chay đậu hũ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -1912,6 +2273,16 @@ WHERE r.title = 'Bún thang chay nấm bào ngư'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún thang chay nấm bào ngư'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Nấu nước dùng từ củ cải trắng và nấm hương cho trong vắt.'
 FROM recipes r
@@ -1959,7 +2330,7 @@ WHERE r.title = 'Bánh bao chay nhân nấm mộc nhĩ'
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 30, 'GRAM', 'Ngâm nở băm nhỏ'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'nam meo'
+JOIN ingredients i ON i.normalized_name = 'nam meo kho'
 WHERE r.title = 'Bánh bao chay nhân nấm mộc nhĩ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -1980,6 +2351,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 40, 'GRAM', 'Xắt hạt lựu'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Bánh bao chay nhân nấm mộc nhĩ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bánh bao chay nhân nấm mộc nhĩ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 180, 'GRAM', 'Bột mì làm vỏ bánh bao'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'bot mi'
 WHERE r.title = 'Bánh bao chay nhân nấm mộc nhĩ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2208,6 +2599,26 @@ WHERE r.title = 'Bánh cuốn chay nhân nấm mộc nhĩ'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bánh cuốn chay nhân nấm mộc nhĩ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 120, 'GRAM', 'Bột gạo tráng bánh cuốn'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'bot gao'
+WHERE r.title = 'Bánh cuốn chay nhân nấm mộc nhĩ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Xào chín nhân nấm rơm và mộc nhĩ nêm hạt nêm chay và tiêu.'
 FROM recipes r
@@ -2272,6 +2683,16 @@ WHERE r.title = 'Miến măng khô nấm đùi gà chay'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Miến măng khô nấm đùi gà chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Xào thơm măng khô đã luộc kĩ với nấm đùi gà và gia vị.'
 FROM recipes r
@@ -2319,7 +2740,7 @@ WHERE r.title = 'Bánh xèo chay nấm giá đỗ'
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 50, 'GRAM', 'Đã hấp chín'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'dau xanh'
+JOIN ingredients i ON i.normalized_name = 'dau xanh chin'
 WHERE r.title = 'Bánh xèo chay nấm giá đỗ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2340,6 +2761,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 30, 'ML', 'Pha vào bột'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'nuoc cot dua'
+WHERE r.title = 'Bánh xèo chay nấm giá đỗ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bánh xèo chay nấm giá đỗ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 120, 'GRAM', 'Bột gạo pha bột bánh xèo'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'bot gao'
 WHERE r.title = 'Bánh xèo chay nấm giá đỗ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2420,6 +2861,16 @@ WHERE r.title = 'Nui xào rau củ sốt tương'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Nui xào rau củ sốt tương'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Luộc nui vừa chín tới rồi xả nước lạnh cho sợi nui săn lại.'
 FROM recipes r
@@ -2477,7 +2928,7 @@ WHERE r.title = 'Bún chả giò bắp chay'
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 40, 'GRAM', 'Nấu chín tán nhuyễn'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'dau xanh'
+JOIN ingredients i ON i.normalized_name = 'dau xanh chin'
 WHERE r.title = 'Bún chả giò bắp chay'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2488,6 +2939,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 20, 'GRAM', 'Băm nhỏ'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'nam meo'
+WHERE r.title = 'Bún chả giò bắp chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún chả giò bắp chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 56, 'GRAM', 'Bánh tráng cuốn chả giò'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'banh trang'
 WHERE r.title = 'Bún chả giò bắp chay'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2568,6 +3039,16 @@ WHERE r.title = 'Cơm tấm sườn nấm chay nướng'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Mật mía ướp nấm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'mat mia'
+WHERE r.title = 'Cơm tấm sườn nấm chay nướng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Ướp nấm đùi gà với sả băm, ngũ vị hương và mật mía rồi nướng vàng.'
 FROM recipes r
@@ -2605,7 +3086,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm chiên Dương Châu
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 150, 'GRAM', 'Cơm để nguội'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'gao thom'
+JOIN ingredients i ON i.normalized_name = 'com trang'
 WHERE r.title = 'Cơm chiên Dương Châu chay'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2652,6 +3133,16 @@ WHERE r.title = 'Cơm chiên Dương Châu chay'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm chiên Dương Châu chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Xào săn cà rốt, đậu Hà Lan, bắp ngọt và đậu hũ chiên.'
 FROM recipes r
@@ -2689,7 +3180,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm hấp lá sen hạt 
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 140, 'GRAM', 'Gạo thơm dẻo'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'gao thom'
+JOIN ingredients i ON i.normalized_name = 'com trang'
 WHERE r.title = 'Cơm hấp lá sen hạt sen chay'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2720,6 +3211,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 40, 'GRAM', 'Hạt lựu'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Cơm hấp lá sen hạt sen chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Cơm hấp lá sen hạt sen chay'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2763,7 +3264,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Mì Quảng chay nấm đ
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 200, 'GRAM', 'Trụng chín mềm'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'mi soi'
+JOIN ingredients i ON i.normalized_name = 'banh pho'
 WHERE r.title = 'Mì Quảng chay nấm đậu hũ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2794,6 +3295,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 30, 'GRAM', 'Rang giã dập'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dau phong'
+WHERE r.title = 'Mì Quảng chay nấm đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Mì Quảng chay nấm đậu hũ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -2938,6 +3449,16 @@ WHERE r.title = 'Nui sốt cà chua đậu hũ non'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Nui sốt cà chua đậu hũ non'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Xào nhuyễn cà chua tươi với dầu thực vật tạo thành sốt sền sệt.'
 FROM recipes r
@@ -2975,7 +3496,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm chiên rong biển m
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 150, 'GRAM', 'Cơm để ráo'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'gao thom'
+JOIN ingredients i ON i.normalized_name = 'com trang'
 WHERE r.title = 'Cơm chiên rong biển mè rang'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3006,6 +3527,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 40, 'GRAM', 'Cắt hạt lựu'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Cơm chiên rong biển mè rang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Cơm chiên rong biển mè rang'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3070,6 +3601,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Thái lát mỏng'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dua leo'
+WHERE r.title = 'Bún đậu chả cốm chay mắm tương'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún đậu chả cốm chay mắm tương'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường pha nước tương bần chấm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
 WHERE r.title = 'Bún đậu chả cốm chay mắm tương'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3144,6 +3695,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Cắt khúc'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'cai thia'
+WHERE r.title = 'Miến xào nấm đùi gà cà rốt'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Miến xào nấm đùi gà cà rốt'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3234,6 +3795,16 @@ WHERE r.title = 'Cơm niêu rau củ luộc kho quẹt chay'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 10, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm niêu rau củ luộc kho quẹt chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Nấu cơm niêu trên lửa nhỏ để tạo lớp cháy đáy giòn rụm.'
 FROM recipes r
@@ -3302,6 +3873,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 40, 'GRAM', 'Tỉa hoa'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Mì xào giòn rau củ thập cẩm chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Mì xào giòn rau củ thập cẩm chay'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3382,6 +3963,16 @@ WHERE r.title = 'Bún mắm chay nấm rơm cà tím'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún mắm chay nấm rơm cà tím'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Phi thơm sả băm rồi xào cà tím, nấm rơm và đậu hũ cho thấm vị tương.'
 FROM recipes r
@@ -3419,7 +4010,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm chiên trái thơm k
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 140, 'GRAM', 'Cơm nấu chín nguội'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'gao thom'
+JOIN ingredients i ON i.normalized_name = 'com trang'
 WHERE r.title = 'Cơm chiên trái thơm kiểu Thái chay'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3450,6 +4041,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 40, 'GRAM', 'Luộc sơ'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dau ha lan'
+WHERE r.title = 'Cơm chiên trái thơm kiểu Thái chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Cơm chiên trái thơm kiểu Thái chay'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3540,6 +4141,16 @@ WHERE r.title = 'Cơm gạo lứt cuộn rong biển kimbap chay'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 9, 'GRAM', 'Rang rắc mặt cuộn'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'me'
+WHERE r.title = 'Cơm gạo lứt cuộn rong biển kimbap chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Trộn cơm gạo lứt ấm với chút dầu mè và muối hạt.'
 FROM recipes r
@@ -3614,6 +4225,16 @@ WHERE r.title = 'Hủ tiếu xào mềm rau cải nấm'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Hủ tiếu xào mềm rau cải nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Áp chảo sợi hủ tiếu với chút hắc xì dầu cho thơm và có màu nâu đẹp.'
 FROM recipes r
@@ -3651,7 +4272,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Bún gạo lứt xào c�
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 200, 'GRAM', 'Bún gạo lứt ngâm mềm'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'bun tuoi'
+JOIN ingredients i ON i.normalized_name = 'bun kho'
 WHERE r.title = 'Bún gạo lứt xào cải thìa đậu hũ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3672,6 +4293,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 100, 'GRAM', 'Thái sợi chiên sơ'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Bún gạo lứt xào cải thìa đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Bún gạo lứt xào cải thìa đậu hũ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3762,6 +4393,16 @@ WHERE r.title = 'Cơm sốt cà ri rau củ nước cốt dừa'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm sốt cà ri rau củ nước cốt dừa'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Xào săn khoai tây, cà rốt và đậu gà với bột cà ri và sả băm.'
 FROM recipes r
@@ -3799,7 +4440,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Mì cay Hàn Quốc chay 
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 120, 'GRAM', 'Vắt mì chay'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'mi soi'
+JOIN ingredients i ON i.normalized_name = 'mi an lien'
 WHERE r.title = 'Mì cay Hàn Quốc chay rau nấm'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3910,6 +4551,16 @@ WHERE r.title = 'Bún gỏi già chay nấm bào ngư'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún gỏi già chay nấm bào ngư'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Nấu nước dùng chua ngọt từ nước cốt me chín và nước hầm củ cải ngọt mát.'
 FROM recipes r
@@ -3947,7 +4598,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm cháy sốt nấm kh
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 140, 'GRAM', 'Ép chảo làm cơm cháy'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'gao thom'
+JOIN ingredients i ON i.normalized_name = 'com trang'
 WHERE r.title = 'Cơm cháy sốt nấm kho quẹt nấm rơm'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -3968,6 +4619,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Chiên giòn cắt nhỏ'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Cơm cháy sốt nấm kho quẹt nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm cháy sốt nấm kho quẹt nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường thốt nốt nấu kho quẹt'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
 WHERE r.title = 'Cơm cháy sốt nấm kho quẹt nấm rơm'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -4048,6 +4719,16 @@ WHERE r.title = 'Bún măng le nấm rơm đậu hũ'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún măng le nấm rơm đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Luộc măng le cho hết vị đắng rồi xào thơm với nấm rơm và gia vị.'
 FROM recipes r
@@ -4095,7 +4776,7 @@ WHERE r.title = 'Cơm hấp nấm đông cô hạt sen'
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Ngâm nở xắt nhỏ'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'nam dong co'
+JOIN ingredients i ON i.normalized_name = 'nam dong co kho'
 WHERE r.title = 'Cơm hấp nấm đông cô hạt sen'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -4116,6 +4797,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 40, 'GRAM', 'Xắt hạt lựu'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Cơm hấp nấm đông cô hạt sen'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Cơm hấp nấm đông cô hạt sen'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -4180,6 +4871,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 80, 'GRAM', 'Cắt khúc vừa ăn'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'cai thia'
+WHERE r.title = 'Phở xào áp chảo rau cải nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Phở xào áp chảo rau cải nấm'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -4260,6 +4961,16 @@ WHERE r.title = 'Mì hoành thánh chay nhân nấm'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 80, 'GRAM', 'Vỏ hoành thánh chay gói nhân'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'vo hoanh thanh'
+WHERE r.title = 'Mì hoành thánh chay nhân nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Trộn nấm đùi gà, nấm mèo và gia vị gói vào vỏ hoành thánh thành viên xinh xắn.'
 FROM recipes r
@@ -4297,7 +5008,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Bún gạo lứt trộn s
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 200, 'GRAM', 'Bún gạo lứt trụng chín'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'bun tuoi'
+JOIN ingredients i ON i.normalized_name = 'bun kho'
 WHERE r.title = 'Bún gạo lứt trộn sốt mè đậu phộng'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -4338,6 +5049,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 30, 'GRAM', 'Rang giã dập'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dau phong'
+WHERE r.title = 'Bún gạo lứt trộn sốt mè đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún gạo lứt trộn sốt mè đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 9, 'GRAM', 'Rang xay làm sốt'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'me'
 WHERE r.title = 'Bún gạo lứt trộn sốt mè đậu phộng'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -4408,6 +5139,16 @@ WHERE r.title = 'Đậu hũ sốt cà chua hành boa-rô'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 35, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Đậu hũ sốt cà chua hành boa-rô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Chiên đậu hũ vàng đều hai mặt rồi vớt ra đĩa có lót giấy thấm dầu.'
 FROM recipes r
@@ -4472,6 +5213,16 @@ WHERE r.title = 'Đậu hũ chiên sả ớt giòn rụm'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Đậu hũ chiên sả ớt giòn rụm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Khía nhẹ trên mặt miếng đậu hũ để khi chiên sả ớt dễ bám vào.'
 FROM recipes r
@@ -4520,6 +5271,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 80, 'GRAM', 'Cắt lát mỏng'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'nam dong co'
+WHERE r.title = 'Đậu hũ non sốt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Đậu hũ non sốt nấm đông cô'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -4580,6 +5341,26 @@ WHERE r.title = 'Đậu hũ kho nấm rơm tiêu xanh'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Đậu hũ kho nấm rơm tiêu xanh'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường thốt nốt thắng nước màu'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
+WHERE r.title = 'Đậu hũ kho nấm rơm tiêu xanh'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Chiên sơ đậu hũ và nấm rơm cho săn mặt ngoài.'
 FROM recipes r
@@ -4627,7 +5408,7 @@ WHERE r.title = 'Chả đậu xanh hấp lá chuối'
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 30, 'GRAM', 'Ngâm nở băm nhỏ'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'nam meo'
+JOIN ingredients i ON i.normalized_name = 'nam meo kho'
 WHERE r.title = 'Chả đậu xanh hấp lá chuối'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -4698,6 +5479,26 @@ WHERE r.title = 'Chả giò bắp đậu hũ giòn tan'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Chả giò bắp đậu hũ giòn tan'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 80, 'GRAM', 'Bánh tráng cuốn chả giò'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'banh trang'
+WHERE r.title = 'Chả giò bắp đậu hũ giòn tan'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Trộn bắp ngọt bào nhuyễn cùng đậu hũ ráo nước và nấm mèo băm nhỏ.'
 FROM recipes r
@@ -4762,6 +5563,16 @@ WHERE r.title = 'Đậu gà sốt cà ri nước cốt dừa'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Đậu gà sốt cà ri nước cốt dừa'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Phi thơm sả băm và bột cà ri cho dậy màu vàng óng ả thơm lừng.'
 FROM recipes r
@@ -4799,7 +5610,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Đậu gà rang muối �
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 150, 'GRAM', 'Luộc chín để ráo'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'dau ga'
+JOIN ingredients i ON i.normalized_name = 'dau ga kho'
 WHERE r.title = 'Đậu gà rang muối ớt thảo mộc'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -4884,6 +5695,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Cắt khoanh tròn'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Đậu lăng hầm khoai tây cà rốt'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Đậu lăng hầm khoai tây cà rốt'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -5018,6 +5839,16 @@ WHERE r.title = 'Tàu hũ ky cuộn nấm sốt dầu hào chay'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Tàu hũ ky cuộn nấm sốt dầu hào chay'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Trải lá tàu hũ ky, xếp nấm kim châm và nấm đông cô vào giữa rồi cuộn chặt lại.'
 FROM recipes r
@@ -5066,6 +5897,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 25, 'GRAM', 'Rang vàng thơm lừng'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'me'
+WHERE r.title = 'Đậu hũ chiên giòn sốt mè rang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Đậu hũ chiên giòn sốt mè rang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường thốt nốt xay sốt mè'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
 WHERE r.title = 'Đậu hũ chiên giòn sốt mè rang'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -5126,6 +5977,16 @@ WHERE r.title = 'Đậu hũ kho nước dừa xiêm'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Đậu hũ kho nước dừa xiêm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Đậu hũ cắt miếng vuông dày chiên vàng đều bốn mặt cho dai ngon.'
 FROM recipes r
@@ -5164,6 +6025,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 180, 'GRAM', 'Khía ca-rô áp chảo'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'nam dui ga'
+WHERE r.title = 'Nấm đùi gà áp chảo sốt tiêu đen'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Nấm đùi gà áp chảo sốt tiêu đen'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -5234,6 +6105,16 @@ WHERE r.title = 'Chả nấm thì là rán giòn'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Chả nấm thì là rán giòn'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Trộn đều đậu hũ tán nhuyễn, nấm mèo, nấm bào ngư và thì là thái nhỏ.'
 FROM recipes r
@@ -5298,6 +6179,16 @@ WHERE r.title = 'Đậu lăng đỏ nấu súp rau củ'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Đậu lăng đỏ nấu súp rau củ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Xào thơm cần tây và cà rốt với chút dầu ăn cho dậy mùi thơm ngọt.'
 FROM recipes r
@@ -5335,7 +6226,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Đậu gà kho tiêu hạ
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 150, 'GRAM', 'Ngâm nở luộc chín'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'dau ga'
+JOIN ingredients i ON i.normalized_name = 'dau ga kho'
 WHERE r.title = 'Đậu gà kho tiêu hạt nước tương'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -5379,7 +6270,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Đậu nành lông luộc
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 150, 'GRAM', 'Đậu nành lông nguyên quả luộc'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'dau hu'
+JOIN ingredients i ON i.normalized_name = 'dau nanh long'
 WHERE r.title = 'Đậu nành lông luộc muối biển'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -5450,6 +6341,16 @@ WHERE r.title = 'Đậu hũ nhồi nấm mộc nhĩ sốt tương'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 40, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Đậu hũ nhồi nấm mộc nhĩ sốt tương'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Trộn ruột đậu hũ cùng nấm rơm, nấm mèo và gia vị tiêu sọ làm nhân.'
 FROM recipes r
@@ -5497,7 +6398,27 @@ WHERE r.title = 'Chả ram bắp đậu xanh giòn rụm'
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 40, 'GRAM', 'Hấp chín tán nhuyễn'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'dau xanh'
+JOIN ingredients i ON i.normalized_name = 'dau xanh chin'
+WHERE r.title = 'Chả ram bắp đậu xanh giòn rụm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Chả ram bắp đậu xanh giòn rụm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 50, 'GRAM', 'Bánh tráng gạo nhỏ cuốn chả ram'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'banh trang'
 WHERE r.title = 'Chả ram bắp đậu xanh giòn rụm'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -5636,6 +6557,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Chẻ đôi'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'nam rom'
+WHERE r.title = 'Canh chua nấm dọc mùng thơm cà'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Canh chua nấm dọc mùng thơm cà'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -5824,6 +6755,16 @@ WHERE r.title = 'Canh rau ngót nấu nấm rơm ngọt nước'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Canh rau ngót nấu nấm rơm ngọt nước'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Xào thơm nấm rơm với chút dầu ăn và hạt nêm chay cho dậy mùi ngọt.'
 FROM recipes r
@@ -5861,7 +6802,7 @@ WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Canh khoai mỡ tím nấ
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 120, 'GRAM', 'Nạo mịn làm canh dẻo'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'khoai lang'
+JOIN ingredients i ON i.normalized_name = 'khoai mo'
 WHERE r.title = 'Canh khoai mỡ tím nấm bào ngư'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -5872,6 +6813,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 80, 'GRAM', 'Xé sợi nhỏ'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'nam bao ngu'
+WHERE r.title = 'Canh khoai mỡ tím nấm bào ngư'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Canh khoai mỡ tím nấm bào ngư'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -6050,6 +7001,16 @@ WHERE r.title = 'Canh chua bắp cải cà chua đậu hũ'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Canh chua bắp cải cà chua đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Xào mềm cà chua tạo nước canh màu đỏ đẹp rồi châm nước đun sôi.'
 FROM recipes r
@@ -6188,6 +7149,16 @@ WHERE r.title = 'Canh mướp hương mồng tơi nấm rơm'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Canh mướp hương mồng tơi nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Xào nấm rơm với chút dầu ăn cho thơm ngọt rồi thêm nước đun sôi.'
 FROM recipes r
@@ -6235,7 +7206,7 @@ WHERE r.title = 'Canh củ sen táo đỏ nấm đông cô'
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 50, 'GRAM', 'Ngâm nở'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'nam dong co'
+JOIN ingredients i ON i.normalized_name = 'nam dong co kho'
 WHERE r.title = 'Canh củ sen táo đỏ nấm đông cô'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -6508,6 +7479,16 @@ WHERE r.title = 'Nộm ngó sen nấm tuyết chua ngọt'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường pha sốt chanh trộn nộm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
+WHERE r.title = 'Nộm ngó sen nấm tuyết chua ngọt'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Ngó sen và cà rốt bào sợi vắt ráo nước trộn cùng sốt chanh đường ớt.'
 FROM recipes r
@@ -6566,6 +7547,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 30, 'GRAM', 'Rang thơm'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dau phong'
+WHERE r.title = 'Gỏi củ hũ dừa đậu hũ đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 10, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Gỏi củ hũ dừa đậu hũ đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường thốt nốt pha nước trộn gỏi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
 WHERE r.title = 'Gỏi củ hũ dừa đậu hũ đậu phộng'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -6636,6 +7637,16 @@ WHERE r.title = 'Gỏi xoài xanh bắp chuối đậu phộng'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Bào sợi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'xoai xanh'
+WHERE r.title = 'Gỏi xoài xanh bắp chuối đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Bắp chuối bào mỏng ngâm nước chanh loãng vớt ra vắt thật ráo nước.'
 FROM recipes r
@@ -6694,6 +7705,36 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 30, 'GRAM', 'Rang giòn'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dau phong'
+WHERE r.title = 'Nộm đu đủ bò khô chay đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 5, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Nộm đu đủ bò khô chay đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Bào sợi ngâm nước đá'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'du du xanh'
+WHERE r.title = 'Nộm đu đủ bò khô chay đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường pha nước giấm trộn'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
 WHERE r.title = 'Nộm đu đủ bò khô chay đậu phộng'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -6774,6 +7815,16 @@ WHERE r.title = 'Rau củ luộc thập cẩm sốt chao mè'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường tán sốt chao chấm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
+WHERE r.title = 'Rau củ luộc thập cẩm sốt chao mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Luộc bông cải xanh, cà rốt và đậu que trong nước sôi có chút muối hạt cho giữ màu.'
 FROM recipes r
@@ -6832,6 +7883,36 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 50, 'GRAM', 'Cắt thanh dài'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dua leo'
+WHERE r.title = 'Gỏi cuốn bún đậu hũ rau sống sốt tương'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Gỏi cuốn bún đậu hũ rau sống sốt tương'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Bơ đậu phộng pha nước chấm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau phong'
+WHERE r.title = 'Gỏi cuốn bún đậu hũ rau sống sốt tương'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 60, 'GRAM', 'Bánh tráng cuốn gỏi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'banh trang'
 WHERE r.title = 'Gỏi cuốn bún đậu hũ rau sống sốt tương'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -6902,6 +7983,26 @@ WHERE r.title = 'Gỏi bắp cải tím đậu phộng rau răm'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 5, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Gỏi bắp cải tím đậu phộng rau răm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường pha nước sốt giấm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
+WHERE r.title = 'Gỏi bắp cải tím đậu phộng rau răm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Bắp cải tím bào sợi mỏng ngâm nước muối loãng rồi rửa sạch vắt ráo.'
 FROM recipes r
@@ -6960,6 +8061,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Cắt lát'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'dua leo'
+WHERE r.title = 'Salad dầu giấm xà lách cà chua bơ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 13.6, 'GRAM', 'Dầu oliu pha sốt dầu giấm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Salad dầu giấm xà lách cà chua bơ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Mật mía pha sốt dầu giấm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'mat mia'
 WHERE r.title = 'Salad dầu giấm xà lách cà chua bơ'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -7030,6 +8151,26 @@ WHERE r.title = 'Gỏi bưởi rong biển mè rang'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 5, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Gỏi bưởi rong biển mè rang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Tách tép'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'buoi'
+WHERE r.title = 'Gỏi bưởi rong biển mè rang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Tách từng tép bưởi hồng mọng nước cho vào tô lớn tránh làm dập tép bưởi.'
 FROM recipes r
@@ -7084,6 +8225,16 @@ WHERE r.title = 'Rau càng cua trộn dầu giấm đậu hũ'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 23.6, 'GRAM', 'Dầu chiên thấm vào món và dầu trộn dầu giấm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Rau càng cua trộn dầu giấm đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Rau càng cua nhặt sạch ngâm nước muối rồi vớt ra để thật ráo nước.'
 FROM recipes r
@@ -7128,6 +8279,26 @@ WHERE r.title = 'Nấm rơm kho tiêu xanh đậm đà'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Nấm rơm kho tiêu xanh đậm đà'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường thốt nốt kho'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
+WHERE r.title = 'Nấm rơm kho tiêu xanh đậm đà'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Rửa sạch nấm rơm, ngâm nước muối loãng rồi vớt ra để ráo nước hoàn toàn.'
 FROM recipes r
@@ -7166,6 +8337,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 160, 'GRAM', 'Cắt khúc ngâm nước muối'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'ca tim'
+WHERE r.title = 'Cà tím kho tộ sốt tương bần'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Cà tím kho tộ sốt tương bần'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -7236,6 +8417,16 @@ WHERE r.title = 'Nấm đùi gà kho gừng sả ớt'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Nấm đùi gà kho gừng sả ớt'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Khía mặt nấm đùi gà rồi chiên sơ trên chảo cho vàng mặt ngoài.'
 FROM recipes r
@@ -7284,6 +8475,16 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 20, 'GRAM', 'Băm nhỏ'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'hanh paro'
+WHERE r.title = 'Rau muống xào tỏi hành boa-rô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Rau muống xào tỏi hành boa-rô'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -7344,6 +8545,16 @@ WHERE r.title = 'Khổ qua xào đậu hũ non'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Khổ qua xào đậu hũ non'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Khổ qua bổ đôi nạo sạch ruột trắng bên trong rồi thái lát mỏng ngâm nước đá.'
 FROM recipes r
@@ -7391,7 +8602,17 @@ WHERE r.title = 'Đậu que xào nấm đông cô dầu mè'
 INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 60, 'GRAM', 'Ngâm mềm thái lát'
 FROM recipes r
-JOIN ingredients i ON i.normalized_name = 'nam dong co'
+JOIN ingredients i ON i.normalized_name = 'nam dong co kho'
+WHERE r.title = 'Đậu que xào nấm đông cô dầu mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 28.6, 'GRAM', 'Dầu để xào và 1 muỗng dầu mè rưới cuối'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
 WHERE r.title = 'Đậu que xào nấm đông cô dầu mè'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -7462,6 +8683,16 @@ WHERE r.title = 'Bắp cải xào nấm bào ngư cà rốt'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bắp cải xào nấm bào ngư cà rốt'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Phi thơm hành boa-rô xào chín nấm bào ngư và cà rốt trên chảo nóng.'
 FROM recipes r
@@ -7516,6 +8747,16 @@ WHERE r.title = 'Mít non kho nghệ sả nước dừa'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Mít non kho nghệ sả nước dừa'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Mít non luộc chín gọt bỏ gai và cùi, cắt thành từng miếng tam giác vừa ăn.'
 FROM recipes r
@@ -7564,6 +8805,26 @@ INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
 SELECT r.id, i.id, 80, 'GRAM', 'Cắt múi cau'
 FROM recipes r
 JOIN ingredients i ON i.normalized_name = 'ca chua'
+WHERE r.title = 'Dưa chua xào đậu hũ sốt cà'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Dầu để xào và dầu chiên thấm vào món'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Dưa chua xào đậu hũ sốt cà'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Đường nêm món xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
 WHERE r.title = 'Dưa chua xào đậu hũ sốt cà'
   AND NOT EXISTS (
     SELECT 1 FROM recipe_ingredients ri
@@ -7634,6 +8895,16 @@ WHERE r.title = 'Nấm bào ngư xào sả ớt lá lốt'
     WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
 );
 
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Dầu để xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Nấm bào ngư xào sả ớt lá lốt'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
 INSERT INTO recipe_steps (recipe_id, step_number, instruction)
 SELECT r.id, 1, 'Rửa sạch nấm bào ngư, vắt nhẹ ráo nước rồi xé thành từng tai vừa ăn.'
 FROM recipes r
@@ -7660,4 +8931,1464 @@ WHERE r.title = 'Nấm bào ngư xào sả ớt lá lốt'
     SELECT 1 FROM recipe_steps rs
     WHERE rs.recipe_id = r.id AND rs.step_number = 3
 );
+
+-- ============================================================
+-- 5b. MÓN ĐỦ NĂNG LƯỢNG (2026-10, đối chiếu dinh dưỡng)
+-- ============================================================
+
+-- ------------------------------------------------------------
+-- RECIPE 103: Cơm đậu hũ chiên sốt cà chua
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Cơm đậu hũ chiên sốt cà chua', 'Cơm trắng ăn cùng đậu hũ chiên vàng rim sốt cà chua hành boa-rô, đủ năng lượng cho một bữa chính.', NULL, 2, 15, 25, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm đậu hũ chiên sốt cà chua');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 500, 'GRAM', 'Cơm nấu chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'com trang'
+WHERE r.title = 'Cơm đậu hũ chiên sốt cà chua'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 250, 'GRAM', 'Cắt miếng vuông, chiên vàng'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Cơm đậu hũ chiên sốt cà chua'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 250, 'GRAM', 'Băm nhỏ nấu sốt'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'ca chua'
+WHERE r.title = 'Cơm đậu hũ chiên sốt cà chua'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Cắt khúc'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'hanh paro'
+WHERE r.title = 'Cơm đậu hũ chiên sốt cà chua'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 40, 'GRAM', 'Chiên đậu hũ 25 g (10% của 250 g), phi hành xào sốt 15 g'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm đậu hũ chiên sốt cà chua'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Cắt đậu hũ miếng vuông, chiên vàng các mặt trong chảo dầu rồi vớt ra để ráo.'
+FROM recipes r
+WHERE r.title = 'Cơm đậu hũ chiên sốt cà chua'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Phi thơm hành boa-rô với dầu, cho cà chua băm vào xào tới khi nhuyễn thành sốt, nêm muối và nước tương.'
+FROM recipes r
+WHERE r.title = 'Cơm đậu hũ chiên sốt cà chua'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Cho đậu hũ chiên vào chảo sốt, rim lửa nhỏ 5 phút cho đậu thấm.'
+FROM recipes r
+WHERE r.title = 'Cơm đậu hũ chiên sốt cà chua'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Xới cơm ra đĩa, múc đậu hũ sốt cà chua bên cạnh và dùng nóng.'
+FROM recipes r
+WHERE r.title = 'Cơm đậu hũ chiên sốt cà chua'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 104: Cơm tàu hũ ky xào sả ớt nấm đông cô
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Cơm tàu hũ ky xào sả ớt nấm đông cô', 'Tàu hũ ky chiên giòn xào sả ớt cùng nấm đông cô tươi, ăn kèm cơm trắng.', NULL, 2, 15, 20, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 500, 'GRAM', 'Cơm nấu chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'com trang'
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 80, 'GRAM', 'Lá khô, ngâm mềm, cắt miếng, chiên giòn'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'tau hu ky'
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Cắt lát'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'nam dong co'
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Băm nhuyễn'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'sa cay'
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 10, 'GRAM', 'Băm nhỏ'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'ot'
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 25, 'GRAM', 'Chiên tàu hũ ky 10 g (10% của 80 g), xào 15 g'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Ngâm tàu hũ ky cho mềm, để ráo, cắt miếng vừa ăn rồi chiên giòn, vớt ra để ráo dầu.'
+FROM recipes r
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Phi thơm sả và ớt băm với dầu, cho nấm đông cô vào xào chín.'
+FROM recipes r
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Cho tàu hũ ky vào đảo đều, nêm nước tương và tiêu cho vừa ăn.'
+FROM recipes r
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Dọn tàu hũ ky xào sả ớt ra đĩa, ăn cùng cơm trắng.'
+FROM recipes r
+WHERE r.title = 'Cơm tàu hũ ky xào sả ớt nấm đông cô'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 105: Cơm gạo lứt đậu gà rim nấm rơm
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Cơm gạo lứt đậu gà rim nấm rơm', 'Cơm gạo lứt ăn với đậu gà và nấm rơm rim nước tương, giàu đạm và chất xơ.', NULL, 2, 70, 45, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm gạo lứt đậu gà rim nấm rơm');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Vo sạch, nấu chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'gao lut'
+WHERE r.title = 'Cơm gạo lứt đậu gà rim nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Đã luộc chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau ga'
+WHERE r.title = 'Cơm gạo lứt đậu gà rim nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Cắt đôi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'nam rom'
+WHERE r.title = 'Cơm gạo lứt đậu gà rim nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 80, 'GRAM', 'Cắt hạt lựu'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Cơm gạo lứt đậu gà rim nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Phi hành xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm gạo lứt đậu gà rim nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Vo sạch gạo lứt, ngâm 1 giờ rồi nấu chín thành cơm.'
+FROM recipes r
+WHERE r.title = 'Cơm gạo lứt đậu gà rim nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Phi thơm hành tỏi với dầu, cho cà rốt và nấm rơm vào xào săn.'
+FROM recipes r
+WHERE r.title = 'Cơm gạo lứt đậu gà rim nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Cho đậu gà đã luộc chín vào, thêm nước tương và nửa chén nước, rim lửa nhỏ 10 phút cho thấm.'
+FROM recipes r
+WHERE r.title = 'Cơm gạo lứt đậu gà rim nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Xới cơm gạo lứt ra đĩa, múc đậu gà rim nấm bên cạnh, rắc tiêu và dùng nóng.'
+FROM recipes r
+WHERE r.title = 'Cơm gạo lứt đậu gà rim nấm rơm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 106: Cơm nấm đùi gà kho tiêu đậu hũ
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Cơm nấm đùi gà kho tiêu đậu hũ', 'Đậu hũ chiên kho tiêu cùng nấm đùi gà, nước kho sệt đậm đà, ăn với cơm trắng.', NULL, 2, 15, 30, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm nấm đùi gà kho tiêu đậu hũ');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 500, 'GRAM', 'Cơm nấu chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'com trang'
+WHERE r.title = 'Cơm nấm đùi gà kho tiêu đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 250, 'GRAM', 'Cắt miếng, chiên vàng'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Cơm nấm đùi gà kho tiêu đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Cắt khoanh dày'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'nam dui ga'
+WHERE r.title = 'Cơm nấm đùi gà kho tiêu đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Thắng nước màu (1 muỗng canh)'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
+WHERE r.title = 'Cơm nấm đùi gà kho tiêu đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 40, 'GRAM', 'Chiên đậu hũ 25 g (10% của 250 g), phi hành 15 g'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm nấm đùi gà kho tiêu đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Cắt đậu hũ miếng vừa ăn, chiên vàng các mặt trong chảo dầu rồi vớt ra.'
+FROM recipes r
+WHERE r.title = 'Cơm nấm đùi gà kho tiêu đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Phi thơm hành tím với dầu trong nồi, cho 1 muỗng canh đường vào thắng nước màu.'
+FROM recipes r
+WHERE r.title = 'Cơm nấm đùi gà kho tiêu đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Cho nấm đùi gà và đậu hũ chiên vào, thêm nước tương, tiêu xay và nửa chén nước, kho lửa nhỏ 15 phút tới khi nước sệt lại.'
+FROM recipes r
+WHERE r.title = 'Cơm nấm đùi gà kho tiêu đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Rắc thêm tiêu, dọn ra ăn cùng cơm trắng.'
+FROM recipes r
+WHERE r.title = 'Cơm nấm đùi gà kho tiêu đậu hũ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 107: Xôi mặn chay tàu hũ ky đậu phộng
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Xôi mặn chay tàu hũ ky đậu phộng', 'Xôi nếp dẻo phủ tàu hũ ky chiên giòn, nấm đông cô xào, mỡ hành chay và đậu phộng rang.', NULL, 2, 260, 45, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Xôi mặn chay tàu hũ ky đậu phộng');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Ngâm nở'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'gao nep'
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 40, 'GRAM', 'Lá khô, ngâm mềm, xé miếng, chiên giòn'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'tau hu ky'
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 100, 'GRAM', 'Thái sợi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'nam dong co'
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Rang khô, giã dập'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau phong'
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Thái nhỏ làm mỡ hành'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'hanh paro'
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Chiên tàu hũ ky 5 g (10% của 40 g), xào nấm và phi hành 15 g'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Ngâm gạo nếp 4 giờ cho nở, để ráo rồi đồ chín thành xôi.'
+FROM recipes r
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Ngâm tàu hũ ky cho mềm, xé miếng rồi chiên giòn, vớt ra để ráo dầu.'
+FROM recipes r
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Xào nấm đông cô với dầu cho chín, nêm nước tương. Phi hành boa-rô với dầu làm mỡ hành.'
+FROM recipes r
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Rang khô đậu phộng rồi giã dập.'
+FROM recipes r
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 5, 'Xới xôi ra đĩa, phủ tàu hũ ky và nấm xào, rưới mỡ hành, rắc đậu phộng.'
+FROM recipes r
+WHERE r.title = 'Xôi mặn chay tàu hũ ky đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 5
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 108: Bún cà ri chay đậu hũ khoai lang
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Bún cà ri chay đậu hũ khoai lang', 'Cà ri chay nấu nước cốt dừa với đậu hũ chiên, khoai lang và cà rốt, ăn kèm bún tươi.', NULL, 2, 15, 35, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Bún cà ri chay đậu hũ khoai lang');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 400, 'GRAM', 'Trụng qua nước sôi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'bun tuoi'
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Cắt miếng, chiên vàng'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Cắt khối vừa ăn'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'khoai lang'
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 100, 'GRAM', 'Cắt khúc'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 120, 'GRAM', 'Nấu cà ri'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'nuoc cot dua'
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Đập dập, cắt khúc'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'sa cay'
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 35, 'GRAM', 'Chiên đậu hũ 20 g (10% của 200 g), phi sả xào 15 g'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Cắt đậu hũ miếng vừa ăn, chiên vàng rồi vớt ra để ráo.'
+FROM recipes r
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Phi thơm sả với dầu, cho bột cà ri vào xào thơm, thêm khoai lang và cà rốt đảo đều.'
+FROM recipes r
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Đổ nước vừa ngập, nấu 15 phút cho khoai mềm, cho đậu hũ và nước cốt dừa vào, đun sôi lại rồi nêm muối.'
+FROM recipes r
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Trụng bún tươi, cho vào tô và chan cà ri nóng lên trên.'
+FROM recipes r
+WHERE r.title = 'Bún cà ri chay đậu hũ khoai lang'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 109: Bún trộn đậu hũ chiên sả đậu phộng
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Bún trộn đậu hũ chiên sả đậu phộng', 'Bún tươi trộn đậu hũ chiên sả, đậu phộng rang, dưa leo, cà rốt và nước mắm chay chua ngọt.', NULL, 2, 20, 20, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Bún trộn đậu hũ chiên sả đậu phộng');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 500, 'GRAM', 'Trụng qua nước sôi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'bun tuoi'
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Cắt thanh, chiên vàng'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Băm nhuyễn'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'sa cay'
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Rang khô, giã dập'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau phong'
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Cắt sợi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dua leo'
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 50, 'GRAM', 'Bào sợi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Pha nước mắm chay (1 muỗng canh)'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 35, 'GRAM', 'Chiên đậu hũ 20 g (10% của 200 g), phi sả 15 g'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Cắt đậu hũ thành thanh, chiên vàng rồi vớt ra để ráo.'
+FROM recipes r
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Phi sả băm với dầu tới khi vàng thơm, cho đậu hũ vào đảo đều với sả.'
+FROM recipes r
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Rang khô đậu phộng rồi giã dập. Pha nước mắm chay với 1 muỗng canh đường, nước cốt chanh, tỏi và ớt.'
+FROM recipes r
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Cho bún vào tô, thêm dưa leo, cà rốt, đậu hũ sả, rắc đậu phộng và rưới nước mắm chay, trộn đều khi ăn.'
+FROM recipes r
+WHERE r.title = 'Bún trộn đậu hũ chiên sả đậu phộng'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 110: Mì xào mềm đậu hũ cải thìa nấm
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Mì xào mềm đậu hũ cải thìa nấm', 'Mì sợi luộc mềm xào cùng đậu hũ chiên, cải thìa, nấm đùi gà và cà rốt.', NULL, 2, 15, 20, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Mì xào mềm đậu hũ cải thìa nấm');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Luộc chín tới, để ráo'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'mi soi'
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Cắt miếng, chiên vàng'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Cắt khúc'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'cai thia'
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Xé sợi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'nam dui ga'
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 80, 'GRAM', 'Thái sợi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 35, 'GRAM', 'Chiên đậu hũ 20 g (10% của 200 g), xào 15 g'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Luộc mì sợi trong nước sôi tới khi chín tới, xả nước lạnh rồi để ráo.'
+FROM recipes r
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Cắt đậu hũ miếng vừa ăn, chiên vàng rồi vớt ra.'
+FROM recipes r
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Phi tỏi với dầu, xào cà rốt và nấm đùi gà cho chín, thêm cải thìa đảo nhanh.'
+FROM recipes r
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Cho mì và đậu hũ vào, nêm nước tương, đảo đều trên lửa lớn tới khi mì thấm gia vị rồi tắt bếp.'
+FROM recipes r
+WHERE r.title = 'Mì xào mềm đậu hũ cải thìa nấm'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 111: Hủ tiếu khô chay tàu hũ ky
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Hủ tiếu khô chay tàu hũ ky', 'Hủ tiếu trộn sốt nấm rơm nước tương với đậu hũ và tàu hũ ky chiên, cải thìa trụng.', NULL, 2, 20, 25, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Hủ tiếu khô chay tàu hũ ky');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 500, 'GRAM', 'Trụng chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'hu tieu'
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Cắt miếng, chiên vàng'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 30, 'GRAM', 'Lá khô, ngâm mềm, cắt miếng, chiên giòn'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'tau hu ky'
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 100, 'GRAM', 'Cắt đôi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'nam rom'
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 100, 'GRAM', 'Trụng sơ'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'cai thia'
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Nấu sốt trộn (1 muỗng canh)'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 35, 'GRAM', 'Chiên đậu hũ và tàu hũ ky 20 g (10% của 180 g), phi tỏi xào sốt 15 g'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Chiên vàng đậu hũ và tàu hũ ky đã ngâm mềm, vớt ra để ráo dầu.'
+FROM recipes r
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Phi tỏi với dầu, cho nấm rơm vào xào chín, thêm nước tương và 1 muỗng canh đường, nấu sệt thành sốt.'
+FROM recipes r
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Trụng hủ tiếu và cải thìa qua nước sôi, để ráo.'
+FROM recipes r
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Cho hủ tiếu vào tô, rưới sốt nấm, xếp đậu hũ, tàu hũ ky và cải thìa lên trên, trộn đều khi ăn.'
+FROM recipes r
+WHERE r.title = 'Hủ tiếu khô chay tàu hũ ky'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 112: Phở cuốn chay đậu hũ nấm xào
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Phở cuốn chay đậu hũ nấm xào', 'Bánh phở lá cuốn đậu hũ chiên, nấm đùi gà xào và rau sống, chấm nước chấm chua ngọt.', NULL, 2, 25, 20, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Phở cuốn chay đậu hũ nấm xào');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 500, 'GRAM', 'Bánh phở lá, cắt miếng vuông'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'banh pho'
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 250, 'GRAM', 'Cắt thanh, chiên vàng'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Xé sợi'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'nam dui ga'
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 100, 'GRAM', 'Cắt thanh'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dua leo'
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 12.5, 'GRAM', 'Pha nước chấm (1 muỗng canh)'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'duong'
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 40, 'GRAM', 'Chiên đậu hũ 25 g (10% của 250 g), xào nấm 15 g'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Cắt đậu hũ thành thanh dài, chiên vàng rồi vớt ra để ráo.'
+FROM recipes r
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Phi tỏi với dầu, cho nấm đùi gà xé sợi vào xào chín, nêm nước tương.'
+FROM recipes r
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Pha nước chấm từ nước tương, 1 muỗng canh đường, nước cốt chanh, tỏi và ớt.'
+FROM recipes r
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Trải từng miếng bánh phở, xếp đậu hũ, nấm, dưa leo và rau thơm lên rồi cuộn chặt.'
+FROM recipes r
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 5, 'Xếp phở cuốn ra đĩa, chấm nước chấm khi ăn.'
+FROM recipes r
+WHERE r.title = 'Phở cuốn chay đậu hũ nấm xào'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 5
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 113: Cơm đậu gà hầm cà chua khoai tây
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Cơm đậu gà hầm cà chua khoai tây', 'Đậu gà hầm mềm cùng cà chua, khoai tây và cà rốt, ăn kèm cơm trắng nóng cho một bữa chính no lâu.', NULL, 2, 490, 60, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm đậu gà hầm cà chua khoai tây');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 500, 'GRAM', 'Cơm nấu chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'com trang'
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 100, 'GRAM', 'Hạt khô, ngâm 8 giờ, luộc chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau ga kho'
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Cắt khối'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'khoai tay'
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 100, 'GRAM', 'Cắt khối'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'ca rot'
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Băm nhỏ'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'ca chua'
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Phi hành xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Ngâm đậu gà 8 giờ cho nở, luộc khoảng 40 phút tới khi chín mềm rồi để ráo.'
+FROM recipes r
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Phi thơm hành tỏi với dầu, cho cà chua băm vào xào nhuyễn.'
+FROM recipes r
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Cho khoai tây, cà rốt và đậu gà vào, đổ nước vừa ngập, hầm lửa nhỏ 20 phút tới khi khoai mềm, nêm muối và nước tương.'
+FROM recipes r
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Xới cơm ra đĩa, múc đậu gà hầm bên cạnh và dùng nóng.'
+FROM recipes r
+WHERE r.title = 'Cơm đậu gà hầm cà chua khoai tây'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 114: Cơm cà ri đậu lăng đỏ bí đỏ
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Cơm cà ri đậu lăng đỏ bí đỏ', 'Đậu lăng đỏ nấu cà ri sệt với bí đỏ và rau chân vịt, ăn với cơm trắng.', NULL, 2, 15, 35, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm cà ri đậu lăng đỏ bí đỏ');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 500, 'GRAM', 'Cơm nấu chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'com trang'
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 130, 'GRAM', 'Hạt khô, rửa sạch, để ráo'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau lang do'
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Cắt khối'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'bi do'
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 80, 'GRAM', 'Thái hạt lựu'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'hanh tay'
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 100, 'GRAM', 'Cắt khúc'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'rau chan vit'
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Phi hành xào'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Phi thơm hành tây với dầu, cho bột cà ri vào xào thơm.'
+FROM recipes r
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Cho đậu lăng và bí đỏ vào, đổ nước ngập gấp đôi, nấu lửa nhỏ 25 phút tới khi đậu nhừ và nước sệt lại, nêm muối.'
+FROM recipes r
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Cho rau chân vịt vào đảo tới khi rau vừa mềm thì tắt bếp.'
+FROM recipes r
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Xới cơm ra đĩa, múc cà ri đậu lăng bên cạnh và dùng nóng.'
+FROM recipes r
+WHERE r.title = 'Cơm cà ri đậu lăng đỏ bí đỏ'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ------------------------------------------------------------
+-- RECIPE 115: Cơm gạo lứt đậu đỏ muối mè
+-- ------------------------------------------------------------
+INSERT INTO recipes (user_id, title, description, image_url, servings, prep_time, cook_time, status, created_at, updated_at, published_at)
+SELECT 1, 'Cơm gạo lứt đậu đỏ muối mè', 'Cơm gạo lứt nấu cùng đậu đỏ, rắc muối mè, ăn kèm đậu hũ áp chảo và cải thìa luộc.', NULL, 2, 70, 45, 'PUBLISHED', NOW(), NOW(), NOW()
+WHERE NOT EXISTS (SELECT 1 FROM recipes WHERE title = 'Cơm gạo lứt đậu đỏ muối mè');
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Vo sạch, nấu chín'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'gao lut'
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 150, 'GRAM', 'Đã ninh mềm'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau do'
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 20, 'GRAM', 'Rang khô, giã với muối'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'me'
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Cắt miếng, áp chảo'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau hu'
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 200, 'GRAM', 'Luộc'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'cai thia'
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit, note)
+SELECT r.id, i.id, 15, 'GRAM', 'Áp chảo'
+FROM recipes r
+JOIN ingredients i ON i.normalized_name = 'dau an'
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_ingredients ri
+    WHERE ri.recipe_id = r.id AND ri.ingredient_id = i.id
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 1, 'Vo sạch gạo lứt, ngâm 1 giờ, nấu chín cùng đậu đỏ đã ninh mềm.'
+FROM recipes r
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 1
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 2, 'Rang khô mè tới khi vàng thơm, giã dập cùng muối làm muối mè.'
+FROM recipes r
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 2
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 3, 'Áp chảo đậu hũ với dầu cho vàng hai mặt, luộc cải thìa.'
+FROM recipes r
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 3
+);
+
+INSERT INTO recipe_steps (recipe_id, step_number, instruction)
+SELECT r.id, 4, 'Xới cơm gạo lứt đậu đỏ ra đĩa, rắc muối mè, ăn cùng đậu hũ và cải thìa.'
+FROM recipes r
+WHERE r.title = 'Cơm gạo lứt đậu đỏ muối mè'
+  AND NOT EXISTS (
+    SELECT 1 FROM recipe_steps rs
+    WHERE rs.recipe_id = r.id AND rs.step_number = 4
+);
+
+-- ============================================================
+-- 6. DATA FIXES (2026-10, đối chiếu dinh dưỡng)
+-- Bỏ các dòng mà DB tạo trước đợt đối chiếu còn giữ.
+-- ============================================================
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Bánh bao chay nhân nấm mộc nhĩ')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'nam meo');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Bánh xèo chay nấm giá đỗ')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'dau xanh');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Bún chả giò bắp chay')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'dau xanh');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Cơm chiên Dương Châu chay')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'gao thom');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Cơm hấp lá sen hạt sen chay')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'gao thom');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Mì Quảng chay nấm đậu hũ')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'mi soi');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Cơm chiên rong biển mè rang')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'gao thom');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Cơm chiên trái thơm kiểu Thái chay')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'gao thom');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Bún gạo lứt xào cải thìa đậu hũ')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'bun tuoi');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Mì cay Hàn Quốc chay rau nấm')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'mi soi');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Cơm cháy sốt nấm kho quẹt nấm rơm')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'gao thom');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Cơm hấp nấm đông cô hạt sen')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'nam dong co');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Bún gạo lứt trộn sốt mè đậu phộng')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'bun tuoi');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Chả đậu xanh hấp lá chuối')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'nam meo');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Đậu gà rang muối ớt thảo mộc')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'dau ga');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Đậu gà kho tiêu hạt nước tương')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'dau ga');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Đậu nành lông luộc muối biển')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'dau hu');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Chả ram bắp đậu xanh giòn rụm')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'dau xanh');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Canh khoai mỡ tím nấm bào ngư')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'khoai lang');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Canh củ sen táo đỏ nấm đông cô')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'nam dong co');
+
+DELETE FROM recipe_ingredients
+WHERE recipe_id IN (SELECT id FROM recipes WHERE title = 'Đậu que xào nấm đông cô dầu mè')
+  AND ingredient_id = (SELECT id FROM ingredients WHERE normalized_name = 'nam dong co');
 
