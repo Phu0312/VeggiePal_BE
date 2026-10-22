@@ -19,7 +19,7 @@ class VideoMaintenanceServiceTest {
         VideoStorage storage = mock(VideoStorage.class);
         VideoProperties properties = new VideoProperties("ffmpeg", "ffprobe", 100, 1800,
                 Duration.ofMinutes(2), Duration.ofSeconds(20), 2, 2, "build/video",
-                Duration.ofMinutes(20), Duration.ofDays(30), Duration.ofMinutes(5));
+                Duration.ofMinutes(20), Duration.ofDays(30), Duration.ofMinutes(5), 4000);
         VideoJob restart = new VideoJob(1L, "restart.mp4", "build/restart.upload", true);
         VideoJob stale = new VideoJob(1L, "stale.mp4", "build/stale.upload", true);
         when(repository.findByStatus(VideoJob.PROCESSING)).thenReturn(List.of(restart));

@@ -55,8 +55,10 @@ public class GroqClient {
                     throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
                 }
                 var usage = response.usage();
-                return new GroqResult(response.choices().getFirst().message().content(),
-                        usage == null ? 0 : usage.prompt_tokens(), usage == null ? 0 : usage.completion_tokens());
+                var choice = response.choices().getFirst();
+                return new GroqResult(choice.message().content(),
+                        usage == null ? 0 : usage.prompt_tokens(), usage == null ? 0 : usage.completion_tokens(),
+                        choice.finishReason());
             } catch (RestClientResponseException exception) {
                 int status = exception.getStatusCode().value();
                 logSafeHttpResponseError("complete", model, attempt, status, exception.getResponseBodyAsString());
@@ -146,6 +148,11 @@ public class GroqClient {
             throw new AppException(ErrorCode.GROQ_UNAVAILABLE, exception);
         }
     }
-    public record GroqResult(String content, int promptTokens, int completionTokens) {}
+    public record GroqResult(String content, int promptTokens, int completionTokens, String finishReason) {
+        public GroqResult(String content, int promptTokens, int completionTokens) {
+            this(content, promptTokens, completionTokens, null);
+        }
+        public boolean isLengthTruncated() { return "length".equalsIgnoreCase(finishReason); }
+    }
 }
 

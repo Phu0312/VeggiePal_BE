@@ -10,7 +10,8 @@ public record GroqResponse(
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Choice(
-            Message message
+            Message message,
+            @com.fasterxml.jackson.annotation.JsonProperty("finish_reason") String finishReason
     ) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
