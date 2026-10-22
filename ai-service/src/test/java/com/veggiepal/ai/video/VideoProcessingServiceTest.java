@@ -20,6 +20,7 @@ import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
@@ -229,6 +230,64 @@ class VideoProcessingServiceTest {
         assertEquals("Soup", ((java.util.Map<?, ?>) shared.extraction()).get("title"));
         verifyNoInteractions(downloader);
         verify(quota, never()).reserveVideo(any());
+    }
+
+    @Test
+    void failedSourceJobIsReleasedAndRetryCreatesAChargedJob() {
+        publishedUpload();
+        VideoJob failed = new VideoJob(22L, "source.mp4", null, true, LocalDate.now(), 8L);
+        failed.fail("first attempt failed");
+        when(repository.findBySourceVideoId(8L)).thenReturn(Optional.of(failed), Optional.empty());
+        when(downloader.download(any())).thenReturn(stored);
+        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = service.processExisting(7L, 8L);
+
+        assertEquals(VideoJob.PROCESSING, response.status());
+        verify(states).releaseReusableSource(8L);
+        verify(quota).reserveVideo(7L);
+        verify(repository).saveAndFlush(any(VideoJob.class));
+        verify(executor).execute(any(Runnable.class));
+    }
+
+    @Test
+    void completedSourceWithoutRetainedExtractionRunsAgain() {
+        publishedUpload();
+        VideoJob expired = new VideoJob(22L, "source.mp4", null, true, LocalDate.now(), 8L);
+        expired.complete("old transcript", "{\"title\":\"Old\"}");
+        expired.purgeOutput();
+        when(repository.findBySourceVideoId(8L)).thenReturn(Optional.of(expired), Optional.empty());
+        when(downloader.download(any())).thenReturn(stored);
+        when(repository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var response = service.processExisting(7L, 8L);
+
+        assertEquals(VideoJob.PROCESSING, response.status());
+        verify(states).releaseReusableSource(8L);
+        verify(quota).reserveVideo(7L);
+    }
+
+    @Test
+    void sharedExpiredResultIsNotFoundInsteadOfEmptySuccess() {
+        publishedUpload();
+        VideoJob expired = new VideoJob(22L, "source.mp4", null, true, LocalDate.now(), 8L);
+        expired.complete("old transcript", "{\"title\":\"Old\"}");
+        expired.purgeOutput();
+        when(repository.findBySourceVideoId(8L)).thenReturn(Optional.of(expired));
+
+        assertEquals(ErrorCode.RESOURCE_NOT_FOUND,
+                assertThrows(AppException.class, () -> service.sharedResult(8L)).getErrorCode());
+    }
+
+    @Test
+    void responseTimestampsAreExplicitUtcInstants() {
+        VideoJob job = new VideoJob(8L, "history.mp4");
+        when(repository.findByIdAndUserId(10L, 8L)).thenReturn(Optional.of(job));
+
+        var response = service.get(8L, 10L);
+
+        assertEquals(job.getCreatedAt().toInstant(ZoneOffset.UTC), response.createdAt());
+        assertEquals(job.getUpdatedAt().toInstant(ZoneOffset.UTC), response.updatedAt());
     }
 
     @Test

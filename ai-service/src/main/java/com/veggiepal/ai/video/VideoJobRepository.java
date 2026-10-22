@@ -13,6 +13,9 @@ import org.springframework.data.repository.query.Param;
 public interface VideoJobRepository extends JpaRepository<VideoJob,Long>{
     Optional<VideoJob> findByIdAndUserId(Long id,Long userId);
     Optional<VideoJob> findBySourceVideoId(Long sourceVideoId);
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select j from VideoJob j where j.sourceVideoId=:sourceVideoId")
+    Optional<VideoJob> findBySourceVideoIdForUpdate(@Param("sourceVideoId") Long sourceVideoId);
     Page<VideoJob> findAllByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     List<VideoJob> findByStatus(String status);
     List<VideoJob> findTop100ByStatusAndUpdatedAtBeforeOrderByUpdatedAtAsc(String status, LocalDateTime cutoff);

@@ -33,5 +33,6 @@ public class VideoJob {
     public boolean fail(String error){if(!PROCESSING.equals(status))return false;this.status=FAILED;this.errorMessage=error==null?null:error.substring(0,Math.min(500,error.length()));this.tempFilePath=null;this.updatedAt=LocalDateTime.now();return true;}
     public void touch(){if(PROCESSING.equals(status))this.updatedAt=LocalDateTime.now();}
     public void markQuotaRefunded(){this.quotaRefunded=true;}
-    public void purgeOutput(){if(!PROCESSING.equals(status)){this.transcript=null;this.extractionJson=null;}}
+    public void releaseSourceVideo(){this.sourceVideoId=null;}
+    public void purgeOutput(){if(!PROCESSING.equals(status)){this.transcript=null;this.extractionJson=null;this.sourceVideoId=null;}}
 }

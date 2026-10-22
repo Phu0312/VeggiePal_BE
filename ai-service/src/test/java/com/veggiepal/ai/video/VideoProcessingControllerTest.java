@@ -8,7 +8,6 @@ import static org.mockito.Mockito.when;
 
 import com.veggiepal.ai.common.AppException;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -21,7 +20,7 @@ class VideoProcessingControllerTest {
         VideoProcessingService service = mock(VideoProcessingService.class);
         var file = new MockMultipartFile("file", "meal.mp4", "video/mp4", new byte[]{1});
         var response = new VideoDtos.VideoJobResponse(42L, null, VideoJob.PROCESSING, "meal.mp4", null,
-                null, null, LocalDateTime.now(), LocalDateTime.now());
+                null, null, Instant.now(), Instant.now());
         when(service.process(7L, file)).thenReturn(response);
         Jwt jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(60),
                 Map.of("alg", "none"), Map.of("userId", 7L));
@@ -44,7 +43,7 @@ class VideoProcessingControllerTest {
     void processExistingReturnsAcceptedAndUsesAuthenticatedUser() {
         VideoProcessingService service = mock(VideoProcessingService.class);
         var response = new VideoDtos.VideoJobResponse(42L, 8L, VideoJob.PROCESSING,
-                "blog-video-8.mp4", null, null, null, LocalDateTime.now(), LocalDateTime.now());
+                "blog-video-8.mp4", null, null, null, Instant.now(), Instant.now());
         when(service.processExisting(7L, 8L)).thenReturn(response);
         Jwt jwt = new Jwt("token", Instant.now(), Instant.now().plusSeconds(60),
                 Map.of("alg", "none"), Map.of("userId", 7L));

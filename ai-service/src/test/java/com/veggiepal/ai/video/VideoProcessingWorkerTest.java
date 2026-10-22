@@ -83,6 +83,17 @@ class VideoProcessingWorkerTest {
     }
 
     @Test
+    void malformedJsonIsReportedAsInvalidAiResponse() {
+        when(groq.complete(eq("video"), any(), anyDouble(), anyInt())).thenReturn(
+                new GroqClient.GroqResult("{not-json", 10, 3, "stop"));
+
+        worker.process(9L);
+
+        verify(states, never()).complete(any(), any(), any());
+        verify(states).failAndRefund(9L, ErrorCode.INVALID_AI_RESPONSE.message);
+    }
+
+    @Test
     void ffmpegTimeoutFailsRefundsAndCleansTemporaryFiles() {
         org.mockito.Mockito.doThrow(new AppException(ErrorCode.VIDEO_PROCESSING_FAILED))
                 .when(media).extractAudio(video, audio);
