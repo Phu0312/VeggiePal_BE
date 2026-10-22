@@ -46,6 +46,12 @@ public class PaymentService {
                     "VeggiePal " + plan.getCode(), returnUrl, cancelUrl);
             order.setPaymentLinkId(link.paymentLinkId());
             order.setCheckoutUrl(link.checkoutUrl());
+            order.setQrCode(link.qrCode());
+            order.setAccountName(link.accountName());
+            order.setAccountNumber(link.accountNumber());
+            order.setBin(link.bin());
+            order.setDescription(link.description());
+            order.setExpiredAt(link.expiredAt());
             return response(orders.save(order));
         } catch (PayOsOperationException exception) {
             throw new AppException(ErrorCode.PAYOS_UNAVAILABLE);
@@ -60,7 +66,7 @@ public class PaymentService {
 
     @Transactional(readOnly = true)
     public List<PaymentOrderResponse> history(Long userId) {
-        return orders.findAllByUserIdOrderByCreatedAtDesc(userId).stream().map(PaymentService::response).toList();
+        return orders.findAllByUserIdOrderByCreatedAtDesc(userId).stream().map(this::response).toList();
     }
 
     @Transactional
@@ -93,8 +99,12 @@ public class PaymentService {
         subscriptionService.activate(order.getUserId(), order.getPlan(), paidAt);
     }
 
-    private static PaymentOrderResponse response(PaymentOrder o) {
+    private PaymentOrderResponse response(PaymentOrder o) {
+        boolean qrVisible = o.getStatus() == PaymentStatus.PENDING
+                && (o.getExpiredAt() == null || o.getExpiredAt().isAfter(clock.instant()));
         return new PaymentOrderResponse(o.getId(), o.getOrderCode(), o.getPlan().getCode(), o.getAmount(),
-                o.getStatus(), o.getCheckoutUrl(), o.getCreatedAt(), o.getPaidAt());
+                o.getStatus(), o.getCheckoutUrl(), qrVisible ? o.getQrCode() : null,
+                o.getAccountName(), o.getAccountNumber(), o.getBin(), o.getDescription(), o.getExpiredAt(),
+                o.getCreatedAt(), o.getPaidAt());
     }
 }
