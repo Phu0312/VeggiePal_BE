@@ -23,7 +23,8 @@ public class VideoMaintenanceService implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         // No in-memory task survives a process restart, so every pre-existing PROCESSING job is unrecoverable.
         repository.findByStatus(VideoJob.PROCESSING).forEach(this::failAndCleanup);
-        storage.cleanupOrphans(properties.staleAfter());
+        // The storage directory is dedicated to video jobs. After a JVM restart no worker owns any remaining file.
+        storage.cleanupOrphans(java.time.Duration.ZERO);
     }
 
     @Scheduled(fixedDelayString = "${ai.video.maintenance-interval:5m}")
