@@ -34,6 +34,22 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+  
+  ngrok:
+    image: ngrok/ngrok:latest
+    restart: unless-stopped
+    command:
+      - http
+      - api-gateway:8080
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?NGROK_AUTHTOKEN must be set}
+    ports:
+      - "127.0.0.1:4040:4040"
+    networks:
+      - backend
+    depends_on:
+      api-gateway:
+        condition: service_healthy
 
   identity-service:
     <<: *service-defaults
