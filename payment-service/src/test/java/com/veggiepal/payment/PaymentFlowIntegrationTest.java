@@ -11,7 +11,14 @@ import com.veggiepal.payment.entity.*;
 import com.veggiepal.payment.payos.*;
 import com.veggiepal.payment.exception.PayOsOperationException;
 import com.veggiepal.payment.repository.*;
+import com.veggiepal.payment.service.PaymentService;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,6 +35,7 @@ class PaymentFlowIntegrationTest {
     @Autowired SubscriptionPlanRepository plans;
     @Autowired PaymentOrderRepository orders;
     @Autowired UserSubscriptionRepository subscriptions;
+    @Autowired PaymentService paymentService;
     @MockitoBean PayOsGateway payOs;
 
     @BeforeEach
@@ -95,6 +103,102 @@ class PaymentFlowIntegrationTest {
     }
 
     @Test
+    void cancelChecksOwnershipCallsPayOsOnceAndIsIdempotent() throws Exception {
+        SubscriptionPlan plus = plans.findByCode(PlanCode.PLUS).orElseThrow();
+        PaymentOrder order = orders.save(PaymentOrder.builder().orderCode(2222L).userId(70L).plan(plus)
+                .amount(29_000).status(PaymentStatus.PENDING).paymentLinkId("cancel-link")
+                .qrCode("persisted-emv").checkoutUrl("https://pay.test/cancel-link")
+                .createdAt(Instant.now()).expiredAt(Instant.now().plusSeconds(900)).build());
+        when(payOs.cancelPaymentLink(2222L, "Cancelled by customer"))
+                .thenReturn(PaymentCancellationResult.CANCELLED);
+
+        mvc.perform(post("/payments/orders/{id}/cancel", order.getId()))
+                .andExpect(status().isUnauthorized());
+
+        mvc.perform(post("/payments/orders/{id}/cancel", order.getId())
+                        .with(jwt().jwt(token -> token.claim("userId", 71L).claim("role", "USER"))))
+                .andExpect(status().isNotFound());
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mvc.perform(post("/payments/orders/{id}/cancel", order.getId())
+                            .with(jwt().jwt(token -> token.claim("userId", 70L).claim("role", "USER"))))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.status").value("CANCELLED"))
+                    .andExpect(jsonPath("$.result.qrCode").isEmpty());
+        }
+
+        assertThat(orders.findById(order.getId()).orElseThrow().getStatus()).isEqualTo(PaymentStatus.CANCELLED);
+        verify(payOs, times(1)).cancelPaymentLink(2222L, "Cancelled by customer");
+    }
+
+    @Test
+    void concurrentCheckoutsCreateOnePayOsLinkAndReturnSameOrder() throws Exception {
+        when(payOs.createPaymentLink(anyLong(), eq(29_000L), eq("VeggiePal PLUS"), any(), any()))
+                .thenReturn(new PaymentLinkResult("one-link", "https://pay.test/one-link", "one-emv",
+                        "VEGGIEPAL", "0123456789", "970422", "VP PLUS", Instant.now().plusSeconds(900)));
+        int requestCount = 4;
+        CountDownLatch ready = new CountDownLatch(requestCount);
+        CountDownLatch start = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(requestCount);
+        try {
+            List<Future<Long>> futures = new ArrayList<>();
+            for (int index = 0; index < requestCount; index++) {
+                futures.add(executor.submit(() -> {
+                    ready.countDown();
+                    start.await();
+                    return paymentService.checkout(88L, PlanCode.PLUS).id();
+                }));
+            }
+            assertThat(ready.await(5, TimeUnit.SECONDS)).isTrue();
+            start.countDown();
+            List<Long> ids = new ArrayList<>();
+            for (Future<Long> future : futures) ids.add(future.get(10, TimeUnit.SECONDS));
+
+            assertThat(ids).containsOnly(ids.getFirst());
+            assertThat(orders.findAllByUserIdOrderByCreatedAtDesc(88L)).hasSize(1);
+            verify(payOs, times(1)).createPaymentLink(anyLong(), anyLong(), anyString(), anyString(), anyString());
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void confirmedCancellationWinsAgainstWaitingWebhookWithoutSubscriptionActivation() throws Exception {
+        SubscriptionPlan plus = plans.findByCode(PlanCode.PLUS).orElseThrow();
+        PaymentOrder order = orders.save(PaymentOrder.builder().orderCode(3333L).userId(90L).plan(plus)
+                .amount(29_000).status(PaymentStatus.PENDING).paymentLinkId("race-link")
+                .createdAt(Instant.now()).build());
+        CountDownLatch cancellationAtProvider = new CountDownLatch(1);
+        CountDownLatch allowCancellation = new CountDownLatch(1);
+        CountDownLatch webhookVerified = new CountDownLatch(1);
+        when(payOs.cancelPaymentLink(3333L, "Cancelled by customer")).thenAnswer(ignored -> {
+            cancellationAtProvider.countDown();
+            allowCancellation.await(5, TimeUnit.SECONDS);
+            return PaymentCancellationResult.CANCELLED;
+        });
+        when(payOs.verifyWebhook(any())).thenAnswer(ignored -> {
+            webhookVerified.countDown();
+            return new VerifiedPayment(3333L, 29_000L, "00", "VND", "race-link", "race-ref");
+        });
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            Future<?> cancellation = executor.submit(() -> paymentService.cancel(90L, order.getId()));
+            assertThat(cancellationAtProvider.await(5, TimeUnit.SECONDS)).isTrue();
+            Future<?> webhook = executor.submit(() -> paymentService.processWebhook(java.util.Map.of("signed", true)));
+            assertThat(webhookVerified.await(5, TimeUnit.SECONDS)).isTrue();
+            allowCancellation.countDown();
+            cancellation.get(10, TimeUnit.SECONDS);
+            webhook.get(10, TimeUnit.SECONDS);
+        } finally {
+            allowCancellation.countDown();
+            executor.shutdownNow();
+        }
+
+        assertThat(orders.findById(order.getId()).orElseThrow().getStatus()).isEqualTo(PaymentStatus.CANCELLED);
+        assertThat(subscriptions.findByUserId(90L)).isEmpty();
+    }
+
+    @Test
     void adminDashboardIsAdminOnlyAndUsesOnlyVerifiedPaidRevenue() throws Exception {
         SubscriptionPlan plus = plans.findByCode(PlanCode.PLUS).orElseThrow();
         SubscriptionPlan pro = plans.findByCode(PlanCode.PRO).orElseThrow();
@@ -129,7 +233,7 @@ class PaymentFlowIntegrationTest {
                         .param("from", "2026-10-20T00:00:00Z")
                         .param("to", "2026-10-20T23:59:59Z").with(admin))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.statusDistribution.length()").value(3))
+                .andExpect(jsonPath("$.result.statusDistribution.length()").value(4))
                 .andExpect(jsonPath("$.result.planDistribution.length()").value(3))
                 .andExpect(jsonPath("$.result.transactionTrend[0].period").value("2026-10-20"));
 
