@@ -1,3 +1,4 @@
+
 name: veggiepal
 
 x-service-defaults: &service-defaults
@@ -19,6 +20,8 @@ services:
   mysql:
     image: mysql:8.4
     restart: unless-stopped
+    ports:
+      - "127.0.0.1:3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
     volumes:
