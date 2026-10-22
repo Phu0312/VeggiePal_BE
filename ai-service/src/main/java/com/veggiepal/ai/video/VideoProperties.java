@@ -8,7 +8,7 @@ public record VideoProperties(String ffmpegPath, String ffprobePath, long maxFil
                               long maxDurationSeconds, Duration ffmpegTimeout,
                               Duration ffprobeTimeout, int workerCount, int queueCapacity,
                               String storageDir, Duration staleAfter, Duration retention,
-                              Duration maintenanceInterval) {
+                              Duration maintenanceInterval, int videoExtractionMaxTokens) {
     public VideoProperties {
         if (ffmpegPath == null || ffmpegPath.isBlank()) ffmpegPath = "ffmpeg";
         if (ffprobePath == null || ffprobePath.isBlank()) ffprobePath = "ffprobe";
@@ -22,6 +22,7 @@ public record VideoProperties(String ffmpegPath, String ffprobePath, long maxFil
         if (staleAfter == null) staleAfter = Duration.ofMinutes(20);
         if (retention == null) retention = Duration.ofDays(30);
         if (maintenanceInterval == null) maintenanceInterval = Duration.ofMinutes(5);
+        if (videoExtractionMaxTokens <= 0) videoExtractionMaxTokens = 4_000;
     }
     public int storageCapacity() { return Math.max(1, workerCount) + Math.max(0, queueCapacity); }
 }

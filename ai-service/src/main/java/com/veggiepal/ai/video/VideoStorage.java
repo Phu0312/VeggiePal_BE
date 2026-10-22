@@ -5,6 +5,8 @@ import com.veggiepal.ai.common.ErrorCode;
 import jakarta.annotation.PostConstruct;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
@@ -39,6 +41,31 @@ public class VideoStorage {
             file.transferTo(target);
             owned.add(target);
             return target;
+        } catch (Exception exception) {
+            capacity.release();
+            deleteFile(target);
+            throw new AppException(ErrorCode.VIDEO_PROCESSING_FAILED, exception);
+        }
+    }
+
+    public Path store(InputStream input, long maxBytes) {
+        if (!capacity.tryAcquire()) throw new AppException(ErrorCode.VIDEO_QUEUE_FULL);
+        Path target = root.resolve(UUID.randomUUID() + ".video").normalize();
+        try (InputStream source = input; OutputStream output = Files.newOutputStream(target)) {
+            byte[] buffer = new byte[8192];
+            long total = 0;
+            int read;
+            while ((read = source.read(buffer)) != -1) {
+                total += read;
+                if (total > maxBytes) throw new AppException(ErrorCode.FILE_TOO_LARGE);
+                output.write(buffer, 0, read);
+            }
+            owned.add(target);
+            return target;
+        } catch (AppException exception) {
+            capacity.release();
+            deleteFile(target);
+            throw exception;
         } catch (Exception exception) {
             capacity.release();
             deleteFile(target);

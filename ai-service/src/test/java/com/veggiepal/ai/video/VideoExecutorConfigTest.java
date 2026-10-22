@@ -14,7 +14,7 @@ class VideoExecutorConfigTest {
     void executorRejectsWorkBeyondBoundedWorkerAndQueueCapacity() throws Exception {
         VideoProperties properties = new VideoProperties("ffmpeg", "ffprobe", 100, 1800,
                 Duration.ofMinutes(2), Duration.ofSeconds(20), 1, 1, "build/video",
-                Duration.ofMinutes(20), Duration.ofDays(30), Duration.ofMinutes(5));
+                Duration.ofMinutes(20), Duration.ofDays(30), Duration.ofMinutes(5), 4000);
         Executor executor = new VideoExecutorConfig().videoTaskExecutor(properties);
         CountDownLatch release = new CountDownLatch(1);
         Runnable blocked = () -> {
