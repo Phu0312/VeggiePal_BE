@@ -23,6 +23,7 @@ public enum ErrorCode {
     VERSION_NOT_FOUND(6017, "Phiên bản thực đơn không tồn tại.", HttpStatus.NOT_FOUND),
     RECIPE_NOT_VEGAN(6018, "Món ăn được chọn không phải món thuần chay.", HttpStatus.BAD_REQUEST),
     RECIPE_CONTAINS_ALLERGEN(6019, "Món ăn chứa thành phần gây dị ứng của bạn.", HttpStatus.BAD_REQUEST),
+    VIDEO_QUEUE_FULL(6020, "Video processing queue is full", HttpStatus.SERVICE_UNAVAILABLE),
     UNCATEGORIZED(6999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
     public final int code;
