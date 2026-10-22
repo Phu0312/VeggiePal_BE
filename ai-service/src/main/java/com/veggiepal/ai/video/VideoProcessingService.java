@@ -9,6 +9,8 @@ import com.veggiepal.ai.video.VideoDtos.VideoJobResponse;
 import com.veggiepal.ai.video.VideoDtos.SharedVideoRecipeResponse;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
@@ -52,7 +54,7 @@ public class VideoProcessingService {
 
     public VideoJobResponse processExisting(Long userId, Long videoId) {
         BlogVideoClient.BlogVideoMetadata source = requirePublishedUpload(videoId);
-        VideoJob cached = repository.findBySourceVideoId(videoId).orElse(null);
+        VideoJob cached = findReusableResult(videoId);
         if (cached != null) return sourceView(cached);
 
         Path video = null;
@@ -67,7 +69,7 @@ public class VideoProcessingService {
             }
 
             // Avoid quota work if another request completed creation while this request downloaded.
-            cached = repository.findBySourceVideoId(videoId).orElse(null);
+            cached = findReusableResult(videoId);
             if (cached != null) {
                 storage.delete(video);
                 return sourceView(cached);
@@ -118,7 +120,10 @@ public class VideoProcessingService {
         if (VideoJob.FAILED.equals(job.getStatus())) {
             throw new AppException(ErrorCode.VIDEO_EXTRACTION_FAILED);
         }
-        return new SharedVideoRecipeResponse(videoId, parseExtraction(job), job.getUpdatedAt());
+        if (!VideoJob.COMPLETED.equals(job.getStatus()) || job.getExtractionJson() == null) {
+            throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
+        }
+        return new SharedVideoRecipeResponse(videoId, parseExtraction(job), utc(job.getUpdatedAt()));
     }
 
     public VideoJobResponse process(Long userId, MultipartFile file) {
@@ -185,7 +190,7 @@ public class VideoProcessingService {
             return new VideoJobResponse(job.getId(), job.getSourceVideoId(), job.getStatus(), job.getOriginalFilename(),
                     job.getTranscript(), job.getExtractionJson() == null ? null
                     : mapper.readValue(job.getExtractionJson(), Object.class), job.getErrorMessage(),
-                    job.getCreatedAt(), job.getUpdatedAt());
+                    utc(job.getCreatedAt()), utc(job.getUpdatedAt()));
         } catch (Exception exception) {
             throw new AppException(ErrorCode.INVALID_AI_RESPONSE, exception);
         }
@@ -195,7 +200,7 @@ public class VideoProcessingService {
         try {
             return new VideoJobResponse(job.getId(), job.getSourceVideoId(), job.getStatus(),
                     job.getOriginalFilename(), null, parseExtraction(job), job.getErrorMessage(),
-                    job.getCreatedAt(), job.getUpdatedAt());
+                    utc(job.getCreatedAt()), utc(job.getUpdatedAt()));
         } catch (AppException exception) {
             throw exception;
         }
@@ -208,6 +213,21 @@ public class VideoProcessingService {
         } catch (Exception exception) {
             throw new AppException(ErrorCode.INVALID_AI_RESPONSE, exception);
         }
+    }
+
+    private VideoJob findReusableResult(Long videoId) {
+        VideoJob job = repository.findBySourceVideoId(videoId).orElse(null);
+        if (job == null) return null;
+        if (VideoJob.PROCESSING.equals(job.getStatus())
+                || VideoJob.COMPLETED.equals(job.getStatus()) && job.getExtractionJson() != null) {
+            return job;
+        }
+        states.releaseReusableSource(videoId);
+        return null;
+    }
+
+    private java.time.Instant utc(LocalDateTime value) {
+        return value == null ? null : value.toInstant(ZoneOffset.UTC);
     }
 
     private BlogVideoClient.BlogVideoMetadata requirePublishedUpload(Long videoId) {
