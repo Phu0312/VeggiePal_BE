@@ -38,7 +38,7 @@ class PaymentServiceTest {
         when(orders.save(any())).thenAnswer(i -> { PaymentOrder o = i.getArgument(0); o.setId(9L); return o; });
         when(payOs.createPaymentLink(123L, 29_000L, "VeggiePal PLUS",
                 "https://app.test/success", "https://app.test/cancel"))
-                .thenReturn(new PaymentLinkResult("link-1", "https://pay.payos.vn/link-1", "0002010102123854VIETQR"));
+                .thenReturn(link("0002010102123854VIETQR", clock.instant().plusSeconds(900)));
 
         var result = service.checkout(7L, PlanCode.PLUS);
 
@@ -46,6 +46,17 @@ class PaymentServiceTest {
         assertThat(result.status()).isEqualTo(PaymentStatus.PENDING);
         assertThat(result.checkoutUrl()).isEqualTo("https://pay.payos.vn/link-1");
         assertThat(result.qrCode()).isEqualTo("0002010102123854VIETQR");
+        assertThat(result.accountName()).isEqualTo("VEGGIEPAL");
+        assertThat(result.accountNumber()).isEqualTo("123456789");
+        assertThat(result.bin()).isEqualTo("970422");
+        assertThat(result.description()).isEqualTo("VP PLUS");
+        assertThat(result.expiredAt()).isEqualTo(clock.instant().plusSeconds(900));
+
+        ArgumentCaptor<PaymentOrder> captor = ArgumentCaptor.forClass(PaymentOrder.class);
+        verify(orders, times(2)).save(captor.capture());
+        PaymentOrder saved = captor.getAllValues().getLast();
+        assertThat(saved.getQrCode()).isEqualTo("0002010102123854VIETQR");
+        assertThat(saved.getAccountName()).isEqualTo("VEGGIEPAL");
     }
 
     @Test
@@ -55,12 +66,28 @@ class PaymentServiceTest {
         when(codes.next()).thenReturn(123L);
         when(orders.save(any())).thenAnswer(i -> i.getArgument(0));
         when(payOs.createPaymentLink(anyLong(), anyLong(), anyString(), anyString(), anyString()))
-                .thenReturn(new PaymentLinkResult("link-1", "https://pay.payos.vn/link-1", null));
+                .thenReturn(link(null, null));
 
         var result = service.checkout(7L, PlanCode.PLUS);
 
         assertThat(result.qrCode()).isNull();
         assertThat(result.checkoutUrl()).isEqualTo("https://pay.payos.vn/link-1");
+    }
+
+    @Test
+    void getOrder_restoresActiveQrButHidesExpiredOrPaidQr() {
+        PaymentOrder order = order(PaymentStatus.PENDING);
+        order.setQrCode("persisted-qr");
+        order.setExpiredAt(clock.instant().plusSeconds(60));
+        when(orders.findByIdAndUserId(1L, 7L)).thenReturn(Optional.of(order));
+
+        assertThat(service.getOrder(7L, 1L).qrCode()).isEqualTo("persisted-qr");
+
+        order.setExpiredAt(clock.instant());
+        assertThat(service.getOrder(7L, 1L).qrCode()).isNull();
+        order.setExpiredAt(clock.instant().plusSeconds(60));
+        order.setStatus(PaymentStatus.PAID);
+        assertThat(service.getOrder(7L, 1L).qrCode()).isNull();
     }
 
     @Test
@@ -118,5 +145,9 @@ class PaymentServiceTest {
     private SubscriptionPlan plan(Long id, PlanCode code, long price) {
         return SubscriptionPlan.builder().id(id).code(code).price(price).durationDays(code == PlanCode.FREE ? 0 : 30)
                 .chatPerDay(20).mealPlansPerMonth(8).videosPerMonth(3).active(true).build();
+    }
+    private PaymentLinkResult link(String qrCode, Instant expiredAt) {
+        return new PaymentLinkResult("link-1", "https://pay.payos.vn/link-1", qrCode,
+                "VEGGIEPAL", "123456789", "970422", "VP PLUS", expiredAt);
     }
 }

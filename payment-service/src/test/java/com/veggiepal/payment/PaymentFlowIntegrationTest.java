@@ -18,6 +18,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -52,7 +53,8 @@ class PaymentFlowIntegrationTest {
     @Test
     void checkoutDerivesUserFromJwtAndUsesCatalogPrice() throws Exception {
         when(payOs.createPaymentLink(anyLong(), eq(29_000L), eq("VeggiePal PLUS"), any(), any()))
-                .thenReturn(new PaymentLinkResult("new-link", "https://pay.test/new-link", "0002010102123854VIETQR"));
+                .thenReturn(new PaymentLinkResult("new-link", "https://pay.test/new-link", "0002010102123854VIETQR",
+                        "VEGGIEPAL JSC", "0123456789", "970422", "VP PLUS", Instant.now().plusSeconds(900)));
 
         mvc.perform(post("/payments/checkout")
                         .with(jwt().jwt(token -> token.claim("userId", 55L).claim("role", "USER")))
@@ -66,7 +68,12 @@ class PaymentFlowIntegrationTest {
                 .andExpect(jsonPath("$.result.amount").value(29000))
                 .andExpect(jsonPath("$.result.status").value("PENDING"))
                 .andExpect(jsonPath("$.result.checkoutUrl").value("https://pay.test/new-link"))
-                .andExpect(jsonPath("$.result.qrCode").value("0002010102123854VIETQR"));
+                .andExpect(jsonPath("$.result.qrCode").value("0002010102123854VIETQR"))
+                .andExpect(jsonPath("$.result.accountName").value("VEGGIEPAL JSC"))
+                .andExpect(jsonPath("$.result.accountNumber").value("0123456789"))
+                .andExpect(jsonPath("$.result.bin").value("970422"))
+                .andExpect(jsonPath("$.result.description").value("VP PLUS"))
+                .andExpect(jsonPath("$.result.expiredAt").isNotEmpty());
 
         PaymentOrder saved = orders.findAllByUserIdOrderByCreatedAtDesc(55L).getFirst();
         assertThat(saved.getAmount()).isEqualTo(29_000L);
@@ -79,7 +86,63 @@ class PaymentFlowIntegrationTest {
                 .andExpect(jsonPath("$.result.orderCode").value(saved.getOrderCode()))
                 .andExpect(jsonPath("$.result.status").value("PENDING"))
                 .andExpect(jsonPath("$.result.checkoutUrl").value("https://pay.test/new-link"))
-                .andExpect(jsonPath("$.result.qrCode").isEmpty());
+                .andExpect(jsonPath("$.result.qrCode").value("0002010102123854VIETQR"))
+                .andExpect(jsonPath("$.result.accountName").value("VEGGIEPAL JSC"));
+
+        mvc.perform(get("/payments/orders/{id}", saved.getId())
+                        .with(jwt().jwt(token -> token.claim("userId", 56L).claim("role", "USER"))))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void adminDashboardIsAdminOnlyAndUsesOnlyVerifiedPaidRevenue() throws Exception {
+        SubscriptionPlan plus = plans.findByCode(PlanCode.PLUS).orElseThrow();
+        SubscriptionPlan pro = plans.findByCode(PlanCode.PRO).orElseThrow();
+        Instant now = Instant.parse("2026-10-20T12:00:00Z");
+        PaymentOrder paid = orders.save(PaymentOrder.builder().orderCode(1001L).userId(10L).plan(plus)
+                .amount(29_000).status(PaymentStatus.PAID).createdAt(now.minusSeconds(60)).paidAt(now)
+                .paymentReference("verified-reference").build());
+        orders.save(PaymentOrder.builder().orderCode(1002L).userId(11L).plan(pro)
+                .amount(59_000).status(PaymentStatus.PENDING).createdAt(now).build());
+        orders.save(PaymentOrder.builder().orderCode(1003L).userId(12L).plan(pro)
+                .amount(59_000).status(PaymentStatus.PAID).createdAt(now).paidAt(null).build());
+
+        mvc.perform(get("/admin/payments/summary")
+                        .with(jwt().jwt(token -> token.claim("userId", 1L).claim("role", "USER"))))
+                .andExpect(status().isForbidden());
+
+        var admin = jwt().jwt(token -> token.claim("userId", 1L).claim("role", "ADMIN"))
+                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
+        mvc.perform(get("/admin/payments/summary").param("planCode", "PLUS").with(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalRevenue").value(29000))
+                .andExpect(jsonPath("$.result.totalTransactions").value(1))
+                .andExpect(jsonPath("$.result.paidTransactions").value(1));
+
+        mvc.perform(get("/admin/payments/revenue").param("groupBy", "DAY").with(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.totalRevenue").value(29000))
+                .andExpect(jsonPath("$.result.paidTransactions").value(1))
+                .andExpect(jsonPath("$.result.points[0].period").value("2026-10-20"));
+
+        mvc.perform(get("/admin/payments/statistics")
+                        .param("from", "2026-10-20T00:00:00Z")
+                        .param("to", "2026-10-20T23:59:59Z").with(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.statusDistribution.length()").value(3))
+                .andExpect(jsonPath("$.result.planDistribution.length()").value(3))
+                .andExpect(jsonPath("$.result.transactionTrend[0].period").value("2026-10-20"));
+
+        mvc.perform(get("/admin/payments/orders").param("status", "PAID").param("page", "0").param("size", "1").with(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.items.length()").value(1))
+                .andExpect(jsonPath("$.result.totalElements").value(2));
+
+        mvc.perform(get("/admin/payments/orders/{id}", paid.getId()).with(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.orderId").value(paid.getId()))
+                .andExpect(jsonPath("$.result.userId").value(10))
+                .andExpect(jsonPath("$.result.paymentReference").value("verified-reference"));
     }
 
     @Test
