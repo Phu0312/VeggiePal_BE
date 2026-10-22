@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import vn.payos.PayOS;
 import vn.payos.exception.PayOSException;
 import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
+import vn.payos.model.v2.paymentRequests.PaymentLinkStatus;
 
 @Component
 public class PayOsSdkAdapter implements PayOsGateway {
@@ -18,6 +19,22 @@ public class PayOsSdkAdapter implements PayOsGateway {
                            @Value("${payos.api-key}") String apiKey,
                            @Value("${payos.checksum-key}") String checksumKey) {
         this.clientId = clientId; this.apiKey = apiKey; this.checksumKey = checksumKey;
+    }
+
+    @Override
+    public PaymentCancellationResult cancelPaymentLink(long orderCode, String reason) {
+        PayOS payOS = null;
+        try {
+            payOS = client();
+            var response = payOS.paymentRequests().cancel(orderCode, reason);
+            if (response.getStatus() == PaymentLinkStatus.CANCELLED) return PaymentCancellationResult.CANCELLED;
+            if (response.getStatus() == PaymentLinkStatus.PAID) return PaymentCancellationResult.PAID;
+            return PaymentCancellationResult.NOT_CANCELLED;
+        } catch (PayOSException | IllegalArgumentException exception) {
+            throw new PayOsOperationException(exception);
+        } finally {
+            if (payOS != null) payOS.close();
+        }
     }
 
     @Override

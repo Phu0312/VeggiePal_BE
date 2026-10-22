@@ -23,5 +23,6 @@ public class DailyQuota {
         this.principalKey = principalKey; this.feature = feature; this.usageDate = date;
     }
     public void reserve() { requestCount++; }
+    public void refund() { if (requestCount > 0) requestCount--; }
     public void addTokens(int input, int output) { inputTokens += input; outputTokens += output; }
 }
