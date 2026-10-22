@@ -106,4 +106,12 @@ class ApiGatewayApplicationTests {
 		assertThat(environment.getProperty("spring.servlet.multipart.max-request-size")).isNull();
 	}
 
+	@Test
+	void routesAdminPaymentsToPaymentService() {
+		assertThat(environment.getProperty("spring.cloud.gateway.server.webmvc.routes[21].predicates[0]"))
+				.isEqualTo("Path=/api/admin/payments/**");
+		assertThat(environment.getProperty("spring.cloud.gateway.server.webmvc.routes[21].filters[0]"))
+				.isEqualTo("StripPrefix=1");
+	}
+
 }
