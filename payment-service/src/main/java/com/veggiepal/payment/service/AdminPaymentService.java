@@ -39,7 +39,8 @@ public class AdminPaymentService {
         transactions.forEach(order -> distribution.compute(order.getStatus(), (key, count) -> count + 1));
         long revenue = paid.stream().mapToLong(PaymentOrder::getAmount).sum();
         return new AdminPaymentDtos.Summary(revenue, transactions.size(), paid.size(),
-                distribution.get(PaymentStatus.PENDING), distribution.get(PaymentStatus.FAILED),
+                distribution.get(PaymentStatus.PENDING), distribution.get(PaymentStatus.CANCELLED),
+                distribution.get(PaymentStatus.FAILED),
                 paid.isEmpty() ? 0 : revenue / paid.size(), distribution);
     }
 

@@ -7,6 +7,7 @@ import lombok.*;
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 @Entity @Table(name = "payment_orders", indexes = {
         @Index(name = "idx_payment_orders_user_created", columnList = "user_id,created_at"),
+        @Index(name = "idx_payment_orders_reusable", columnList = "user_id,plan_id,status,created_at"),
         @Index(name = "idx_payment_orders_status_paid", columnList = "status,paid_at")
 }, uniqueConstraints = @UniqueConstraint(name = "uk_payment_orders_order_code", columnNames = "order_code"))
 public class PaymentOrder {

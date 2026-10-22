@@ -21,7 +21,7 @@ public final class AdminPaymentDtos {
     public record OrderPage(List<Order> items, int page, int size, long totalElements, int totalPages) {}
 
     public record Summary(long totalRevenue, long totalTransactions, long paidTransactions,
-                          long pendingTransactions, long failedTransactions,
+                          long pendingTransactions, long cancelledTransactions, long failedTransactions,
                           long averagePaidAmount, Map<PaymentStatus, Long> statusDistribution) {}
 
     public record Distribution(String key, long count, long amount) {}

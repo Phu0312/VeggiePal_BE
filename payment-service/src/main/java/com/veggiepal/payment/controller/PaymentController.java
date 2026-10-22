@@ -44,6 +44,14 @@ public class PaymentController {
                 .result(paymentService.getOrder(CurrentUser.id(jwt), id)).build();
     }
 
+    @PostMapping("/orders/{id}/cancel")
+    @Operation(summary = "Cancel one of the current user's pending payment orders")
+    public ApiResponse<PaymentOrderResponse> cancel(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                                    @PathVariable Long id) {
+        return ApiResponse.<PaymentOrderResponse>builder()
+                .result(paymentService.cancel(CurrentUser.id(jwt), id)).build();
+    }
+
     @GetMapping("/history")
     @Operation(summary = "List the current user's payment history")
     public ApiResponse<List<PaymentOrderResponse>> history(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
