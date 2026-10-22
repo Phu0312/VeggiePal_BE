@@ -2,6 +2,7 @@ package com.veggiepal.ai.quota;
 
 import com.veggiepal.ai.subscription.*;
 import java.time.Instant;
+import java.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,15 @@ public class PremiumQuotaService {
         SubscriptionEntitlement entitlement = effective(userId);
         return quotas.reserveFeature("user:" + userId, "VIDEO", QuotaPeriod.MONTHLY,
                 entitlement.videosPerMonth());
+    }
+
+    public void refundVideo(Long userId) {
+        quotas.refundFeature("user:" + userId, "VIDEO", QuotaPeriod.MONTHLY);
+    }
+
+    public void refundVideo(Long userId, LocalDate quotaPeriodDate) {
+        if (quotaPeriodDate == null) refundVideo(userId);
+        else quotas.refundFeature("user:" + userId, "VIDEO", quotaPeriodDate);
     }
 
     private SubscriptionEntitlement effective(Long userId) {

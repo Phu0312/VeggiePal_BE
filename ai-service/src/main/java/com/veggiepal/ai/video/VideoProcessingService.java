@@ -1,77 +1,121 @@
 package com.veggiepal.ai.video;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.veggiepal.ai.common.AppException;
 import com.veggiepal.ai.common.ErrorCode;
-import com.veggiepal.ai.groq.GroqClient;
-import com.veggiepal.ai.groq.ModelProperties;
-import com.veggiepal.ai.groq.dto.GroqRequest;
-import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.common.PageResponse;
 import com.veggiepal.ai.quota.PremiumQuotaService;
 import com.veggiepal.ai.video.VideoDtos.VideoJobResponse;
-import org.springframework.beans.factory.annotation.Value;
+import java.nio.file.Path;
+import java.time.LocalDate;
+import java.util.concurrent.Executor;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class VideoProcessingService {
-    private final VideoJobRepository repository;private final GroqClient groq;private final ModelProperties models;private final ObjectMapper mapper;private final UsageService usage;private final PremiumQuotaService premiumQuota;
-    private final String ffmpeg;private final String ffprobe;private final long maxBytes;private final long maxDurationSeconds;
-    public VideoProcessingService(VideoJobRepository repository,GroqClient groq,ModelProperties models,ObjectMapper mapper,UsageService usage,PremiumQuotaService premiumQuota,
-            @Value("${ai.video.ffmpeg-path}")String ffmpeg,@Value("${ai.video.ffprobe-path:ffprobe}")String ffprobe,
-            @Value("${ai.video.max-file-bytes}")long maxBytes,@Value("${ai.video.max-duration-seconds:1800}")long maxDurationSeconds){
-        this.repository=repository;this.groq=groq;this.models=models;this.mapper=mapper;this.usage=usage;this.premiumQuota=premiumQuota;this.ffmpeg=ffmpeg;this.ffprobe=ffprobe;
-        this.maxBytes=maxBytes;this.maxDurationSeconds=maxDurationSeconds;}
-    public VideoJobResponse process(Long userId,MultipartFile file){
-        if(file.isEmpty()||file.getContentType()==null||!file.getContentType().toLowerCase().startsWith("video/"))throw new AppException(ErrorCode.INVALID_REQUEST);
-        if(file.getSize()>maxBytes)throw new AppException(ErrorCode.FILE_TOO_LARGE);
-        premiumQuota.reserveVideo(userId);
-        VideoJob job=repository.save(new VideoJob(userId,safeName(file.getOriginalFilename())));Path video=null,audio=null;
-        try{video=Files.createTempFile("veggiepal-video-",".upload");audio=Files.createTempFile("veggiepal-audio-",".mp3");file.transferTo(video);validateDuration(video);
-            Process process=new ProcessBuilder(ffmpeg,"-y","-loglevel","error","-i",video.toString(),"-vn","-acodec","libmp3lame","-ar","16000","-ac","1",audio.toString()).redirectErrorStream(true).redirectOutput(ProcessBuilder.Redirect.DISCARD).start();
-            if(!process.waitFor(120,TimeUnit.SECONDS)){process.destroyForcibly();throw new AppException(ErrorCode.VIDEO_PROCESSING_FAILED);}
-            if(process.exitValue()!=0)throw new AppException(ErrorCode.VIDEO_PROCESSING_FAILED);
-            usage.checkBudget("user:"+userId);long transcriptionStart=System.nanoTime();String transcript;
-            try{transcript=groq.transcribe(audio,models.transcription());usage.success(userId,"user:"+userId,"TRANSCRIPTION",models.transcription(),
-                    new GroqClient.GroqResult("",0,0),(System.nanoTime()-transcriptionStart)/1_000_000);}
-            catch(RuntimeException exception){usage.failure(userId,"user:"+userId,"TRANSCRIPTION",models.transcription(),
-                    (System.nanoTime()-transcriptionStart)/1_000_000,exception);throw exception;}
-            usage.checkBudget("user:"+userId);long start=System.nanoTime();
-            String prompt="Từ transcript video nấu ăn sau, trích xuất và trả duy nhất JSON {\"title\":\"\",\"ingredients\":[{\"name\":\"\",\"quantity\":\"\"}],\"steps\":[{\"number\":1,\"instruction\":\"\"}]}. Không bịa phần không nghe thấy. Transcript: "+transcript;
-            GroqClient.GroqResult result;
-            try{result=groq.complete(models.videoExtraction(),List.of(new GroqRequest.Message("user",prompt)),0.1,1200);
-                usage.success(userId,"user:"+userId,"VIDEO",models.videoExtraction(),result,(System.nanoTime()-start)/1_000_000);}
-            catch(RuntimeException exception){usage.failure(userId,"user:"+userId,"VIDEO",models.videoExtraction(),
-                    (System.nanoTime()-start)/1_000_000,exception);throw exception;}
-            JsonNode extraction=mapper.readTree(cleanJson(result.content()));validateExtraction(extraction);job.complete(transcript,extraction.toString());repository.save(job);return view(job);
-        }catch(AppException e){job.fail(e.getMessage());repository.save(job);throw e;}catch(Exception e){job.fail(e.getMessage());repository.save(job);throw new AppException(ErrorCode.VIDEO_PROCESSING_FAILED,e);}finally{delete(video);delete(audio);}
+    private final VideoJobRepository repository;
+    private final PremiumQuotaService premiumQuota;
+    private final VideoStorage storage;
+    private final VideoMediaTools media;
+    private final VideoJobStateService states;
+    private final VideoProcessingWorker worker;
+    private final Executor executor;
+    private final ObjectMapper mapper;
+    private final VideoProperties properties;
+
+    public VideoProcessingService(VideoJobRepository repository, PremiumQuotaService premiumQuota,
+                                  VideoStorage storage, VideoMediaTools media, VideoJobStateService states,
+                                  VideoProcessingWorker worker,
+                                  @Qualifier("videoTaskExecutor") Executor executor,
+                                  ObjectMapper mapper, VideoProperties properties) {
+        this.repository = repository;
+        this.premiumQuota = premiumQuota;
+        this.storage = storage;
+        this.media = media;
+        this.states = states;
+        this.worker = worker;
+        this.executor = executor;
+        this.mapper = mapper;
+        this.properties = properties;
     }
-    public VideoJobResponse get(Long userId,Long id){return view(repository.findByIdAndUserId(id,userId).orElseThrow(()->new AppException(ErrorCode.RESOURCE_NOT_FOUND)));}
-    private VideoJobResponse view(VideoJob j){try{return new VideoJobResponse(j.getId(),j.getStatus(),j.getOriginalFilename(),j.getTranscript(),j.getExtractionJson()==null?null:mapper.readValue(j.getExtractionJson(),Object.class),j.getErrorMessage(),j.getCreatedAt(),j.getUpdatedAt());}catch(Exception e){throw new AppException(ErrorCode.INVALID_AI_RESPONSE,e);}}
-    private String safeName(String name){if(name==null)return"video";return Path.of(name).getFileName().toString().substring(0,Math.min(255,Path.of(name).getFileName().toString().length()));}
-    private String cleanJson(String raw){return raw.replaceFirst("(?s)^```(?:json)?\\s*","").replaceFirst("\\s*```$","").trim();}
-    private void validateDuration(Path video)throws Exception{
-        Process process=new ProcessBuilder(ffprobe,"-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",video.toString()).redirectErrorStream(true).start();
-        if(!process.waitFor(20,TimeUnit.SECONDS)){process.destroyForcibly();throw new AppException(ErrorCode.VIDEO_PROCESSING_FAILED);}
-        String output=new String(process.getInputStream().readAllBytes(),java.nio.charset.StandardCharsets.UTF_8).trim();
-        if(process.exitValue()!=0||output.isBlank())throw new AppException(ErrorCode.VIDEO_PROCESSING_FAILED);
-        double duration=Double.parseDouble(output);if(!Double.isFinite(duration)||duration<=0||duration>maxDurationSeconds)throw new AppException(ErrorCode.VIDEO_PROCESSING_FAILED);
-    }
-    private void validateExtraction(JsonNode extraction){
-        if(extraction==null||extraction.path("title").asText().isBlank()||!extraction.path("ingredients").isArray()
-                ||extraction.path("ingredients").isEmpty()||!extraction.path("steps").isArray()||extraction.path("steps").isEmpty())
-            throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
-        for(JsonNode ingredient:extraction.path("ingredients"))if(ingredient.path("name").asText().isBlank())
-            throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
-        int expected=1;for(JsonNode step:extraction.path("steps")){
-            if(step.path("number").asInt(-1)!=expected++||step.path("instruction").asText().isBlank())
-                throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
+
+    public VideoJobResponse process(Long userId, MultipartFile file) {
+        validateUpload(file);
+        Path video = null;
+        boolean quotaReserved = false;
+        VideoJob job = null;
+        try {
+            video = storage.store(file);
+            media.probe(video); // Real media validation always happens before quota reservation.
+            premiumQuota.reserveVideo(userId);
+            quotaReserved = true;
+            job = repository.save(new VideoJob(userId, safeName(file.getOriginalFilename()),
+                    video.toString(), true, LocalDate.now().withDayOfMonth(1)));
+            VideoJobResponse accepted = view(job);
+            Long jobId = job.getId();
+            Path storedVideo = video;
+            try {
+                executor.execute(() -> worker.process(jobId));
+            } catch (RuntimeException rejected) {
+                states.failAndRefund(jobId, "Video processing queue is full");
+                storage.delete(storedVideo);
+                throw new AppException(ErrorCode.VIDEO_QUEUE_FULL, rejected);
+            }
+            return accepted;
+        } catch (AppException exception) {
+            if (job == null && quotaReserved) premiumQuota.refundVideo(userId);
+            if (job == null) storage.delete(video);
+            throw exception;
+        } catch (RuntimeException exception) {
+            if (job == null && quotaReserved) premiumQuota.refundVideo(userId);
+            if (job == null) storage.delete(video);
+            throw exception;
         }
     }
-    private void delete(Path p){if(p!=null)try{Files.deleteIfExists(p);}catch(Exception ignored){}}
+
+    public VideoJobResponse get(Long userId, Long id) {
+        return view(repository.findByIdAndUserId(id, userId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND)));
+    }
+
+    public PageResponse<VideoJobResponse> history(Long userId, int page, int size) {
+        int safePage = Math.max(0, page);
+        int safeSize = Math.min(100, Math.max(1, size));
+        Page<VideoJob> result = repository.findAllByUserIdOrderByCreatedAtDesc(
+                userId, PageRequest.of(safePage, safeSize));
+        return PageResponse.<VideoJobResponse>builder()
+                .content(result.getContent().stream().map(this::view).toList())
+                .page(result.getNumber()).size(result.getSize())
+                .totalElements(result.getTotalElements()).totalPages(result.getTotalPages())
+                .first(result.isFirst()).last(result.isLast()).build();
+    }
+
+    private void validateUpload(MultipartFile file) {
+        if (file == null || file.isEmpty() || file.getContentType() == null
+                || !file.getContentType().toLowerCase().startsWith("video/")) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+        if (file.getSize() > properties.maxFileBytes()) throw new AppException(ErrorCode.FILE_TOO_LARGE);
+    }
+
+    private VideoJobResponse view(VideoJob job) {
+        try {
+            return new VideoJobResponse(job.getId(), job.getStatus(), job.getOriginalFilename(),
+                    job.getTranscript(), job.getExtractionJson() == null ? null
+                    : mapper.readValue(job.getExtractionJson(), Object.class), job.getErrorMessage(),
+                    job.getCreatedAt(), job.getUpdatedAt());
+        } catch (Exception exception) {
+            throw new AppException(ErrorCode.INVALID_AI_RESPONSE, exception);
+        }
+    }
+
+    private String safeName(String name) {
+        if (name == null || name.isBlank()) return "video";
+        String filename = Path.of(name).getFileName().toString();
+        return filename.substring(0, Math.min(255, filename.length()));
+    }
 }

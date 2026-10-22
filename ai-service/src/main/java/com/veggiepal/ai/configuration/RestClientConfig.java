@@ -25,6 +25,18 @@ public class RestClientConfig {
                 .messageConverters(items -> items.add(0, new MappingJackson2HttpMessageConverter(objectMapper))).build();
     }
 
+    @Bean("groqTranscriptionRestClient")
+    RestClient groqTranscriptionRestClient(GroqProperties properties,
+            com.fasterxml.jackson.databind.ObjectMapper objectMapper,
+            @org.springframework.beans.factory.annotation.Value("${groq.api.transcription-read-timeout:10m}")
+            java.time.Duration transcriptionReadTimeout) {
+        var factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(properties.connectTimeout());
+        factory.setReadTimeout(transcriptionReadTimeout);
+        return RestClient.builder().baseUrl(properties.baseUrl()).requestFactory(factory)
+                .messageConverters(items -> items.add(0, new MappingJackson2HttpMessageConverter(objectMapper))).build();
+    }
+
     @Bean("serviceRestClient")
     RestClient serviceRestClient(com.fasterxml.jackson.databind.ObjectMapper objectMapper) {
         var factory = new SimpleClientHttpRequestFactory();
