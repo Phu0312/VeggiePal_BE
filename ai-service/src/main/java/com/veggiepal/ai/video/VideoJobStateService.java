@@ -42,6 +42,14 @@ public class VideoJobStateService {
     }
 
     @Transactional
+    public void releaseReusableSource(Long sourceVideoId) {
+        repository.findBySourceVideoIdForUpdate(sourceVideoId)
+                .filter(job -> VideoJob.FAILED.equals(job.getStatus())
+                        || VideoJob.COMPLETED.equals(job.getStatus()) && job.getExtractionJson() == null)
+                .ifPresent(VideoJob::releaseSourceVideo);
+    }
+
+    @Transactional
     public int purgeBefore(LocalDateTime cutoff) {
         var jobs = repository.findPurgeCandidates(VideoJob.PROCESSING, cutoff,
                 org.springframework.data.domain.PageRequest.of(0, 100));
