@@ -3,6 +3,9 @@ package com.veggiepal.ai.video;
 import com.veggiepal.ai.common.ApiResponse;
 import com.veggiepal.ai.security.CurrentUser;
 import com.veggiepal.ai.video.VideoDtos.VideoJobResponse;
+import com.veggiepal.ai.video.VideoDtos.ExistingVideoRequest;
+import com.veggiepal.ai.video.VideoDtos.SharedVideoRecipeResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +20,16 @@ public class VideoProcessingController {
     @PostMapping(value="/process",consumes=MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<ApiResponse<VideoJobResponse>> process(@AuthenticationPrincipal Jwt jwt,@RequestPart("file")MultipartFile file){
         return ResponseEntity.accepted().body(ApiResponse.success(service.process(CurrentUser.id(jwt),file)));
+    }
+    @PostMapping("/process-existing")
+    ResponseEntity<ApiResponse<VideoJobResponse>> processExisting(
+            @AuthenticationPrincipal Jwt jwt, @RequestBody @Valid ExistingVideoRequest request) {
+        return ResponseEntity.accepted().body(ApiResponse.success(
+                service.processExisting(CurrentUser.id(jwt), request.videoId())));
+    }
+    @GetMapping("/by-video/{videoId}")
+    ApiResponse<SharedVideoRecipeResponse> byVideo(@PathVariable Long videoId) {
+        return ApiResponse.success(service.sharedResult(videoId));
     }
     @GetMapping ApiResponse<com.veggiepal.ai.common.PageResponse<VideoJobResponse>> history(
             @AuthenticationPrincipal Jwt jwt,@RequestParam(defaultValue="0") int page,

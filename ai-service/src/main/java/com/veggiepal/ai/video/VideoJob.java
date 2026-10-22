@@ -13,6 +13,7 @@ public class VideoJob {
     public static final String FAILED = "FAILED";
     @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id;
     @Column(name="user_id",nullable=false) private Long userId;
+    @Column(name="source_video_id") private Long sourceVideoId;
     @Column(nullable=false,length=30) private String status;
     @Column(name="original_filename",nullable=false,length=255) private String originalFilename;
     @Column(columnDefinition="LONGTEXT") private String transcript;
@@ -26,7 +27,8 @@ public class VideoJob {
     @Column(name="updated_at",nullable=false) private LocalDateTime updatedAt;
     public VideoJob(Long userId,String filename){this(userId,filename,null,false);}
     public VideoJob(Long userId,String filename,String tempFilePath,boolean quotaReserved){this(userId,filename,tempFilePath,quotaReserved,null);}
-    public VideoJob(Long userId,String filename,String tempFilePath,boolean quotaReserved,LocalDate quotaPeriodDate){this.userId=userId;this.originalFilename=filename;this.tempFilePath=tempFilePath;this.quotaReserved=quotaReserved;this.quotaPeriodDate=quotaPeriodDate;this.status=PROCESSING;this.createdAt=LocalDateTime.now();this.updatedAt=createdAt;}
+    public VideoJob(Long userId,String filename,String tempFilePath,boolean quotaReserved,LocalDate quotaPeriodDate){this(userId,filename,tempFilePath,quotaReserved,quotaPeriodDate,null);}
+    public VideoJob(Long userId,String filename,String tempFilePath,boolean quotaReserved,LocalDate quotaPeriodDate,Long sourceVideoId){this.userId=userId;this.sourceVideoId=sourceVideoId;this.originalFilename=filename;this.tempFilePath=tempFilePath;this.quotaReserved=quotaReserved;this.quotaPeriodDate=quotaPeriodDate;this.status=PROCESSING;this.createdAt=LocalDateTime.now();this.updatedAt=createdAt;}
     public boolean complete(String transcript,String json){if(!PROCESSING.equals(status))return false;this.transcript=transcript;this.extractionJson=json;this.status=COMPLETED;this.tempFilePath=null;this.updatedAt=LocalDateTime.now();return true;}
     public boolean fail(String error){if(!PROCESSING.equals(status))return false;this.status=FAILED;this.errorMessage=error==null?null:error.substring(0,Math.min(500,error.length()));this.tempFilePath=null;this.updatedAt=LocalDateTime.now();return true;}
     public void touch(){if(PROCESSING.equals(status))this.updatedAt=LocalDateTime.now();}

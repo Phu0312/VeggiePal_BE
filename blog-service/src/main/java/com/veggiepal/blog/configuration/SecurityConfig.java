@@ -43,6 +43,10 @@ public class SecurityConfig {
             new PublicEndpoint(null, "/swagger-ui.html"),
             new PublicEndpoint(null, "/v3/api-docs/**"),
 
+            // Authentication for this service-to-service endpoint is its mandatory
+            // constant-time X-Internal-Service-Token check in InternalVideoController.
+            new PublicEndpoint(HttpMethod.GET, "/internal/videos/{id:[0-9]+}"),
+
             new PublicEndpoint(HttpMethod.GET, "/blogs"),
             new PublicEndpoint(HttpMethod.GET, "/blogs/{id:[0-9]+}"),
             new PublicEndpoint(HttpMethod.GET, "/blogs/{id:[0-9]+}/related"),

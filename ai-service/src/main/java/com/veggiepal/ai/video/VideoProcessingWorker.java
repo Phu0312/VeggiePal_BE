@@ -11,6 +11,8 @@ import com.veggiepal.ai.monitoring.UsageService;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -23,6 +25,7 @@ public class VideoProcessingWorker {
             missing ingredients, quantities, nutrition, or facts. If required information is unavailable, return
             {"error":"INSUFFICIENT_INFORMATION"}.
             """;
+    private static final Logger log = LoggerFactory.getLogger(VideoProcessingWorker.class);
     private final VideoJobStateService states;
     private final VideoStorage storage;
     private final VideoMediaTools media;
@@ -30,10 +33,12 @@ public class VideoProcessingWorker {
     private final ModelProperties models;
     private final ObjectMapper mapper;
     private final UsageService usage;
+    private final VideoProperties properties;
 
     public VideoProcessingWorker(VideoJobStateService states, VideoStorage storage, VideoMediaTools media,
-                                 GroqClient groq, ModelProperties models, ObjectMapper mapper, UsageService usage) {
-        this.states=states;this.storage=storage;this.media=media;this.groq=groq;this.models=models;this.mapper=mapper;this.usage=usage;
+                                 GroqClient groq, ModelProperties models, ObjectMapper mapper, UsageService usage,
+                                 VideoProperties properties) {
+        this.states=states;this.storage=storage;this.media=media;this.groq=groq;this.models=models;this.mapper=mapper;this.usage=usage;this.properties=properties;
     }
 
     public void process(Long jobId) {
@@ -61,20 +66,33 @@ public class VideoProcessingWorker {
             states.touch(jobId);
             usage.checkBudget("user:" + item.userId());
             long extractionStart = System.nanoTime();
+            String model = models.videoExtraction();
+            int maxTokens = properties.videoExtractionMaxTokens();
             GroqClient.GroqResult result;
             try {
                 String transcriptData = mapper.writeValueAsString(java.util.Map.of("transcript", transcript));
-                result = groq.complete(models.videoExtraction(), List.of(
+                result = groq.complete(model, List.of(
                         new GroqRequest.Message("system", SYSTEM_INSTRUCTION),
-                        new GroqRequest.Message("user", transcriptData)), 0.1, 1200);
-                usage.success(item.userId(), "user:" + item.userId(), "VIDEO", models.videoExtraction(), result,
+                        new GroqRequest.Message("user", transcriptData)), 0.1, maxTokens);
+                usage.success(item.userId(), "user:" + item.userId(), "VIDEO", model, result,
                         elapsed(extractionStart));
             } catch (RuntimeException exception) {
-                usage.failure(item.userId(), "user:" + item.userId(), "VIDEO", models.videoExtraction(),
+                usage.failure(item.userId(), "user:" + item.userId(), "VIDEO", model,
                         elapsed(extractionStart), exception);
                 throw exception;
             }
+            log.info("[video-extraction] jobId={} model={} promptTokens={} completionTokens={} finishReason={}",
+                    jobId, model, result.promptTokens(), result.completionTokens(), result.finishReason());
+            if (result.isLengthTruncated()) {
+                log.warn("[video-extraction] jobId={} model={} finish_reason=length: response was truncated at {} tokens, increase GROQ_VIDEO_EXTRACTION_MAX_TOKENS (current={})",
+                        jobId, model, result.completionTokens(), maxTokens);
+                throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
+            }
             JsonNode extraction = mapper.readTree(cleanJson(result.content()));
+            if (isInsufficientInformation(extraction)) {
+                log.info("[video-extraction] jobId={} model={}: INSUFFICIENT_INFORMATION returned by model", jobId, model);
+                throw new AppException(ErrorCode.INSUFFICIENT_INFORMATION);
+            }
             validateExtraction(extraction);
             states.complete(jobId, transcript, extraction.toString());
         } catch (Exception exception) {
@@ -126,4 +144,9 @@ public class VideoProcessingWorker {
         return ErrorCode.VIDEO_PROCESSING_FAILED.message;
     }
     private static long elapsed(long start) { return (System.nanoTime()-start)/1_000_000; }
+    private static boolean isInsufficientInformation(JsonNode extraction) {
+        return extraction != null && extraction.isObject()
+                && exactFields(extraction, Set.of("error"))
+                && "INSUFFICIENT_INFORMATION".equals(extraction.path("error").asText());
+    }
 }
