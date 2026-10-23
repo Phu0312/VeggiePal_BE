@@ -222,8 +222,8 @@ Giới hạn hiện tại:
 - Recipe Service trả thêm macro/100g, cờ vegan/allergen và normalized ingredient name. AI Service tự tính macro theo gram và servings; LLM không thực hiện phép tính quyết định.
 - Dị ứng được lọc trước khi tạo prompt và kiểm tra lại sau kết quả AI. Do schema Recipe chỉ có cờ allergen chung, hệ thống fail-closed với mọi ingredient có `allergen=true` khi user có dị ứng.
 - Kết quả phải có 7 tên ngày duy nhất; mỗi ngày có đúng một `BREAKFAST`, `LUNCH`, `DINNER`.
-- Có thể truyền `dailyNutritionTarget`; từng ngày sai min/max calorie, protein, carbohydrate hoặc fat sẽ bị từ chối.
-- Thay món gọi lại Nutrition Service, loại món không an toàn, bắt buộc ID mới khác `currentRecipeId` và tái tính toàn bộ macro.
+- Có thể truyền `dailyNutritionTarget`. Mỗi bữa có ngân sách calo riêng (sáng 25%, trưa 40%, tối 35% của mục tiêu giữa, tính lần lượt để bữa sau gánh phần bữa trước thiếu); món được chọn theo ngân sách và khẩu phần nhân riêng từng bữa trong khoảng 0,75–2,0 (`servingMultiplier`). Khi chỉ có một đầu (chỉ `minCalories` hoặc chỉ `maxCalories`), hệ thống nhắm vào trong giới hạn 5% (min × 1,05 / max × 0,95). Ngày lệch mục tiêu chỉ bị đánh dấu, không bị từ chối.
+- Thay món gọi lại Nutrition Service, loại món không an toàn, bắt buộc ID mới khác `currentRecipeId` và tái tính toàn bộ macro. Món thay còn phải khác các món còn lại trong ngày và chạm được ngân sách của bữa đó (nếu catalogue quá nhỏ nên không còn món nào, chỉ cần khác món hiện tại); các bữa khác giữ nguyên món.
 - Mùa/vùng miền chưa được ưu tiên vì Recipe Service không có trường dữ liệu tương ứng. Không có Health App API; module chỉ dùng health record thật của Nutrition Service.
 
 ### 4.5 AI Video Processing
@@ -688,9 +688,9 @@ Response `plan` có JSON do model trả và đã qua kiểm tra cấu trúc:
 
 Response thực tế có đủ 7 phần tử trong `days`; ví dụ được rút gọn để dễ đọc.
 
-Khi `dailyNutritionTarget` được cung cấp, backend tự động tính toán tổng dinh dưỡng của từng ngày (`nutritionTotals`), áp dụng dung sai cấu hình (`ai.meal-plan.target-tolerance-ratio`, mặc định 15%), và trả về cờ kiểm tra cùng sai số chi tiết:
-- `days[].targetMet`: kiểu `boolean`, mang giá trị `true` nếu mọi chỉ số nằm trong khoảng dung sai cho phép, `false` nếu có chỉ số bị lệch.
-- `days[].targetDeviations`: object chi tiết các chỉ số không đạt mục tiêu (nếu `targetMet` là `false`), cấu trúc:
+Khi `dailyNutritionTarget` được cung cấp, backend tính tổng dinh dưỡng của từng ngày (`nutritionTotals`) và trả về:
+- `days[].targetMet`: kiểu `boolean`, `true` khi calo trong ngày nằm trong `[minCalories, maxCalories]`, không có dung sai; đạm, carb và béo không quyết định `targetMet`.
+- `days[].targetDeviations`: liệt kê mọi chỉ số nằm ngoài `[min, max]`, kể cả khi `targetMet` là `true`, cấu trúc:
   ```json
   "targetDeviations": {
     "calories": { "actual": 1320.00, "min": 1500.00, "max": 2200.00 },
@@ -784,7 +784,7 @@ Chỉnh sửa thủ công thực đơn (thay món, thêm bữa, xóa bữa, đ�
 ```
 - Hành động hỗ trợ: `REPLACE`, `ADD`, `REMOVE`, `UPDATE_SERVING`.
 - Tự động tính toán xác định lại dinh dưỡng Calo, Protein, Carbs, Fat cho từng bữa và tổng ngày (`nutritionTotals`).
-- Tự động kiểm tra và cập nhật `targetMet` và `targetDeviations` theo dung sai cho từng ngày.
+- Tự động tính lại `targetMet` (chỉ xét calo trong `[minCalories, maxCalories]`, không có dung sai) và `targetDeviations` cho từng ngày.
 - Kiểm tra an toàn: Chỉ chấp nhận Recipe thuần chay (`isVegan = true`) và không chứa chất gây dị ứng của người dùng.
 - Hỗ trợ `preview: true` (hoặc gọi qua endpoint `/preview-edit`) để xem trước mà không ghi vào MySQL.
 - Khi lưu (`preview: false`), tự động lưu snapshot phiên bản cũ vào `ai_meal_plan_versions` và tăng `version`.
@@ -798,8 +798,8 @@ Lấy lịch sử các phiên bản đã lưu của thực đơn (`List<MealPlan
 Lấy chi tiết đầy đủ của một phiên bản cụ thể trong quá khứ.
 
 #### Hợp đồng dữ liệu dinh dưỡng FE (Nutrition Contract)
-- `plan.days[].targetMet`: boolean (`true` khi mọi chỉ số calo/protein/carbs/fat nằm trong biên độ dung sai 15%).
-- `plan.days[].targetDeviations`: Object ghi nhận độ lệch khi `targetMet == false`:
+- `plan.days[].targetMet`: boolean (`true` khi calo trong ngày nằm trong `[minCalories, maxCalories]`, không có dung sai; đạm, carb và béo không quyết định `targetMet`).
+- `plan.days[].targetDeviations`: Object liệt kê mọi chỉ số nằm ngoài `[min, max]`, kể cả khi `targetMet` là `true`:
   `targetDeviations.{calories|protein|carbohydrate|fat}.{actual, min, max}`.
 - `plan.days[].meals[].servingMultiplier`: Hệ số khẩu phần (mặc định 1.0 nếu không có).
 - `plan.days[].nutritionTotals`: `{calories, protein, carbohydrate, fat}`.

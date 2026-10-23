@@ -99,7 +99,8 @@ public class MealPlanService {
                 Mục tiêu: %s; sở thích: %s; nguyên liệu sẵn có: %s; sức khỏe: %s; dị ứng đã lọc: %s;
                 mục tiêu dinh dưỡng/ngày: %s; recipes an toàn: %s
                 """.formatted(request.healthGoal(), request.preferences(), request.availableIngredients(), health,
-                allergies, request.dailyNutritionTarget(), json(promptRecipes));
+                allergies, request.dailyNutritionTarget(), json(promptRecipes))
+                + validator.mealBudgetHint(request.dailyNutritionTarget());
 
         ObjectNode plan;
         try {
@@ -118,7 +119,7 @@ public class MealPlanService {
             plan = mapper.createObjectNode();
         }
 
-        validator.validateAndEnrich(plan, candidates, allergies, request.dailyNutritionTarget());
+        validator.validateAndEnrich(plan, candidates, allergies, request.dailyNutritionTarget(), true);
         ObjectNode constraints = plan.putObject("constraints");
         constraints.set("preferences", mapper.valueToTree(nullToEmpty(request.preferences())));
         constraints.set("availableIngredients", mapper.valueToTree(nullToEmpty(request.availableIngredients())));
@@ -152,8 +153,12 @@ public class MealPlanService {
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
         ArrayNode safeRecipes = validator.safeCandidates(allRecipes, allergies, List.of());
         ArrayNode candidates = validator.safeCandidates(allRecipes, allergies, available);
+        String mealType = request.mealType().trim().toUpperCase(Locale.ROOT);
+        BigDecimal budget = validator.mealBudgets(target).get(mealType);
         String prompt = "Chọn một recipe thay thế từ danh sách thật, khác ID " + request.currentRecipeId()
                 + ", phù hợp mục tiêu " + entity.getGoal()
+                + (budget == null ? "" : ", ngân sách calo của bữa này khoảng "
+                        + budget.setScale(0, RoundingMode.HALF_UP).toPlainString() + " kcal")
                 + ". Trả duy nhất JSON {\"recipeId\":1,\"note\":\"...\"}, note viết bằng tiếng Việt. Recipes: "
                 + json(validator.promptCandidates(candidates));
 
@@ -169,20 +174,34 @@ public class MealPlanService {
             log.warn("AI recipe replacement failed, selecting best deterministic alternative.", ex);
         }
 
+        // The replacement must differ from the current recipe and from the day's other meals: a same-day
+        // duplicate would make validateAndEnrich change another meal, and only this one may change.
+        Set<Long> excluded = otherRecipeIdsOfDay(root, request.day(), mealType);
         Long currentId = request.currentRecipeId();
-        boolean validReplacement = replacementId > 0
-                && (currentId == null || replacementId != currentId)
-                && isCandidateSafe(candidates, allergies, replacementId);
+        if (currentId != null) excluded.add(currentId);
+        JsonNode picked = replacementId > 0 ? candidate(candidates, replacementId) : null;
+        boolean validReplacement = picked != null
+                && !excluded.contains(replacementId)
+                && validator.isAllergySafe(picked, allergies)
+                && validator.reachesBudget(picked, budget);
 
         if (!validReplacement) {
-            replacementId = selectAlternativeReplacement(candidates, allergies, currentId);
+            note = "Món ăn thay thế dinh dưỡng"; // the AI's note described the recipe just rejected
+            try {
+                replacementId = validator.pickReplacement(candidates, excluded, budget);
+            } catch (AppException ex) {
+                // A tiny safe pool can be fully used by the day's other meals: fall back to excluding only the
+                // current recipe, and let validateAndEnrich handle any same-day duplicate as it always did.
+                if (ex.getErrorCode() != ErrorCode.NO_VALID_RECIPES) throw ex;
+                replacementId = validator.pickReplacement(candidates, currentId == null ? Set.of() : Set.of(currentId), budget);
+            }
         }
 
         boolean replaced = false;
         for (JsonNode day : root.path("days")) {
             if (!day.path("day").asText().equalsIgnoreCase(request.day())) continue;
             for (JsonNode meal : day.path("meals")) {
-                if (!meal.path("mealType").asText().equalsIgnoreCase(request.mealType())) continue;
+                if (!meal.path("mealType").asText().equalsIgnoreCase(mealType)) continue;
                 ObjectNode object = (ObjectNode) meal;
                 object.put("recipeId", replacementId);
                 object.put("note", note);
@@ -192,7 +211,7 @@ public class MealPlanService {
             if (replaced) break;
         }
         if (!replaced) throw new AppException(ErrorCode.INVALID_REQUEST);
-        validator.validateAndEnrich(root, safeRecipes, allergies, target);
+        validator.validateAndEnrich(root, safeRecipes, allergies, target, false);
         root.withObject("constraints").set("allergies", allergies.deepCopy());
         entity.replaceJson(root.toString());
         repository.save(entity);
@@ -286,7 +305,7 @@ public class MealPlanService {
         constraints.set("allergies", allergies.deepCopy());
 
         JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
-        validator.validateAndEnrich(root, allRecipes, allergies, recalculatedTarget);
+        validator.validateAndEnrich(root, allRecipes, allergies, recalculatedTarget, true);
 
         boolean confirmed = request != null && Boolean.TRUE.equals(request.confirm());
         if (!confirmed) {
@@ -684,26 +703,22 @@ public class MealPlanService {
         catch (Exception exception) { throw new AppException(ErrorCode.INVALID_REQUEST, exception); }
     }
 
-    private boolean isCandidateSafe(JsonNode candidates, JsonNode allergies, long id) {
-        if (!candidates.isArray()) return false;
+    private JsonNode candidate(JsonNode candidates, long id) {
         for (JsonNode c : candidates) {
-            if (c.path("id").asLong() == id) {
-                return validator.isAllergySafe(c, allergies);
-            }
+            if (c.path("id").asLong() == id) return c;
         }
-        return false;
+        return null;
     }
 
-    private long selectAlternativeReplacement(JsonNode candidates, JsonNode allergies, Long currentId) {
-        if (candidates.isArray()) {
-            for (JsonNode c : candidates) {
-                long id = c.path("id").asLong();
-                if ((currentId == null || id != currentId) && validator.isAllergySafe(c, allergies)) {
-                    return id;
-                }
+    private Set<Long> otherRecipeIdsOfDay(JsonNode root, String day, String mealType) {
+        Set<Long> ids = new HashSet<>();
+        for (JsonNode d : root.path("days")) {
+            if (!d.path("day").asText().equalsIgnoreCase(day)) continue;
+            for (JsonNode m : d.path("meals")) {
+                if (!m.path("mealType").asText().equalsIgnoreCase(mealType)) ids.add(m.path("recipeId").asLong());
             }
         }
-        throw new AppException(ErrorCode.NO_VALID_RECIPES);
+        return ids;
     }
 
     private MealPlan owned(Long userId, Long id) {

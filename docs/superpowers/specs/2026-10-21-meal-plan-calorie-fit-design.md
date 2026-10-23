@@ -30,7 +30,7 @@ Tiêu chí của tài liệu: với mục tiêu khoảng 2.800 kcal, thực đơ
 
 ### 3.1 Ngân sách calo từng bữa
 
-- **Calo mục tiêu giữa:** `mid = (minCalories + maxCalories) / 2`. Nếu chỉ có một đầu thì dùng đầu đó.
+- **Calo mục tiêu giữa:** `mid = (minCalories + maxCalories) / 2`. Nếu chỉ có `minCalories` thì nhắm `min × 1.05`, nếu chỉ có `maxCalories` thì nhắm `max × 0.95` (nằm trong biên 5%, để việc làm tròn 2 chữ số của hệ số bữa cuối không đẩy cả ngày ra ngoài biên).
 - **Tỉ lệ cố định trong code:** sáng 0,25, trưa 0,40, tối 0,35. Không đưa ra cấu hình.
 - **Tính lần lượt từng bữa,** để bữa trước thiếu thì bữa sau gánh:
 
@@ -83,7 +83,7 @@ Với từng bữa:
 
 **Khi `repick = false`:** món đang có được giữ nếu vẫn an toàn (đúng như hiện tại). Chỉ chọn món mới khi món cũ không còn an toàn hoặc bữa đó chưa có món.
 
-**Thay món trong `replace()`:** món thay phải khác `currentRecipeId` và chạm được ngân sách của bữa đó. Ở đây ngân sách tính thẳng `tỉ lệ × mid`, không tính lần lượt. Nếu LLM chọn món không chạm được thì dùng bộ chọn ở §3.2, đã loại `currentRecipeId`. Hàm `selectAlternativeReplacement` bị bỏ.
+**Thay món trong `replace()`:** món thay phải khác `currentRecipeId` và chạm được ngân sách của bữa đó. Ở đây ngân sách tính thẳng `tỉ lệ × mid`, không tính lần lượt. Nếu LLM chọn món không chạm được thì dùng bộ chọn ở §3.2, đã loại `currentRecipeId`. Hàm `selectAlternativeReplacement` bị bỏ. Món thay còn phải khác các bữa khác trong cùng ngày; khi điều này không còn ứng viên nào (danh mục ≤ 3 món an toàn) thì lùi về chỉ loại món hiện tại (hoặc không loại gì khi request không có `currentRecipeId`).
 
 ### 3.7 Báo lý do khi không đạt
 
@@ -138,3 +138,4 @@ Test này fail nếu dữ liệu và thuật toán cùng nhau không còn đạt
 
 - **Dị ứng làm hẹp danh mục.** Người dị ứng một nhóm phổ biến (ví dụ đậu nành) có thể không còn món nào chạm được ngân sách. Khi đó `targetMet = false` và `targetDeviations` báo phần thiếu. Test chấp nhận chưa có ca này.
 - **Bữa thêm bằng sửa tay bị mất (lỗi có từ trước, ngoài phạm vi spec này).** `validateAndEnrich` chỉ giữ 3 bữa chuẩn. Một bữa thêm qua sửa tay với `mealType` khác (ví dụ `SNACK`) sẽ bị bỏ khi `replace` hoặc `updateFromHealth` chạy lại trên thực đơn đó.
+- **`replace` và `updateFromHealth` tính lại `servingMultiplier` của mọi bữa**, nên khẩu phần chỉnh tay bằng `manualEdit` `UPDATE_SERVING` bị đặt lại (hành vi có từ trước, nay dễ thấy hơn vì gần như bữa nào cũng có hệ số). Thực đơn lưu trước thay đổi này giữ nguyên cờ `targetMet` và hệ số cả ngày cũ cho đến khi một trong hai lệnh gọi trên chạy lại chúng.
