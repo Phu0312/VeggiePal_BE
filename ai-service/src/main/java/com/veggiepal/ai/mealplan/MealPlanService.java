@@ -40,6 +40,7 @@ public class MealPlanService {
     private final RestClient http;
     private final String recipeUrl;
     private final String nutritionUrl;
+    private final String identityUrl;
     private final GroqClient groq;
     private final ModelProperties models;
     private final ObjectMapper mapper;
@@ -54,6 +55,7 @@ public class MealPlanService {
             @Qualifier("serviceRestClient") RestClient http,
             @Value("${services.recipe.base-url}") String recipeUrl,
             @Value("${services.nutrition.base-url}") String nutritionUrl,
+            @Value("${services.identity.base-url}") String identityUrl,
             GroqClient groq, ModelProperties models, ObjectMapper mapper, UsageService usage,
             MealPlanValidator validator,
             MealPlanFavoriteRepository favoriteRepository,
@@ -63,6 +65,7 @@ public class MealPlanService {
         this.http = http;
         this.recipeUrl = recipeUrl;
         this.nutritionUrl = nutritionUrl;
+        this.identityUrl = identityUrl;
         this.groq = groq;
         this.models = models;
         this.mapper = mapper;
@@ -79,15 +82,19 @@ public class MealPlanService {
             String nutritionUrl,
             GroqClient groq, ModelProperties models, ObjectMapper mapper, UsageService usage,
             MealPlanValidator validator, PremiumQuotaService premiumQuota) {
-        this(repository, http, recipeUrl, nutritionUrl, groq, models, mapper, usage, validator, null, null, premiumQuota);
+        this(repository, http, recipeUrl, nutritionUrl, "http://identity-service", groq, models, mapper, usage, validator, null, null, premiumQuota);
     }
 
     public MealPlanResponse generate(Long userId, String jwt, GenerateRequest request) {
-        premiumQuota.reserveMealPlan(userId);
-        validator.validateTarget(request.dailyNutritionTarget());
         JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
         JsonNode health = result(get(nutritionUrl + "/nutrition/me/health-records/latest", jwt));
+        NutritionTarget target = request.dailyNutritionTarget() != null
+                ? request.dailyNutritionTarget()
+                : computeTarget(health, jwt, request.goalType()).target();
+        validator.validateTarget(target);
+        // Reserved only once the target is resolved, so 6020/6021/6010 never spend a quota slot.
+        premiumQuota.reserveMealPlan(userId);
         ArrayNode candidates = validator.safeCandidates(allRecipes, allergies, request.availableIngredients());
         ArrayNode promptRecipes = validator.promptCandidates(candidates);
 
@@ -99,8 +106,8 @@ public class MealPlanService {
                 Mục tiêu: %s; sở thích: %s; nguyên liệu sẵn có: %s; sức khỏe: %s; dị ứng đã lọc: %s;
                 mục tiêu dinh dưỡng/ngày: %s; recipes an toàn: %s
                 """.formatted(request.healthGoal(), request.preferences(), request.availableIngredients(), health,
-                allergies, request.dailyNutritionTarget(), json(promptRecipes))
-                + validator.mealBudgetHint(request.dailyNutritionTarget());
+                allergies, target, json(promptRecipes))
+                + validator.mealBudgetHint(target);
 
         ObjectNode plan;
         try {
@@ -119,16 +126,16 @@ public class MealPlanService {
             plan = mapper.createObjectNode();
         }
 
-        validator.validateAndEnrich(plan, candidates, allergies, request.dailyNutritionTarget(), true);
+        validator.validateAndEnrich(plan, candidates, allergies, target, true);
         ObjectNode constraints = plan.putObject("constraints");
         constraints.set("preferences", mapper.valueToTree(nullToEmpty(request.preferences())));
         constraints.set("availableIngredients", mapper.valueToTree(nullToEmpty(request.availableIngredients())));
         constraints.set("allergies", allergies.deepCopy());
         constraints.set("healthRecord", health.deepCopy());
-        constraints.set("dailyNutritionTarget", mapper.valueToTree(request.dailyNutritionTarget()));
+        constraints.set("dailyNutritionTarget", mapper.valueToTree(target));
 
         MealPlan saved = repository.save(new MealPlan(
-                userId, request.name().trim(), request.healthGoal().trim(), plan.toString()));
+                userId, request.name().trim(), request.healthGoal().trim(), request.goalType().name(), plan.toString()));
         return view(saved);
     }
 
@@ -293,7 +300,9 @@ public class MealPlanService {
 
         NutritionTarget recalculatedTarget = (request != null && request.customTarget() != null)
                 ? request.customTarget()
-                : calculateTargetFromHealth(health, entity.getGoal());
+                : computeTarget(health, jwt, entity.getGoalType() != null
+                        ? GoalType.valueOf(entity.getGoalType())
+                        : NutritionTargetCalculator.guessGoal(entity.getGoal())).target();
         validator.validateTarget(recalculatedTarget);
 
         ObjectNode root = object(read(entity.getPlanJson())).deepCopy();
@@ -348,37 +357,29 @@ public class MealPlanService {
         );
     }
 
-    public NutritionTarget calculateTargetFromHealth(JsonNode healthRecord, String goal) {
-        double heightCm = healthRecord.path("heightCm").asDouble(170.0);
-        double weightKg = healthRecord.path("weightKg").asDouble(65.0);
+    public NutritionTargetResponse nutritionTarget(String jwt, GoalType goalType) {
+        JsonNode health = result(get(nutritionUrl + "/nutrition/me/health-records/latest", jwt));
+        return computeTarget(health, jwt, goalType);
+    }
 
-        // Harris-Benedict baseline TDEE
-        double bmr = (10.0 * weightKg) + (6.25 * heightCm) - 120.0;
-        double tdee = bmr * 1.35;
-
-        String g = (goal != null) ? goal.toLowerCase(Locale.ROOT) : "";
-        double targetCalories;
-        if (g.contains("giảm") || g.contains("loss") || g.contains("diet")) {
-            targetCalories = tdee * 0.85;
-        } else if (g.contains("tăng") || g.contains("gain") || g.contains("bulk")) {
-            targetCalories = tdee * 1.15;
-        } else {
-            targetCalories = tdee;
+    // Reads the profile from identity-service only when the backend has to work the target out itself.
+    private NutritionTargetResponse computeTarget(JsonNode health, String jwt, GoalType goalType) {
+        JsonNode profile = result(get(identityUrl + "/users/me", jwt));
+        String dob = profile.path("dateOfBirth").asText(null);
+        java.time.LocalDate dateOfBirth;
+        try {
+            dateOfBirth = dob == null || dob.isBlank() ? null : java.time.LocalDate.parse(dob);
+        } catch (java.time.format.DateTimeParseException ex) {
+            throw new AppException(ErrorCode.PROFILE_INCOMPLETE);
         }
-
-        BigDecimal minCal = BigDecimal.valueOf(Math.round(targetCalories * 0.90));
-        BigDecimal maxCal = BigDecimal.valueOf(Math.round(targetCalories * 1.10));
-
-        BigDecimal minProtein = BigDecimal.valueOf(Math.round(weightKg * 1.2));
-        BigDecimal maxProtein = BigDecimal.valueOf(Math.round(weightKg * 1.8));
-
-        BigDecimal minCarbs = BigDecimal.valueOf(Math.round((targetCalories * 0.45) / 4.0));
-        BigDecimal maxCarbs = BigDecimal.valueOf(Math.round((targetCalories * 0.60) / 4.0));
-
-        BigDecimal minFat = BigDecimal.valueOf(Math.round((targetCalories * 0.20) / 9.0));
-        BigDecimal maxFat = BigDecimal.valueOf(Math.round((targetCalories * 0.30) / 9.0));
-
-        return new NutritionTarget(minCal, maxCal, minProtein, maxProtein, minCarbs, maxCarbs, minFat, maxFat);
+        return NutritionTargetCalculator.calculate(
+                health.hasNonNull("heightCm") ? health.path("heightCm").decimalValue() : null,
+                health.hasNonNull("weightKg") ? health.path("weightKg").decimalValue() : null,
+                dateOfBirth,
+                profile.path("gender").asText(null),
+                profile.path("activityLevel").asText(null),
+                goalType,
+                java.time.LocalDate.now());
     }
 
     // ==========================================
@@ -743,7 +744,8 @@ public class MealPlanService {
                 plan.getCreatedAt(),
                 plan.getUpdatedAt(),
                 plan.getVersion() != null ? plan.getVersion() : 1,
-                isFavorite
+                isFavorite,
+                plan.getGoalType()
         );
     }
 

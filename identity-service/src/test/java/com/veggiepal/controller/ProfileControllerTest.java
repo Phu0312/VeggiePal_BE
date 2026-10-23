@@ -31,6 +31,8 @@ import com.veggiepal.configuration.SecurityExceptionHandler;
 import com.veggiepal.dto.request.ChangePasswordRequest;
 import com.veggiepal.dto.request.UpdateProfileRequest;
 import com.veggiepal.dto.response.UserProfileResponse;
+import com.veggiepal.enums.ActivityLevel;
+import com.veggiepal.enums.Gender;
 import com.veggiepal.service.ProfileService;
 
 @WebMvcTest(ProfileController.class)
@@ -58,6 +60,28 @@ class ProfileControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(1000))
                 .andExpect(jsonPath("$.result.email").value("an@example.com"));
+    }
+
+    @Test
+    void getProfile_returnsGenderAndActivityLevel() throws Exception {
+        when(profileService.getProfile(USER_ID)).thenReturn(UserProfileResponse.builder()
+                .id(USER_ID).gender(Gender.MALE).activityLevel(ActivityLevel.ACTIVE).build());
+
+        mockMvc.perform(get("/users/me").with(currentUser()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.gender").value("MALE"))
+                .andExpect(jsonPath("$.result.activityLevel").value("ACTIVE"));
+    }
+
+    @Test
+    void updateProfile_unknownGender_returnsInvalidRequest() throws Exception {
+        mockMvc.perform(patch("/users/me").with(currentUser())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"gender": "ROBOT"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(1018));
     }
 
     @Test

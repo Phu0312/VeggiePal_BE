@@ -44,6 +44,7 @@ class MealPlanServiceTest {
     private ObjectMapper mapper;
     private UsageService usage;
     private MealPlanValidator validator;
+    private PremiumQuotaService premiumQuota;
     private MealPlanService service;
 
     @BeforeEach
@@ -57,6 +58,7 @@ class MealPlanServiceTest {
         mapper = new ObjectMapper();
         usage = mock(UsageService.class);
         validator = new MealPlanValidator(mapper);
+        premiumQuota = mock(PremiumQuotaService.class);
 
         when(http.get()).thenReturn(uriSpec);
         when(uriSpec.uri(anyString())).thenReturn(uriSpec);
@@ -73,7 +75,7 @@ class MealPlanServiceTest {
                 mapper,
                 usage,
                 validator,
-                mock(PremiumQuotaService.class)
+                premiumQuota
         );
     }
 
@@ -127,7 +129,8 @@ class MealPlanServiceTest {
                 "Giảm mỡ",
                 List.of(),
                 List.of(),
-                null
+                null,
+                GoalType.MAINTAIN
         );
 
         AppException ex = assertThrows(AppException.class, () -> service.generate(1L, "test-jwt", request));
@@ -169,7 +172,8 @@ class MealPlanServiceTest {
                 "Tăng cơ",
                 List.of(),
                 List.of(),
-                null
+                null,
+                GoalType.MAINTAIN
         );
 
         AppException ex = assertThrows(AppException.class, () -> service.generate(1L, "test-jwt", request));
@@ -187,7 +191,8 @@ class MealPlanServiceTest {
                 "Tăng cơ",
                 List.of(),
                 List.of(),
-                null
+                null,
+                GoalType.MAINTAIN
         );
 
         AppException ex = assertThrows(AppException.class, () -> service.generate(1L, "test-jwt", request));
@@ -233,6 +238,8 @@ class MealPlanServiceTest {
         when(healthUriSpec.retrieve()).thenReturn(healthRespSpec);
         when(healthRespSpec.body(any(Class.class))).thenReturn(healthResult);
 
+        stubProfile("1995-01-01", "FEMALE", "LIGHT");
+
         // Groq fails with an exception
         when(groq.complete(any(), any(), any(Double.class), any(Integer.class)))
                 .thenThrow(new RuntimeException("Groq timeout or server error"));
@@ -248,7 +255,8 @@ class MealPlanServiceTest {
                 "Ăn lành mạnh",
                 List.of(),
                 List.of(),
-                null
+                null,
+                GoalType.MAINTAIN
         );
 
         MealPlanDtos.MealPlanResponse response = service.generate(1L, "test-jwt", request);
@@ -375,6 +383,120 @@ class MealPlanServiceTest {
         when(resp.body(any(Class.class))).thenReturn(body);
     }
 
+    private void stubProfile(String dob, String gender, String activity) {
+        ObjectNode profile = mapper.createObjectNode();
+        profile.putObject("result").put("dateOfBirth", dob).put("gender", gender).put("activityLevel", activity);
+        stubGet("http://identity-service/users/me", profile, true);
+    }
+
+    private void stubGenerateDownstreams() {
+        ObjectNode recipes = mapper.createObjectNode();
+        addRecipe(recipes.putObject("result").putArray("content"), 1, 600);
+        stubGet("http://recipe-service/recipes?size=200", recipes, false);
+        ObjectNode allergies = mapper.createObjectNode();
+        allergies.putArray("result");
+        stubGet("http://nutrition-service/nutrition/me/allergies", allergies, true);
+        ObjectNode health = mapper.createObjectNode();
+        health.putObject("result").put("weightKg", 80).put("heightCm", 180);
+        stubGet("http://nutrition-service/nutrition/me/health-records/latest", health, true);
+        when(groq.complete(any(), any(), any(Double.class), any(Integer.class))).thenThrow(new RuntimeException("Groq down"));
+        when(repository.save(any(MealPlan.class))).thenAnswer(invocation -> invocation.getArgument(0));
+    }
+
+    private void stubProfileJson(java.util.function.Consumer<ObjectNode> fields) {
+        ObjectNode profile = mapper.createObjectNode();
+        fields.accept(profile.putObject("result"));
+        stubGet("http://identity-service/users/me", profile, true);
+    }
+
+    private MealPlanDtos.GenerateRequest requestWithoutTarget() {
+        return new MealPlanDtos.GenerateRequest("Kế hoạch", "Giữ cân", List.of(), List.of(), null, GoalType.MAINTAIN);
+    }
+
+    @Test
+    void generateWithNullGenderThrowsProfileIncompleteWithoutSpendingAQuotaSlot() {
+        stubGenerateDownstreams();
+        stubProfileJson(p -> p.put("dateOfBirth", "1995-01-01").putNull("gender").put("activityLevel", "LIGHT"));
+
+        AppException ex = assertThrows(AppException.class, () -> service.generate(1L, "test-jwt", requestWithoutTarget()));
+
+        assertEquals(ErrorCode.PROFILE_INCOMPLETE, ex.getErrorCode());
+        verify(premiumQuota, org.mockito.Mockito.never()).reserveMealPlan(org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
+    void generateWithMissingActivityLevelThrowsProfileIncompleteWithoutSpendingAQuotaSlot() {
+        stubGenerateDownstreams();
+        stubProfileJson(p -> p.put("dateOfBirth", "1995-01-01").put("gender", "FEMALE"));
+
+        AppException ex = assertThrows(AppException.class, () -> service.generate(1L, "test-jwt", requestWithoutTarget()));
+
+        assertEquals(ErrorCode.PROFILE_INCOMPLETE, ex.getErrorCode());
+        verify(premiumQuota, org.mockito.Mockito.never()).reserveMealPlan(org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
+    void generateWithMalformedDateOfBirthThrowsProfileIncomplete() {
+        stubGenerateDownstreams();
+        stubProfileJson(p -> p.put("dateOfBirth", "not-a-date").put("gender", "FEMALE").put("activityLevel", "LIGHT"));
+
+        AppException ex = assertThrows(AppException.class, () -> service.generate(1L, "test-jwt", requestWithoutTarget()));
+
+        assertEquals(ErrorCode.PROFILE_INCOMPLETE, ex.getErrorCode());
+        verify(premiumQuota, org.mockito.Mockito.never()).reserveMealPlan(org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
+    void generateReservesTheQuotaSlotOnlyOnceTheTargetIsResolved() {
+        stubGenerateDownstreams();
+        stubProfile(java.time.LocalDate.now().minusYears(25).toString(), "MALE", "LIGHT");
+
+        service.generate(1L, "test-jwt", requestWithoutTarget());
+
+        verify(premiumQuota).reserveMealPlan(1L);
+    }
+
+    @Test
+    void generateWhoseQuotaIsExhaustedThrowsTheQuotaErrorAndNeverCallsGroq() {
+        stubGenerateDownstreams();
+        stubProfile(java.time.LocalDate.now().minusYears(25).toString(), "MALE", "LIGHT");
+        when(premiumQuota.reserveMealPlan(1L)).thenThrow(new AppException(ErrorCode.QUOTA_EXCEEDED));
+
+        AppException ex = assertThrows(AppException.class, () -> service.generate(1L, "test-jwt", requestWithoutTarget()));
+
+        assertEquals(ErrorCode.QUOTA_EXCEEDED, ex.getErrorCode());
+        verify(groq, org.mockito.Mockito.never()).complete(any(), any(), any(Double.class), any(Integer.class));
+    }
+
+    @Test
+    void generateWithoutTargetUsesTheTargetComputedFromTheProfile() {
+        stubGenerateDownstreams();
+        // 25 years old today, so the expected numbers match the calculator's male/LIGHT/GAIN example
+        stubProfile(java.time.LocalDate.now().minusYears(25).toString(), "MALE", "LIGHT");
+
+        MealPlanDtos.MealPlanResponse response = service.generate(1L, "test-jwt", new MealPlanDtos.GenerateRequest(
+                "Kế hoạch", "Tăng cơ", List.of(), List.of(), null, GoalType.GAIN));
+
+        var target = mapper.valueToTree(response.plan()).path("constraints").path("dailyNutritionTarget");
+        assertEquals(2569, target.path("minCalories").asInt());
+        assertEquals(3140, target.path("maxCalories").asInt());
+        assertEquals("GAIN", response.goalType());
+    }
+
+    @Test
+    void generateWithAnExplicitTargetKeepsItAndNeverCallsIdentity() {
+        stubGenerateDownstreams();
+
+        MealPlanDtos.MealPlanResponse response = service.generate(1L, "test-jwt", new MealPlanDtos.GenerateRequest(
+                "Kế hoạch", "Tăng cơ", List.of(), List.of(),
+                new MealPlanDtos.NutritionTarget(new BigDecimal("2000"), new BigDecimal("2200"),
+                        null, null, null, null, null, null), GoalType.GAIN));
+
+        var target = mapper.valueToTree(response.plan()).path("constraints").path("dailyNutritionTarget");
+        assertEquals(2000, target.path("minCalories").asInt());
+        verify(http.get(), org.mockito.Mockito.never()).uri("http://identity-service/users/me");
+    }
+
     @Test
     void generatePromptCarriesTheMealBudgets() {
         ObjectNode recipes = mapper.createObjectNode();
@@ -393,7 +515,7 @@ class MealPlanServiceTest {
         service.generate(1L, "test-jwt", new MealPlanDtos.GenerateRequest(
                 "Kế hoạch", "Tăng cân", List.of(), List.of(),
                 new MealPlanDtos.NutritionTarget(new BigDecimal("2400"), new BigDecimal("2600"),
-                        null, null, null, null, null, null)));
+                        null, null, null, null, null, null), GoalType.MAINTAIN));
 
         verify(groq).complete(any(), argThat((List<com.veggiepal.ai.groq.dto.GroqRequest.Message> messages) ->
                 messages.getLast().content().contains("LUNCH khoảng 1000 kcal")), anyDouble(), anyInt());
