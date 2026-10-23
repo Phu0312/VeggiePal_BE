@@ -1,0 +1,6903 @@
+[
+ {
+  "id": 111,
+  "title": "Hủ tiếu khô chay tàu hũ ky",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Hủ tiếu",
+    "normalizedName": "hu tieu",
+    "quantity": 500.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Tàu hũ ky đậu nành",
+    "normalizedName": "tau hu ky",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 400.0,
+    "proteinPer100g": 45.0,
+    "carbsPer100g": 15.0,
+    "fatPer100g": 20.0,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 35.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 112,
+  "title": "Phở cuốn chay đậu hũ nấm xào",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bánh phở",
+    "normalizedName": "banh pho",
+    "quantity": 500.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 113,
+  "title": "Cơm đậu gà hầm cà chua khoai tây",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Khoai tây",
+    "normalizedName": "khoai tay",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 77.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 17.5,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 500.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu gà khô",
+    "normalizedName": "dau ga kho",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 378.0,
+    "proteinPer100g": 20.5,
+    "carbsPer100g": 63.0,
+    "fatPer100g": 6.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 114,
+  "title": "Cơm cà ri đậu lăng đỏ bí đỏ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Rau chân vịt",
+    "normalizedName": "rau chan vit",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 23.0,
+    "proteinPer100g": 2.9,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu lăng đỏ",
+    "normalizedName": "dau lang do",
+    "quantity": 130.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 358.0,
+    "proteinPer100g": 23.9,
+    "carbsPer100g": 63.1,
+    "fatPer100g": 2.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bí đỏ",
+    "normalizedName": "bi do",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 26.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 6.5,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hành tây",
+    "normalizedName": "hanh tay",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 40.0,
+    "proteinPer100g": 1.1,
+    "carbsPer100g": 9.3,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 500.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 115,
+  "title": "Cơm gạo lứt đậu đỏ muối mè",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Gạo lứt",
+    "normalizedName": "gao lut",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 370.0,
+    "proteinPer100g": 7.9,
+    "carbsPer100g": 77.2,
+    "fatPer100g": 2.9,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu đỏ",
+    "normalizedName": "dau do",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 128.0,
+    "proteinPer100g": 7.5,
+    "carbsPer100g": 24.8,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt mè vừng",
+    "normalizedName": "me",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 573.0,
+    "proteinPer100g": 17.7,
+    "carbsPer100g": 23.4,
+    "fatPer100g": 49.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 104,
+  "title": "Cơm tàu hũ ky xào sả ớt nấm đông cô",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Tàu hũ ky đậu nành",
+    "normalizedName": "tau hu ky",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 400.0,
+    "proteinPer100g": 45.0,
+    "carbsPer100g": 15.0,
+    "fatPer100g": 20.0,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đông cô",
+    "normalizedName": "nam dong co",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.2,
+    "carbsPer100g": 6.8,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Sả cây",
+    "normalizedName": "sa cay",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 99.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 25.0,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Ớt tươi",
+    "normalizedName": "ot",
+    "quantity": 10.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 40.0,
+    "proteinPer100g": 1.9,
+    "carbsPer100g": 8.8,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 500.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 105,
+  "title": "Cơm gạo lứt đậu gà rim nấm rơm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Gạo lứt",
+    "normalizedName": "gao lut",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 370.0,
+    "proteinPer100g": 7.9,
+    "carbsPer100g": 77.2,
+    "fatPer100g": 2.9,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu gà",
+    "normalizedName": "dau ga",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 164.0,
+    "proteinPer100g": 8.9,
+    "carbsPer100g": 27.4,
+    "fatPer100g": 2.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 106,
+  "title": "Cơm nấm đùi gà kho tiêu đậu hũ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 500.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 107,
+  "title": "Xôi mặn chay tàu hũ ky đậu phộng",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Gạo nếp",
+    "normalizedName": "gao nep",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 370.0,
+    "proteinPer100g": 6.8,
+    "carbsPer100g": 81.7,
+    "fatPer100g": 0.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Tàu hũ ky đậu nành",
+    "normalizedName": "tau hu ky",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 400.0,
+    "proteinPer100g": 45.0,
+    "carbsPer100g": 15.0,
+    "fatPer100g": 20.0,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đông cô",
+    "normalizedName": "nam dong co",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.2,
+    "carbsPer100g": 6.8,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Hành boa-rô",
+    "normalizedName": "hanh paro",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 14.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 108,
+  "title": "Bún cà ri chay đậu hũ khoai lang",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 400.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Khoai lang",
+    "normalizedName": "khoai lang",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 86.0,
+    "proteinPer100g": 1.6,
+    "carbsPer100g": 20.1,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Sả cây",
+    "normalizedName": "sa cay",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 99.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 25.0,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nước cốt dừa",
+    "normalizedName": "nuoc cot dua",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 197.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 2.8,
+    "fatPer100g": 21.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 35.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 109,
+  "title": "Bún trộn đậu hũ chiên sả đậu phộng",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 500.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Sả cây",
+    "normalizedName": "sa cay",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 99.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 25.0,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 35.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 110,
+  "title": "Mì xào mềm đậu hũ cải thìa nấm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Mì sợi lúa mì",
+    "normalizedName": "mi soi",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 356.0,
+    "proteinPer100g": 11.4,
+    "carbsPer100g": 74.1,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 35.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 103,
+  "title": "Cơm đậu hũ chiên sốt cà chua",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hành boa-rô",
+    "normalizedName": "hanh paro",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 14.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 500.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 99,
+  "title": "Bắp cải xào nấm bào ngư cà rốt",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bắp cải trắng",
+    "normalizedName": "bap cai",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 1.3,
+    "carbsPer100g": 5.8,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 100,
+  "title": "Mít non kho nghệ sả nước dừa",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Mít non",
+    "normalizedName": "mit non",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 40.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 8.5,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Sả cây",
+    "normalizedName": "sa cay",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 99.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 25.0,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 101,
+  "title": "Dưa chua xào đậu hũ sốt cà",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 102,
+  "title": "Nấm bào ngư xào sả ớt lá lốt",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 160.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Sả cây",
+    "normalizedName": "sa cay",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 99.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 25.0,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Ớt tươi",
+    "normalizedName": "ot",
+    "quantity": 10.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 40.0,
+    "proteinPer100g": 1.9,
+    "carbsPer100g": 8.8,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 89,
+  "title": "Gỏi bắp cải tím đậu phộng rau răm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bắp cải tím",
+    "normalizedName": "bap cai tim",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 1.4,
+    "carbsPer100g": 7.4,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 5.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 90,
+  "title": "Salad dầu giấm xà lách cà chua bơ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bơ",
+    "normalizedName": "bo",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 160.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 8.5,
+    "fatPer100g": 14.7,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 13.6,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Mật mía",
+    "normalizedName": "mat mia",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 290.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 74.7,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 91,
+  "title": "Gỏi bưởi rong biển mè rang",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Rong biển",
+    "normalizedName": "rong bien",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 259.0,
+    "proteinPer100g": 15.3,
+    "carbsPer100g": 46.2,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt mè vừng",
+    "normalizedName": "me",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 573.0,
+    "proteinPer100g": 17.7,
+    "carbsPer100g": 23.4,
+    "fatPer100g": 49.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 5.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bưởi",
+    "normalizedName": "buoi",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 38.0,
+    "proteinPer100g": 0.8,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 92,
+  "title": "Rau càng cua trộn dầu giấm đậu hũ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 23.6,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 93,
+  "title": "Nấm rơm kho tiêu xanh đậm đà",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 160.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 94,
+  "title": "Cà tím kho tộ sốt tương bần",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà tím",
+    "normalizedName": "ca tim",
+    "quantity": 160.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 5.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 95,
+  "title": "Nấm đùi gà kho gừng sả ớt",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 160.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Gừng tươi",
+    "normalizedName": "gung",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 80.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 17.8,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Sả cây",
+    "normalizedName": "sa cay",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 99.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 25.0,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 96,
+  "title": "Rau muống xào tỏi hành boa-rô",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Rau muống",
+    "normalizedName": "rau muong",
+    "quantity": 180.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 19.0,
+    "proteinPer100g": 2.6,
+    "carbsPer100g": 3.1,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hành boa-rô",
+    "normalizedName": "hanh paro",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 14.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 97,
+  "title": "Khổ qua xào đậu hũ non",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ non",
+    "normalizedName": "dau hu non",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 7.2,
+    "carbsPer100g": 1.2,
+    "fatPer100g": 3.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Khổ qua",
+    "normalizedName": "kho qua",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 17.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 3.7,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 98,
+  "title": "Đậu que xào nấm đông cô dầu mè",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu que",
+    "normalizedName": "dau que",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 7.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 28.6,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đông cô khô",
+    "normalizedName": "nam dong co kho",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 296.0,
+    "proteinPer100g": 9.6,
+    "carbsPer100g": 75.4,
+    "fatPer100g": 1.0,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 80,
+  "title": "Súp măng tây bắp non ngọt dịu",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Bông cải xanh",
+    "normalizedName": "bong cai xanh",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.8,
+    "carbsPer100g": 6.6,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm kim châm",
+    "normalizedName": "nam kim cham",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 37.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 7.8,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bắp ngô ngọt",
+    "normalizedName": "bap ngot",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 86.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 18.7,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 81,
+  "title": "Canh nấm hạt sen hoài sơn bồi bổ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 70.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 82,
+  "title": "Canh chua me đất đậu hũ cà chua",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu hũ non",
+    "normalizedName": "dau hu non",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 7.2,
+    "carbsPer100g": 1.2,
+    "fatPer100g": 3.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Rau muống",
+    "normalizedName": "rau muong",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 19.0,
+    "proteinPer100g": 2.6,
+    "carbsPer100g": 3.1,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 83,
+  "title": "Nộm ngó sen nấm tuyết chua ngọt",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Ngó sen",
+    "normalizedName": "ngo sen",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 30.0,
+    "proteinPer100g": 1.2,
+    "carbsPer100g": 6.0,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 84,
+  "title": "Gỏi củ hũ dừa đậu hũ đậu phộng",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Củ hũ dừa",
+    "normalizedName": "cu hu dua",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 36.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 6.5,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 10.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 85,
+  "title": "Gỏi xoài xanh bắp chuối đậu phộng",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bắp chuối",
+    "normalizedName": "bap chuoi",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 23.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 4.0,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Xoài xanh",
+    "normalizedName": "xoai xanh",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 60.0,
+    "proteinPer100g": 0.8,
+    "carbsPer100g": 15.0,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 86,
+  "title": "Nộm đu đủ bò khô chay đậu phộng",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 5.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đu đủ xanh",
+    "normalizedName": "du du xanh",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 43.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 10.8,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 87,
+  "title": "Rau củ luộc thập cẩm sốt chao mè",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Bông cải xanh",
+    "normalizedName": "bong cai xanh",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.8,
+    "carbsPer100g": 6.6,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu que",
+    "normalizedName": "dau que",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 7.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt mè vừng",
+    "normalizedName": "me",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 573.0,
+    "proteinPer100g": 17.7,
+    "carbsPer100g": 23.4,
+    "fatPer100g": 49.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 88,
+  "title": "Gỏi cuốn bún đậu hũ rau sống sốt tương",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bánh tráng",
+    "normalizedName": "banh trang",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 366.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.1,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 72,
+  "title": "Canh rau ngót nấu nấm rơm ngọt nước",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Rau ngót",
+    "normalizedName": "rau ngot",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 5.3,
+    "carbsPer100g": 3.4,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 73,
+  "title": "Canh khoai mỡ tím nấm bào ngư",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Khoai mỡ",
+    "normalizedName": "khoai mo",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 118.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 27.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 74,
+  "title": "Canh bí đỏ đậu phộng bùi béo",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bí đỏ",
+    "normalizedName": "bi do",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 26.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 6.5,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 75,
+  "title": "Canh cải bẹ xanh gừng non ấm bụng",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cải bẹ xanh",
+    "normalizedName": "cai be xanh",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 27.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 4.7,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Gừng tươi",
+    "normalizedName": "gung",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 80.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 17.8,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 76,
+  "title": "Canh chua bắp cải cà chua đậu hũ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bắp cải trắng",
+    "normalizedName": "bap cai",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 1.3,
+    "carbsPer100g": 5.8,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 77,
+  "title": "Súp bí đỏ đậu gà hạt sen kem dừa",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu gà",
+    "normalizedName": "dau ga",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 164.0,
+    "proteinPer100g": 8.9,
+    "carbsPer100g": 27.4,
+    "fatPer100g": 2.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bí đỏ",
+    "normalizedName": "bi do",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 26.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 6.5,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nước cốt dừa",
+    "normalizedName": "nuoc cot dua",
+    "quantity": 30.0,
+    "unit": "ML",
+    "caloriesPer100g": 197.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 2.8,
+    "fatPer100g": 21.3,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 78,
+  "title": "Canh mướp hương mồng tơi nấm rơm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Mướp hương",
+    "normalizedName": "muop huong",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 20.0,
+    "proteinPer100g": 1.2,
+    "carbsPer100g": 4.4,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Rau mồng tơi",
+    "normalizedName": "rau mong toi",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 19.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 3.4,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 79,
+  "title": "Canh củ sen táo đỏ nấm đông cô",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Củ sen",
+    "normalizedName": "cu sen",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 74.0,
+    "proteinPer100g": 2.6,
+    "carbsPer100g": 17.2,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đông cô khô",
+    "normalizedName": "nam dong co kho",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 296.0,
+    "proteinPer100g": 9.6,
+    "carbsPer100g": 75.4,
+    "fatPer100g": 1.0,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 63,
+  "title": "Đậu lăng đỏ nấu súp rau củ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu lăng đỏ",
+    "normalizedName": "dau lang do",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 358.0,
+    "proteinPer100g": 23.9,
+    "carbsPer100g": 63.1,
+    "fatPer100g": 2.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cần tây",
+    "normalizedName": "can tay",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 14.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 64,
+  "title": "Đậu gà kho tiêu hạt nước tương",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu gà khô",
+    "normalizedName": "dau ga kho",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 378.0,
+    "proteinPer100g": 20.5,
+    "carbsPer100g": 63.0,
+    "fatPer100g": 6.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 65,
+  "title": "Đậu nành lông luộc muối biển",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu nành lông",
+    "normalizedName": "dau nanh long",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 147.0,
+    "proteinPer100g": 13.0,
+    "carbsPer100g": 11.1,
+    "fatPer100g": 6.8,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 66,
+  "title": "Đậu hũ nhồi nấm mộc nhĩ sốt tương",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm mèo mộc nhĩ",
+    "normalizedName": "nam meo",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 7.0,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 67,
+  "title": "Chả ram bắp đậu xanh giòn rụm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Bắp ngô ngọt",
+    "normalizedName": "bap ngot",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 86.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 18.7,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu xanh chín",
+    "normalizedName": "dau xanh chin",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 105.0,
+    "proteinPer100g": 7.0,
+    "carbsPer100g": 19.2,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bánh tráng",
+    "normalizedName": "banh trang",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 366.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.1,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 68,
+  "title": "Canh chua rau muống bắp chuối chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Rau muống",
+    "normalizedName": "rau muong",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 19.0,
+    "proteinPer100g": 2.6,
+    "carbsPer100g": 3.1,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bắp chuối",
+    "normalizedName": "bap chuoi",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 23.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 4.0,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 69,
+  "title": "Canh chua nấm dọc mùng thơm cà",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dọc mùng bạc hà",
+    "normalizedName": "doc mung",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 14.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 3.0,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Quả thơm dứa",
+    "normalizedName": "thom",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 50.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 13.1,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 70,
+  "title": "Canh khổ qua nhồi đậu hũ nấm rơm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Khổ qua",
+    "normalizedName": "kho qua",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 17.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 3.7,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 71,
+  "title": "Canh rong biển đậu hũ non hạt sen",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ non",
+    "normalizedName": "dau hu non",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 7.2,
+    "carbsPer100g": 1.2,
+    "fatPer100g": 3.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Rong biển",
+    "normalizedName": "rong bien",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 259.0,
+    "proteinPer100g": 15.3,
+    "carbsPer100g": 46.2,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 54,
+  "title": "Đậu gà sốt cà ri nước cốt dừa",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu gà",
+    "normalizedName": "dau ga",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 164.0,
+    "proteinPer100g": 8.9,
+    "carbsPer100g": 27.4,
+    "fatPer100g": 2.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nước cốt dừa",
+    "normalizedName": "nuoc cot dua",
+    "quantity": 60.0,
+    "unit": "ML",
+    "caloriesPer100g": 197.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 2.8,
+    "fatPer100g": 21.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 55,
+  "title": "Đậu gà rang muối ớt thảo mộc",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Ớt tươi",
+    "normalizedName": "ot",
+    "quantity": 10.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 40.0,
+    "proteinPer100g": 1.9,
+    "carbsPer100g": 8.8,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "ML",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu gà khô",
+    "normalizedName": "dau ga kho",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 378.0,
+    "proteinPer100g": 20.5,
+    "carbsPer100g": 63.0,
+    "fatPer100g": 6.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 56,
+  "title": "Đậu lăng hầm khoai tây cà rốt",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu lăng đỏ",
+    "normalizedName": "dau lang do",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 358.0,
+    "proteinPer100g": 23.9,
+    "carbsPer100g": 63.1,
+    "fatPer100g": 2.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Khoai tây",
+    "normalizedName": "khoai tay",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 77.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 17.5,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 57,
+  "title": "Súp đậu lăng bí đỏ hạt sen",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu lăng đỏ",
+    "normalizedName": "dau lang do",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 358.0,
+    "proteinPer100g": 23.9,
+    "carbsPer100g": 63.1,
+    "fatPer100g": 2.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bí đỏ",
+    "normalizedName": "bi do",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 26.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 6.5,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 58,
+  "title": "Tàu hũ ky cuộn nấm sốt dầu hào chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Tàu hũ ky đậu nành",
+    "normalizedName": "tau hu ky",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 400.0,
+    "proteinPer100g": 45.0,
+    "carbsPer100g": 15.0,
+    "fatPer100g": 20.0,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đông cô",
+    "normalizedName": "nam dong co",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.2,
+    "carbsPer100g": 6.8,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm kim châm",
+    "normalizedName": "nam kim cham",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 37.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 7.8,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 59,
+  "title": "Đậu hũ chiên giòn sốt mè rang",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 180.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Hạt mè vừng",
+    "normalizedName": "me",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 573.0,
+    "proteinPer100g": 17.7,
+    "carbsPer100g": 23.4,
+    "fatPer100g": 49.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 60,
+  "title": "Đậu hũ kho nước dừa xiêm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 180.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 61,
+  "title": "Nấm đùi gà áp chảo sốt tiêu đen",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 180.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 62,
+  "title": "Chả nấm thì là rán giòn",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm mèo mộc nhĩ",
+    "normalizedName": "nam meo",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 7.0,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 45,
+  "title": "Phở xào áp chảo rau cải nấm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Bánh phở",
+    "normalizedName": "banh pho",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 46,
+  "title": "Mì hoành thánh chay nhân nấm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Mì sợi lúa mì",
+    "normalizedName": "mi soi",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 356.0,
+    "proteinPer100g": 11.4,
+    "carbsPer100g": 74.1,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm mèo mộc nhĩ",
+    "normalizedName": "nam meo",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 7.0,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Vỏ hoành thánh",
+    "normalizedName": "vo hoanh thanh",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 291.0,
+    "proteinPer100g": 9.8,
+    "carbsPer100g": 57.9,
+    "fatPer100g": 1.5,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 47,
+  "title": "Bún gạo lứt trộn sốt mè đậu phộng",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt mè vừng",
+    "normalizedName": "me",
+    "quantity": 9.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 573.0,
+    "proteinPer100g": 17.7,
+    "carbsPer100g": 23.4,
+    "fatPer100g": 49.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bún khô",
+    "normalizedName": "bun kho",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 364.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.2,
+    "fatPer100g": 0.6,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 48,
+  "title": "Đậu hũ sốt cà chua hành boa-rô",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 180.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hành boa-rô",
+    "normalizedName": "hanh paro",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 14.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 35.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 49,
+  "title": "Đậu hũ chiên sả ớt giòn rụm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 180.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Sả cây",
+    "normalizedName": "sa cay",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 99.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 25.0,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Ớt tươi",
+    "normalizedName": "ot",
+    "quantity": 10.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 40.0,
+    "proteinPer100g": 1.9,
+    "carbsPer100g": 8.8,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 50,
+  "title": "Đậu hũ non sốt nấm đông cô",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ non",
+    "normalizedName": "dau hu non",
+    "quantity": 180.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 7.2,
+    "carbsPer100g": 1.2,
+    "fatPer100g": 3.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đông cô",
+    "normalizedName": "nam dong co",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.2,
+    "carbsPer100g": 6.8,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 51,
+  "title": "Đậu hũ kho nấm rơm tiêu xanh",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 52,
+  "title": "Chả đậu xanh hấp lá chuối",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu xanh",
+    "normalizedName": "dau xanh",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 347.0,
+    "proteinPer100g": 23.9,
+    "carbsPer100g": 62.6,
+    "fatPer100g": 1.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm mèo khô",
+    "normalizedName": "nam meo kho",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 284.0,
+    "proteinPer100g": 9.3,
+    "carbsPer100g": 73.0,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 53,
+  "title": "Chả giò bắp đậu hũ giòn tan",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm mèo mộc nhĩ",
+    "normalizedName": "nam meo",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 7.0,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bắp ngô ngọt",
+    "normalizedName": "bap ngot",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 86.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 18.7,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bánh tráng",
+    "normalizedName": "banh trang",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 366.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.1,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 38,
+  "title": "Bún gạo lứt xào cải thìa đậu hũ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bún khô",
+    "normalizedName": "bun kho",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 364.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.2,
+    "fatPer100g": 0.6,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 39,
+  "title": "Cơm sốt cà ri rau củ nước cốt dừa",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu gà",
+    "normalizedName": "dau ga",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 164.0,
+    "proteinPer100g": 8.9,
+    "carbsPer100g": 27.4,
+    "fatPer100g": 2.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Gạo thơm",
+    "normalizedName": "gao thom",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 365.0,
+    "proteinPer100g": 7.1,
+    "carbsPer100g": 80.0,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Khoai tây",
+    "normalizedName": "khoai tay",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 77.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 17.5,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nước cốt dừa",
+    "normalizedName": "nuoc cot dua",
+    "quantity": 60.0,
+    "unit": "ML",
+    "caloriesPer100g": 197.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 2.8,
+    "fatPer100g": 21.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 40,
+  "title": "Mì cay Hàn Quốc chay rau nấm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Bông cải xanh",
+    "normalizedName": "bong cai xanh",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.8,
+    "carbsPer100g": 6.6,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu hũ non",
+    "normalizedName": "dau hu non",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 7.2,
+    "carbsPer100g": 1.2,
+    "fatPer100g": 3.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm kim châm",
+    "normalizedName": "nam kim cham",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 37.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 7.8,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Mì ăn liền",
+    "normalizedName": "mi an lien",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 440.0,
+    "proteinPer100g": 10.2,
+    "carbsPer100g": 60.3,
+    "fatPer100g": 17.6,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 41,
+  "title": "Bún gỏi già chay nấm bào ngư",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bắp chuối",
+    "normalizedName": "bap chuoi",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 23.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 4.0,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 42,
+  "title": "Cơm cháy sốt nấm kho quẹt nấm rơm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 43,
+  "title": "Bún măng le nấm rơm đậu hũ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 44,
+  "title": "Cơm hấp nấm đông cô hạt sen",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Gạo thơm",
+    "normalizedName": "gao thom",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 365.0,
+    "proteinPer100g": 7.1,
+    "carbsPer100g": 80.0,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đông cô khô",
+    "normalizedName": "nam dong co kho",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 296.0,
+    "proteinPer100g": 9.6,
+    "carbsPer100g": 75.4,
+    "fatPer100g": 1.0,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 31,
+  "title": "Miến xào nấm đùi gà cà rốt",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Miến dong",
+    "normalizedName": "mien dong",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 351.0,
+    "proteinPer100g": 0.2,
+    "carbsPer100g": 86.1,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 32,
+  "title": "Cơm niêu rau củ luộc kho quẹt chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bông cải xanh",
+    "normalizedName": "bong cai xanh",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.8,
+    "carbsPer100g": 6.6,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Gạo thơm",
+    "normalizedName": "gao thom",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 365.0,
+    "proteinPer100g": 7.1,
+    "carbsPer100g": 80.0,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 10.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 33,
+  "title": "Mì xào giòn rau củ thập cẩm chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Bông cải xanh",
+    "normalizedName": "bong cai xanh",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.8,
+    "carbsPer100g": 6.6,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Mì sợi lúa mì",
+    "normalizedName": "mi soi",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 356.0,
+    "proteinPer100g": 11.4,
+    "carbsPer100g": 74.1,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đông cô",
+    "normalizedName": "nam dong co",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.2,
+    "carbsPer100g": 6.8,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 34,
+  "title": "Bún mắm chay nấm rơm cà tím",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà tím",
+    "normalizedName": "ca tim",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 5.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 35,
+  "title": "Cơm chiên trái thơm kiểu Thái chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu Hà Lan",
+    "normalizedName": "dau ha lan",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 81.0,
+    "proteinPer100g": 5.4,
+    "carbsPer100g": 14.5,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt điều",
+    "normalizedName": "hat dieu",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 553.0,
+    "proteinPer100g": 18.2,
+    "carbsPer100g": 30.2,
+    "fatPer100g": 43.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Quả thơm dứa",
+    "normalizedName": "thom",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 50.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 13.1,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 36,
+  "title": "Cơm gạo lứt cuộn rong biển kimbap chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Gạo lứt",
+    "normalizedName": "gao lut",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 370.0,
+    "proteinPer100g": 7.9,
+    "carbsPer100g": 77.2,
+    "fatPer100g": 2.9,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Rong biển",
+    "normalizedName": "rong bien",
+    "quantity": 10.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 259.0,
+    "proteinPer100g": 15.3,
+    "carbsPer100g": 46.2,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt mè vừng",
+    "normalizedName": "me",
+    "quantity": 9.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 573.0,
+    "proteinPer100g": 17.7,
+    "carbsPer100g": 23.4,
+    "fatPer100g": 49.7,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 37,
+  "title": "Hủ tiếu xào mềm rau cải nấm",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Hủ tiếu",
+    "normalizedName": "hu tieu",
+    "quantity": 180.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đông cô",
+    "normalizedName": "nam dong co",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.2,
+    "carbsPer100g": 6.8,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 26,
+  "title": "Mì Quảng chay nấm đậu hũ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bánh phở",
+    "normalizedName": "banh pho",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu phộng",
+    "normalizedName": "dau phong",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 567.0,
+    "proteinPer100g": 25.8,
+    "carbsPer100g": 16.1,
+    "fatPer100g": 49.2,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 27,
+  "title": "Bún chả chay Hà Nội",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 28,
+  "title": "Nui sốt cà chua đậu hũ non",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nui gạo",
+    "normalizedName": "nui",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 364.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.2,
+    "fatPer100g": 0.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu hũ non",
+    "normalizedName": "dau hu non",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 7.2,
+    "carbsPer100g": 1.2,
+    "fatPer100g": 3.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 29,
+  "title": "Cơm chiên rong biển mè rang",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Rong biển",
+    "normalizedName": "rong bien",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 259.0,
+    "proteinPer100g": 15.3,
+    "carbsPer100g": 46.2,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt mè vừng",
+    "normalizedName": "me",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 573.0,
+    "proteinPer100g": 17.7,
+    "carbsPer100g": 23.4,
+    "fatPer100g": 49.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 30,
+  "title": "Bún đậu chả cốm chay mắm tương",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đường",
+    "normalizedName": "duong",
+    "quantity": 12.5,
+    "unit": "GRAM",
+    "caloriesPer100g": 387.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 100.0,
+    "fatPer100g": 0.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 19,
+  "title": "Miến măng khô nấm đùi gà chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Miến dong",
+    "normalizedName": "mien dong",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 351.0,
+    "proteinPer100g": 0.2,
+    "carbsPer100g": 86.1,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 20,
+  "title": "Bánh xèo chay nấm giá đỗ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nước cốt dừa",
+    "normalizedName": "nuoc cot dua",
+    "quantity": 30.0,
+    "unit": "ML",
+    "caloriesPer100g": 197.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 2.8,
+    "fatPer100g": 21.3,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu xanh chín",
+    "normalizedName": "dau xanh chin",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 105.0,
+    "proteinPer100g": 7.0,
+    "carbsPer100g": 19.2,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bột gạo",
+    "normalizedName": "bot gao",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 366.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.1,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 21,
+  "title": "Nui xào rau củ sốt tương",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nui gạo",
+    "normalizedName": "nui",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 364.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.2,
+    "fatPer100g": 0.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 22,
+  "title": "Bún chả giò bắp chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm mèo mộc nhĩ",
+    "normalizedName": "nam meo",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 7.0,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bắp ngô ngọt",
+    "normalizedName": "bap ngot",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 86.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 18.7,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu xanh chín",
+    "normalizedName": "dau xanh chin",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 105.0,
+    "proteinPer100g": 7.0,
+    "carbsPer100g": 19.2,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bánh tráng",
+    "normalizedName": "banh trang",
+    "quantity": 56.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 366.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.1,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 23,
+  "title": "Cơm tấm sườn nấm chay nướng",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Gạo thơm",
+    "normalizedName": "gao thom",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 365.0,
+    "proteinPer100g": 7.1,
+    "carbsPer100g": 80.0,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Mật mía",
+    "normalizedName": "mat mia",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 290.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 74.7,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 24,
+  "title": "Cơm chiên Dương Châu chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu Hà Lan",
+    "normalizedName": "dau ha lan",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 81.0,
+    "proteinPer100g": 5.4,
+    "carbsPer100g": 14.5,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bắp ngô ngọt",
+    "normalizedName": "bap ngot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 86.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 18.7,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 25,
+  "title": "Cơm hấp lá sen hạt sen chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đông cô",
+    "normalizedName": "nam dong co",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.2,
+    "carbsPer100g": 6.8,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cơm trắng",
+    "normalizedName": "com trang",
+    "quantity": 140.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 130.0,
+    "proteinPer100g": 2.7,
+    "carbsPer100g": 28.2,
+    "fatPer100g": 0.3,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 12,
+  "title": "Bún mọc nấm rơm chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm mèo mộc nhĩ",
+    "normalizedName": "nam meo",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 7.0,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 13,
+  "title": "Cháo yến mạch bí đỏ đậu đỏ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Yến mạch",
+    "normalizedName": "yen mach",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 389.0,
+    "proteinPer100g": 16.9,
+    "carbsPer100g": 66.3,
+    "fatPer100g": 6.9,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu đỏ",
+    "normalizedName": "dau do",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 128.0,
+    "proteinPer100g": 7.5,
+    "carbsPer100g": 24.8,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bí đỏ",
+    "normalizedName": "bi do",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 26.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 6.5,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 14,
+  "title": "Bún thang chay nấm bào ngư",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 70.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 15,
+  "title": "Bánh bao chay nhân nấm mộc nhĩ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm mèo khô",
+    "normalizedName": "nam meo kho",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 284.0,
+    "proteinPer100g": 9.3,
+    "carbsPer100g": 73.0,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bột mì",
+    "normalizedName": "bot mi",
+    "quantity": 180.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 364.0,
+    "proteinPer100g": 10.3,
+    "carbsPer100g": 76.3,
+    "fatPer100g": 1.0,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 16,
+  "title": "Súp bắp non hạt sen nấm tuyết",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đông cô",
+    "normalizedName": "nam dong co",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.2,
+    "carbsPer100g": 6.8,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bắp ngô ngọt",
+    "normalizedName": "bap ngot",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 86.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 18.7,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 17,
+  "title": "Cháo bí đỏ đậu xanh hạt sen",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Gạo thơm",
+    "normalizedName": "gao thom",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 365.0,
+    "proteinPer100g": 7.1,
+    "carbsPer100g": 80.0,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu xanh",
+    "normalizedName": "dau xanh",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 347.0,
+    "proteinPer100g": 23.9,
+    "carbsPer100g": 62.6,
+    "fatPer100g": 1.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bí đỏ",
+    "normalizedName": "bi do",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 26.0,
+    "proteinPer100g": 1.0,
+    "carbsPer100g": 6.5,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 18,
+  "title": "Bánh cuốn chay nhân nấm mộc nhĩ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 70.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm mèo mộc nhĩ",
+    "normalizedName": "nam meo",
+    "quantity": 30.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 25.0,
+    "proteinPer100g": 0.5,
+    "carbsPer100g": 7.0,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bột gạo",
+    "normalizedName": "bot gao",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 366.0,
+    "proteinPer100g": 6.0,
+    "carbsPer100g": 80.1,
+    "fatPer100g": 1.4,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 4,
+  "title": "Bún bò Huế chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Sả cây",
+    "normalizedName": "sa cay",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 99.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 25.0,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 25.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 5,
+  "title": "Cháo nấm hạt sen",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Gạo thơm",
+    "normalizedName": "gao thom",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 365.0,
+    "proteinPer100g": 7.1,
+    "carbsPer100g": 80.0,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 6,
+  "title": "Bánh mì bì chay thính gạo",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bánh mì lúa mì",
+    "normalizedName": "banh mi",
+    "quantity": 2.0,
+    "unit": "QUA",
+    "caloriesPer100g": 272.0,
+    "proteinPer100g": 10.8,
+    "carbsPer100g": 51.9,
+    "fatPer100g": 2.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Miến dong",
+    "normalizedName": "mien dong",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 351.0,
+    "proteinPer100g": 0.2,
+    "carbsPer100g": 86.1,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dưa leo",
+    "normalizedName": "dua leo",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 15.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 10.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 7,
+  "title": "Bánh mì pate nấm đậu gà",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu gà",
+    "normalizedName": "dau ga",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 164.0,
+    "proteinPer100g": 8.9,
+    "carbsPer100g": 27.4,
+    "fatPer100g": 2.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bơ",
+    "normalizedName": "bo",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 160.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 8.5,
+    "fatPer100g": 14.7,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bánh mì lúa mì",
+    "normalizedName": "banh mi",
+    "quantity": 2.0,
+    "unit": "QUA",
+    "caloriesPer100g": 272.0,
+    "proteinPer100g": 10.8,
+    "carbsPer100g": 51.9,
+    "fatPer100g": 2.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 8,
+  "title": "Hủ tiếu Nam Vang chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Hủ tiếu",
+    "normalizedName": "hu tieu",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Tàu hũ ky đậu nành",
+    "normalizedName": "tau hu ky",
+    "quantity": 40.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 400.0,
+    "proteinPer100g": 45.0,
+    "carbsPer100g": 15.0,
+    "fatPer100g": 20.0,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm đùi gà",
+    "normalizedName": "nam dui ga",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 35.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 5.0,
+    "fatPer100g": 0.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Cải thìa",
+    "normalizedName": "cai thia",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 13.0,
+    "proteinPer100g": 1.5,
+    "carbsPer100g": 2.2,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 20.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 9,
+  "title": "Miến dong xào rau củ chay",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Bông cải xanh",
+    "normalizedName": "bong cai xanh",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.8,
+    "carbsPer100g": 6.6,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 50.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Miến dong",
+    "normalizedName": "mien dong",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 351.0,
+    "proteinPer100g": 0.2,
+    "carbsPer100g": 86.1,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm bào ngư",
+    "normalizedName": "nam bao ngu",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 33.0,
+    "proteinPer100g": 3.3,
+    "carbsPer100g": 6.1,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 10,
+  "title": "Xôi gấc hạt sen đậu xanh",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Gạo nếp",
+    "normalizedName": "gao nep",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 370.0,
+    "proteinPer100g": 6.8,
+    "carbsPer100g": 81.7,
+    "fatPer100g": 0.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu xanh",
+    "normalizedName": "dau xanh",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 347.0,
+    "proteinPer100g": 23.9,
+    "carbsPer100g": 62.6,
+    "fatPer100g": 1.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Hạt sen tươi",
+    "normalizedName": "hat sen",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 89.0,
+    "proteinPer100g": 4.1,
+    "carbsPer100g": 17.3,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nước cốt dừa",
+    "normalizedName": "nuoc cot dua",
+    "quantity": 30.0,
+    "unit": "ML",
+    "caloriesPer100g": 197.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 2.8,
+    "fatPer100g": 21.3,
+    "vegan": true,
+    "allergen": true
+   }
+  ]
+ },
+ {
+  "id": 11,
+  "title": "Bún riêu cua chay đậu hũ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bún tươi",
+    "normalizedName": "bun tuoi",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu hũ non",
+    "normalizedName": "dau hu non",
+    "quantity": 120.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 61.0,
+    "proteinPer100g": 7.2,
+    "carbsPer100g": 1.2,
+    "fatPer100g": 3.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Nấm rơm",
+    "normalizedName": "nam rom",
+    "quantity": 60.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 31.0,
+    "proteinPer100g": 3.8,
+    "carbsPer100g": 3.2,
+    "fatPer100g": 0.7,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 3,
+  "title": "Phở chay nấm đông cô",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Bánh phở",
+    "normalizedName": "banh pho",
+    "quantity": 250.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 108.0,
+    "proteinPer100g": 1.8,
+    "carbsPer100g": 24.0,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Nấm đông cô",
+    "normalizedName": "nam dong co",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.2,
+    "carbsPer100g": 6.8,
+    "fatPer100g": 0.5,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Củ cải trắng",
+    "normalizedName": "cu cai trang",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.7,
+    "carbsPer100g": 4.1,
+    "fatPer100g": 0.1,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 1,
+  "title": "Cơm gạo lứt đậu hũ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Đậu hũ",
+    "normalizedName": "dau hu",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 76.0,
+    "proteinPer100g": 8.1,
+    "carbsPer100g": 1.9,
+    "fatPer100g": 4.8,
+    "vegan": true,
+    "allergen": true
+   },
+   {
+    "ingredientName": "Gạo lứt",
+    "normalizedName": "gao lut",
+    "quantity": 150.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 370.0,
+    "proteinPer100g": 7.9,
+    "carbsPer100g": 77.2,
+    "fatPer100g": 2.9,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bông cải xanh",
+    "normalizedName": "bong cai xanh",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 34.0,
+    "proteinPer100g": 2.8,
+    "carbsPer100g": 6.6,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Cà rốt",
+    "normalizedName": "ca rot",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 41.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 9.6,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Dầu thực vật",
+    "normalizedName": "dau an",
+    "quantity": 15.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 884.0,
+    "proteinPer100g": 0.0,
+    "carbsPer100g": 0.0,
+    "fatPer100g": 100.0,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ },
+ {
+  "id": 2,
+  "title": "Salad đậu gà và bơ",
+  "servings": 2,
+  "ingredients": [
+   {
+    "ingredientName": "Cà chua",
+    "normalizedName": "ca chua",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 18.0,
+    "proteinPer100g": 0.9,
+    "carbsPer100g": 3.9,
+    "fatPer100g": 0.2,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Đậu gà",
+    "normalizedName": "dau ga",
+    "quantity": 200.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 164.0,
+    "proteinPer100g": 8.9,
+    "carbsPer100g": 27.4,
+    "fatPer100g": 2.6,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Bơ",
+    "normalizedName": "bo",
+    "quantity": 100.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 160.0,
+    "proteinPer100g": 2.0,
+    "carbsPer100g": 8.5,
+    "fatPer100g": 14.7,
+    "vegan": true,
+    "allergen": false
+   },
+   {
+    "ingredientName": "Rau chân vịt",
+    "normalizedName": "rau chan vit",
+    "quantity": 80.0,
+    "unit": "GRAM",
+    "caloriesPer100g": 23.0,
+    "proteinPer100g": 2.9,
+    "carbsPer100g": 3.6,
+    "fatPer100g": 0.4,
+    "vegan": true,
+    "allergen": false
+   }
+  ]
+ }
+]

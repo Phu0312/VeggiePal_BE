@@ -31,6 +31,8 @@ import com.veggiepal.dto.request.ChangePasswordRequest;
 import com.veggiepal.dto.request.UpdateProfileRequest;
 import com.veggiepal.dto.response.UserProfileResponse;
 import com.veggiepal.entity.User;
+import com.veggiepal.enums.ActivityLevel;
+import com.veggiepal.enums.Gender;
 import com.veggiepal.enums.Role;
 import com.veggiepal.enums.UserStatus;
 import com.veggiepal.exception.AppException;
@@ -117,6 +119,33 @@ class ProfileServiceTest {
         profileService.updateProfile(USER_ID, UpdateProfileRequest.builder().phone(" 0987654321 ").build());
 
         assertThat(user.getPhone()).isEqualTo("0987654321");
+    }
+
+    @Test
+    void updateProfile_setsGenderAndActivityLevel() {
+        User user = existingUser();
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+        UserProfileResponse profile = profileService.updateProfile(USER_ID, UpdateProfileRequest.builder()
+                .gender(Gender.FEMALE).activityLevel(ActivityLevel.MODERATE).build());
+
+        assertThat(user.getGender()).isEqualTo(Gender.FEMALE);
+        assertThat(user.getActivityLevel()).isEqualTo(ActivityLevel.MODERATE);
+        assertThat(profile.getGender()).isEqualTo(Gender.FEMALE);
+        assertThat(profile.getActivityLevel()).isEqualTo(ActivityLevel.MODERATE);
+    }
+
+    @Test
+    void updateProfile_nullGenderAndActivityLevel_keepExistingValues() {
+        User user = existingUser();
+        user.setGender(Gender.MALE);
+        user.setActivityLevel(ActivityLevel.LIGHT);
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+
+        profileService.updateProfile(USER_ID, new UpdateProfileRequest());
+
+        assertThat(user.getGender()).isEqualTo(Gender.MALE);
+        assertThat(user.getActivityLevel()).isEqualTo(ActivityLevel.LIGHT);
     }
 
     @Test

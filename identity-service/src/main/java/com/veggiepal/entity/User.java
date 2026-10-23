@@ -3,6 +3,8 @@ package com.veggiepal.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import jakarta.persistence.*;
+import com.veggiepal.enums.ActivityLevel;
+import com.veggiepal.enums.Gender;
 import com.veggiepal.enums.Role;
 import com.veggiepal.enums.UserStatus;
 import lombok.*;
@@ -37,6 +39,15 @@ public class User {
 
     @Column(name = "date_of_birth")
     LocalDate dateOfBirth;
+
+    // Nullable: the meal planner needs both to estimate calorie needs and asks the user to fill them in.
+    // ddl-auto=update creates native MySQL ENUM columns; a constant added later needs a manual ALTER (see CLAUDE.md).
+    @Enumerated(EnumType.STRING)
+    Gender gender;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "activity_level")
+    ActivityLevel activityLevel;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -10,7 +10,8 @@ public final class AllergenDetector {
 
     static {
         ALLERGEN_KEYWORDS.put("GLUTEN", List.of(
-                "gluten", "lua mi", "lua mach", "bot mi", "banh mi", "mi soi", "seitan", "can mi"
+                "gluten", "lua mi", "lua mach", "bot mi", "banh mi", "mi soi", "seitan", "can mi",
+                "mi an lien", "hoanh thanh"
         ));
         ALLERGEN_KEYWORDS.put("BUCKWHEAT", List.of(
                 "kieu mach", "soba"

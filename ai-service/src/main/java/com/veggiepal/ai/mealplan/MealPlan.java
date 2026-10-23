@@ -11,6 +11,7 @@ public class MealPlan {
     @Column(name="user_id",nullable=false) private Long userId;
     @Column(nullable=false,length=160) private String name;
     @Column(nullable=false,length=500) private String goal;
+    @Column(name="goal_type",length=20) private String goalType;
     @Column(name="plan_json",nullable=false,columnDefinition="LONGTEXT") private String planJson;
     @Column(name="version",nullable=false) private Integer version = 1;
     @Column(name="created_at",nullable=false) private LocalDateTime createdAt;
@@ -21,9 +22,18 @@ public class MealPlan {
     }
 
     public MealPlan(Long userId,String name,String goal,String json, Integer version) {
+        this(userId, name, goal, null, json, version);
+    }
+
+    public MealPlan(Long userId,String name,String goal,String goalType,String json) {
+        this(userId, name, goal, goalType, json, 1);
+    }
+
+    private MealPlan(Long userId,String name,String goal,String goalType,String json, Integer version) {
         this.userId=userId;
         this.name=name;
         this.goal=goal;
+        this.goalType=goalType;
         this.planJson=json;
         this.version=version != null ? version : 1;
         this.createdAt=LocalDateTime.now();

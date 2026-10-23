@@ -222,8 +222,8 @@ Giới hạn hiện tại:
 - Recipe Service trả thêm macro/100g, cờ vegan/allergen và normalized ingredient name. AI Service tự tính macro theo gram và servings; LLM không thực hiện phép tính quyết định.
 - Dị ứng được lọc trước khi tạo prompt và kiểm tra lại sau kết quả AI. Do schema Recipe chỉ có cờ allergen chung, hệ thống fail-closed với mọi ingredient có `allergen=true` khi user có dị ứng.
 - Kết quả phải có 7 tên ngày duy nhất; mỗi ngày có đúng một `BREAKFAST`, `LUNCH`, `DINNER`.
-- Có thể truyền `dailyNutritionTarget`; từng ngày sai min/max calorie, protein, carbohydrate hoặc fat sẽ bị từ chối.
-- Thay món gọi lại Nutrition Service, loại món không an toàn, bắt buộc ID mới khác `currentRecipeId` và tái tính toàn bộ macro.
+- `goalType` (`LOSE`/`MAINTAIN`/`GAIN`) là bắt buộc. Không truyền `dailyNutritionTarget` thì BE tự tính mục tiêu calo/macro theo hồ sơ (xem 7.6). Nếu có truyền `dailyNutritionTarget`, dùng nguyên giá trị đó. Mỗi bữa có ngân sách calo riêng (sáng 25%, trưa 40%, tối 35% của mục tiêu giữa, tính lần lượt để bữa sau gánh phần bữa trước thiếu); món được chọn theo ngân sách và khẩu phần nhân riêng từng bữa trong khoảng 0,75–2,0 (`servingMultiplier`). Khi chỉ có một đầu (chỉ `minCalories` hoặc chỉ `maxCalories`), hệ thống nhắm vào trong giới hạn 5% (min × 1,05 / max × 0,95). Ngày lệch mục tiêu chỉ bị đánh dấu, không bị từ chối.
+- Thay món gọi lại Nutrition Service, loại món không an toàn, bắt buộc ID mới khác `currentRecipeId` và tái tính toàn bộ macro. Món thay còn phải khác các món còn lại trong ngày và chạm được ngân sách của bữa đó (nếu catalogue quá nhỏ nên không còn món nào, chỉ cần khác món hiện tại); các bữa khác giữ nguyên món.
 - Mùa/vùng miền chưa được ưu tiên vì Recipe Service không có trường dữ liệu tương ứng. Không có Health App API; module chỉ dùng health record thật của Nutrition Service.
 
 ### 4.5 AI Video Processing
@@ -446,6 +446,7 @@ OpenAPI cấu hình server `/api`, nhưng route Gateway không thuộc phạm vi
 | GET | `/ai/recommendations` | Authenticated | Gợi ý Blog/Recipe |
 | POST | `/ai/meal-plans` | Authenticated | Tạo thực đơn 7 ngày |
 | GET | `/ai/meal-plans` | Authenticated | Danh sách thực đơn của user |
+| GET | `/ai/meal-plans/nutrition-target` | Authenticated | Mục tiêu calo/macro tính từ hồ sơ, theo `goalType` |
 | GET | `/ai/meal-plans/{id}` | Authenticated, owner | Chi tiết thực đơn |
 | POST | `/ai/meal-plans/{id}/replace` | Authenticated, owner | Thay món |
 | POST | `/ai/videos/process` | Authenticated | Xử lý video đồng bộ |
@@ -644,6 +645,7 @@ Bỏ qua hoặc đóng case mồ côi mà không cần thực thi callback xuố
 {
   "name": "Thực đơn tuần tăng cơ",
   "healthGoal": "Tăng protein, duy trì cân nặng",
+  "goalType": "GAIN",
   "preferences": ["món Việt", "ít dầu"],
   "availableIngredients": ["đậu hũ", "nấm", "yến mạch"],
   "dailyNutritionTarget": {
@@ -658,6 +660,13 @@ Bỏ qua hoặc đóng case mồ côi mà không cần thực thi callback xuố
   }
 }
 ```
+
+Quy tắc các field chính:
+
+- `goalType` **bắt buộc**: `LOSE`, `MAINTAIN` hoặc `GAIN`. Thiếu hoặc giá trị lạ trả 400/6000.
+- `dailyNutritionTarget` **tùy chọn**. Không gửi thì BE tự tính mục tiêu từ chiều cao/cân nặng mới nhất (nutrition-service) cùng ngày sinh, giới tính và mức vận động (identity-service `GET /users/me`), theo công thức ở mục `GET /ai/meal-plans/nutrition-target` bên dưới. Có gửi thì BE dùng nguyên giá trị đó và không gọi identity-service.
+- `healthGoal` vẫn là mô tả tự do, được đưa vào prompt; không còn quyết định mục tiêu calo.
+- Hai lỗi hồ sơ `6020` và `6021` chỉ xảy ra khi BE tự tính mục tiêu (không gửi `dailyNutritionTarget`).
 
 Response `plan` có JSON do model trả và đã qua kiểm tra cấu trúc:
 
@@ -681,16 +690,19 @@ Response `plan` có JSON do model trả và đã qua kiểm tra cấu trúc:
       ]
     },
     "createdAt": "2026-10-16T11:00:00",
-    "updatedAt": "2026-10-16T11:00:00"
+    "updatedAt": "2026-10-16T11:00:00",
+    "goalType": "GAIN"
   }
 }
 ```
 
+`goalType` trong `MealPlanResponse` là `null` với thực đơn tạo trước thay đổi này (BE vẫn dò chữ trong `goal` cho các thực đơn đó).
+
 Response thực tế có đủ 7 phần tử trong `days`; ví dụ được rút gọn để dễ đọc.
 
-Khi `dailyNutritionTarget` được cung cấp, backend tự động tính toán tổng dinh dưỡng của từng ngày (`nutritionTotals`), áp dụng dung sai cấu hình (`ai.meal-plan.target-tolerance-ratio`, mặc định 15%), và trả về cờ kiểm tra cùng sai số chi tiết:
-- `days[].targetMet`: kiểu `boolean`, mang giá trị `true` nếu mọi chỉ số nằm trong khoảng dung sai cho phép, `false` nếu có chỉ số bị lệch.
-- `days[].targetDeviations`: object chi tiết các chỉ số không đạt mục tiêu (nếu `targetMet` là `false`), cấu trúc:
+Mọi thực đơn tạo sau thay đổi này đều có mục tiêu (do FE gửi hoặc BE tự tính), nên `targetMet` và `targetDeviations` luôn có trên thực đơn mới; thực đơn cũ có thể không có. Backend tính tổng dinh dưỡng của từng ngày (`nutritionTotals`) và trả về:
+- `days[].targetMet`: kiểu `boolean`, `true` khi calo trong ngày nằm trong `[minCalories, maxCalories]`, không có dung sai; đạm, carb và béo không quyết định `targetMet`.
+- `days[].targetDeviations`: liệt kê mọi chỉ số nằm ngoài `[min, max]`, kể cả khi `targetMet` là `true`, cấu trúc:
   ```json
   "targetDeviations": {
     "calories": { "actual": 1320.00, "min": 1500.00, "max": 2200.00 },
@@ -702,6 +714,47 @@ Khi `dailyNutritionTarget` được cung cấp, backend tự động tính toán
 #### GET `/ai/meal-plans`
 
 Trả mảng `MealPlanResponse` của user, mới nhất trước.
+
+#### GET `/ai/meal-plans/nutrition-target?goalType=GAIN`
+
+Cho FE hiển thị mục tiêu calo/macro trước khi tạo thực đơn. `goalType` bắt buộc (`LOSE`, `MAINTAIN`, `GAIN`); thiếu hoặc sai trả 400/6000. Cần JWT. BE đọc chiều cao/cân nặng mới nhất từ nutrition-service và ngày sinh, giới tính, mức vận động từ identity-service.
+
+```json
+{
+  "code": 1000,
+  "result": {
+    "goalType": "GAIN",
+    "bmr": 1805,
+    "tdee": 2482,
+    "targetCalories": 2854,
+    "target": {
+      "minCalories": 2569, "maxCalories": 3140,
+      "minProtein": 96, "maxProtein": 144,
+      "minCarbohydrate": 321, "maxCarbohydrate": 428,
+      "minFat": 63, "maxFat": 95
+    }
+  }
+}
+```
+
+Ví dụ trên là nam, 80 kg, 180 cm, 25 tuổi, mức vận động `LIGHT`. `bmr`, `tdee`, `targetCalories` là số nguyên đã làm tròn; `target` có thể gửi nguyên làm `dailyNutritionTarget` khi tạo thực đơn.
+
+Công thức (tuổi là số năm tròn từ ngày sinh; mọi phép tính dùng số chưa làm tròn, chỉ làm tròn kết quả cuối):
+
+| Bước | Công thức |
+|---|---|
+| BMR (Mifflin-St Jeor) | `10 × kg + 6,25 × cm − 5 × tuổi + s`; `s` = +5 (`MALE`), −161 (`FEMALE`), −78 (`OTHER`) |
+| Hệ số vận động (TDEE = BMR × hệ số) | `SEDENTARY` 1,2 · `LIGHT` 1,375 · `MODERATE` 1,55 · `ACTIVE` 1,725 · `VERY_ACTIVE` 1,9 |
+| Hệ số mục tiêu | `LOSE` × 0,85 · `MAINTAIN` × 1,00 · `GAIN` × 1,15 (nhân với TDEE) |
+| Sàn / trần calo | Calo mục tiêu kẹp vào `[sàn, 4000]`; sàn 1500 (`MALE`), 1200 (`FEMALE`, `OTHER`) |
+| Khoảng calo (±10%) | `min = max(round(mục tiêu × 0,9), sàn)`, `max = min(round(mục tiêu × 1,1), 4000)` |
+| Đạm | `round(kg × 1,2)` đến `round(kg × 1,8)` gam |
+| Carb | `round(mục tiêu × 0,45 / 4)` đến `round(mục tiêu × 0,60 / 4)` gam |
+| Chất béo | `round(mục tiêu × 0,20 / 9)` đến `round(mục tiêu × 0,30 / 9)` gam |
+
+Macro tính trên calo mục tiêu đã kẹp. Lỗi riêng của endpoint: `6010` thiếu chiều cao/cân nặng và `6006` downstream không trả lời áp dụng cho mọi lệnh gọi `POST /ai/meal-plans` và `update-from-health` (cả hai luôn đọc chỉ số sức khỏe mới nhất), không chỉ khi BE tự tính mục tiêu. `6020` thiếu ngày sinh/giới tính/mức vận động và `6021` dưới 18 tuổi chỉ xảy ra khi BE tự tính mục tiêu (`POST /ai/meal-plans` không gửi `dailyNutritionTarget`, `update-from-health` không có `customTarget`).
+
+**Câu "chỉ là gợi ý":** FE hiển thị cố định câu "Mục tiêu calo chỉ là gợi ý, không thay thế tư vấn của chuyên gia dinh dưỡng." cạnh mục tiêu. BE không trả field nào cho việc này.
 
 #### GET `/ai/meal-plans/5`
 
@@ -752,6 +805,7 @@ Cập nhật thực đơn dựa trên chỉ số sức khỏe mới nhất (chi�
   "changeSummary": "Cập nhật theo chỉ số BMI mới"
 }
 ```
+- `customTarget` (tùy chọn): mục tiêu dinh dưỡng do FE gửi, dùng nguyên giá trị. Không gửi thì BE tự tính lại từ hồ sơ theo `goalType` đã lưu của thực đơn; thực đơn lưu trước thay đổi này chưa có `goalType` thì BE đoán từ nội dung `goal`. Trường hợp BE tự tính trả `6020` khi hồ sơ thiếu ngày sinh/giới tính/mức vận động và `6021` khi dưới 18 tuổi.
 - Nếu `confirm: false` (hoặc null): Trả về bản xem trước `UpdateFromHealthResponse` với `confirmed: false`, mục tiêu dinh dưỡng mới được tính toán (`recalculatedTarget`), và cấu trúc thực đơn đề xuất (`proposedPlan`). Không lưu DB và không tăng version.
 - Nếu `confirm: true`: Lưu trữ phiên bản hiện tại vào bảng `ai_meal_plan_versions`, tăng `version` trên thực đơn, cập nhật và lưu JSON thực đơn mới với các ràng buộc sở thích và dị ứng được bảo toàn.
 
@@ -784,7 +838,7 @@ Chỉnh sửa thủ công thực đơn (thay món, thêm bữa, xóa bữa, đ�
 ```
 - Hành động hỗ trợ: `REPLACE`, `ADD`, `REMOVE`, `UPDATE_SERVING`.
 - Tự động tính toán xác định lại dinh dưỡng Calo, Protein, Carbs, Fat cho từng bữa và tổng ngày (`nutritionTotals`).
-- Tự động kiểm tra và cập nhật `targetMet` và `targetDeviations` theo dung sai cho từng ngày.
+- Tự động tính lại `targetMet` (chỉ xét calo trong `[minCalories, maxCalories]`, không có dung sai) và `targetDeviations` cho từng ngày.
 - Kiểm tra an toàn: Chỉ chấp nhận Recipe thuần chay (`isVegan = true`) và không chứa chất gây dị ứng của người dùng.
 - Hỗ trợ `preview: true` (hoặc gọi qua endpoint `/preview-edit`) để xem trước mà không ghi vào MySQL.
 - Khi lưu (`preview: false`), tự động lưu snapshot phiên bản cũ vào `ai_meal_plan_versions` và tăng `version`.
@@ -798,8 +852,8 @@ Lấy lịch sử các phiên bản đã lưu của thực đơn (`List<MealPlan
 Lấy chi tiết đầy đủ của một phiên bản cụ thể trong quá khứ.
 
 #### Hợp đồng dữ liệu dinh dưỡng FE (Nutrition Contract)
-- `plan.days[].targetMet`: boolean (`true` khi mọi chỉ số calo/protein/carbs/fat nằm trong biên độ dung sai 15%).
-- `plan.days[].targetDeviations`: Object ghi nhận độ lệch khi `targetMet == false`:
+- `plan.days[].targetMet`: boolean (`true` khi calo trong ngày nằm trong `[minCalories, maxCalories]`, không có dung sai; đạm, carb và béo không quyết định `targetMet`).
+- `plan.days[].targetDeviations`: Object liệt kê mọi chỉ số nằm ngoài `[min, max]`, kể cả khi `targetMet` là `true`:
   `targetDeviations.{calories|protein|carbohydrate|fat}.{actual, min, max}`.
 - `plan.days[].meals[].servingMultiplier`: Hệ số khẩu phần (mặc định 1.0 nếu không có).
 - `plan.days[].nutritionTotals`: `{calories, protein, carbohydrate, fat}`.
@@ -941,9 +995,14 @@ Trả `guestChatRequestsPerDay`, `memberChatRequestsPerDay`, `dailyTokenLimit`, 
 | 404 | 6017 | Phiên bản thực đơn không tồn tại |
 | 400 | 6018 | Món ăn được chọn không phải món thuần chay |
 | 400 | 6019 | Món ăn chứa thành phần gây dị ứng của người dùng |
+| 400 | 6020 | `PROFILE_INCOMPLETE`: thiếu ngày sinh, giới tính hoặc mức độ vận động trong hồ sơ. Chỉ xảy ra khi BE tự tính mục tiêu calo. Lỗi này không tiêu tốn lượt tạo thực đơn |
+| 400 | 6021 | `AGE_NOT_SUPPORTED`: dưới 18 tuổi. Chỉ xảy ra khi BE tự tính mục tiêu calo. Lỗi này không tiêu tốn lượt tạo thực đơn |
 | 500 | 6999 | Lỗi không phân loại |
 
 Lưu ý:
+- Request sai dạng (thiếu hoặc sai `goalType`, enum lạ trong body, thiếu hoặc sai kiểu query parameter) trả 400/6000, không còn rơi vào 500/6999.
+- `6020` và `6021` chỉ xảy ra khi BE tự tính mục tiêu: `POST /ai/meal-plans` không gửi `dailyNutritionTarget`, `update-from-health` không có `customTarget`, và `GET /ai/meal-plans/nutrition-target`. Khi FE gửi sẵn mục tiêu thì BE không đọc hồ sơ từ identity-service nên không có hai lỗi này.
+- Lượt tạo thực đơn (quota tháng) chỉ được giữ chỗ sau khi mục tiêu đã được xác định, nên `6020`, `6021` và `6010` không tiêu tốn lượt.
 - Mã lỗi `6012` trong backend là `MODERATION_TARGET_NOT_FOUND` (404), còn `6013` là `MODERATION_CASE_STALE` (409).
 - Không có lỗi `NUTRITION_TARGET_UNATTAINABLE` do backend thiết kế linh hoạt trả kết quả kèm cờ `targetMet` và `targetDeviations` thay vì chặn luồng của người dùng.
 
@@ -973,6 +1032,7 @@ File: `ai-service/src/main/resources/application.properties`.
 | `BLOG_SERVICE_URL` | `http://localhost:8083` | Blog Service |
 | `RECIPE_SERVICE_URL` | `http://localhost:8084` | Recipe Service |
 | `NUTRITION_SERVICE_URL` | `http://localhost:8082` | Nutrition Service |
+| `IDENTITY_SERVICE_URL` | `http://localhost:8081` | Identity Service (`services.identity.base-url`); ai-service gọi `/users/me` để đọc ngày sinh, giới tính, mức vận động |
 | `AI_GUEST_DAILY_LIMIT` | `3` | Lượt chat guest/ngày |
 | `AI_GUEST_SESSION_PEPPER` | fallback sang `JWT_SECRET` | Pepper hash remote address |
 | `AI_GUEST_SESSION_TTL` | `24h` | Thời gian sống guest session |
