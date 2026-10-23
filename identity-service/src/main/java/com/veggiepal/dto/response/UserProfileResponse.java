@@ -3,6 +3,8 @@ package com.veggiepal.dto.response;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.veggiepal.enums.ActivityLevel;
+import com.veggiepal.enums.Gender;
 import com.veggiepal.enums.Role;
 import com.veggiepal.enums.UserStatus;
 
@@ -26,6 +28,10 @@ public class UserProfileResponse {
     String avatarUrl;
 
     LocalDate dateOfBirth;
+
+    Gender gender;
+
+    ActivityLevel activityLevel;
 
     Role role;
 

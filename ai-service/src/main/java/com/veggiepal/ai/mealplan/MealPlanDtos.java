@@ -3,6 +3,7 @@ package com.veggiepal.ai.mealplan;
 import java.time.LocalDateTime;
 import java.util.List;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -16,13 +17,21 @@ public final class MealPlanDtos {
             @NotBlank @Size(max=500) String healthGoal,
             @Size(max=20) List<@Size(max=100) String> preferences,
             @Size(max=30) List<@Size(max=100) String> availableIngredients,
-            @Valid NutritionTarget dailyNutritionTarget) {}
+            @Valid NutritionTarget dailyNutritionTarget,
+            @NotNull GoalType goalType) {}
 
     public record NutritionTarget(
             @DecimalMin("0") BigDecimal minCalories, @DecimalMin("0") BigDecimal maxCalories,
             @DecimalMin("0") BigDecimal minProtein, @DecimalMin("0") BigDecimal maxProtein,
             @DecimalMin("0") BigDecimal minCarbohydrate, @DecimalMin("0") BigDecimal maxCarbohydrate,
             @DecimalMin("0") BigDecimal minFat, @DecimalMin("0") BigDecimal maxFat) {}
+
+    public record NutritionTargetResponse(
+            GoalType goalType,
+            int bmr,
+            int tdee,
+            int targetCalories,
+            NutritionTarget target) {}
 
     public record ReplaceMealRequest(
             @NotBlank String day,
@@ -39,13 +48,14 @@ public final class MealPlanDtos {
             LocalDateTime createdAt,
             LocalDateTime updatedAt,
             Integer version,
-            Boolean isFavorite) {
+            Boolean isFavorite,
+            String goalType) {
         public MealPlanResponse(Long id, String name, String goal, Object plan, LocalDateTime createdAt, LocalDateTime updatedAt) {
-            this(id, name, goal, plan, createdAt, updatedAt, 1, false);
+            this(id, name, goal, plan, createdAt, updatedAt, 1, false, null);
         }
 
         public MealPlanResponse(Long id, String name, String goal, Object plan, LocalDateTime createdAt, LocalDateTime updatedAt, Integer version) {
-            this(id, name, goal, plan, createdAt, updatedAt, version, false);
+            this(id, name, goal, plan, createdAt, updatedAt, version, false, null);
         }
     }
 

@@ -5,6 +5,9 @@ import java.time.LocalDate;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 
+import com.veggiepal.enums.ActivityLevel;
+import com.veggiepal.enums.Gender;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -24,4 +27,9 @@ public class UpdateProfileRequest {
 
     @Past(message = "INVALID_DATE_OF_BIRTH")
     LocalDate dateOfBirth;
+
+    // null keeps the current value; an unknown name fails JSON parsing (400 INVALID_REQUEST)
+    Gender gender;
+
+    ActivityLevel activityLevel;
 }

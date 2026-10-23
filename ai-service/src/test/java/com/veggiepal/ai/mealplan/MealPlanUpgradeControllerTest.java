@@ -53,7 +53,7 @@ class MealPlanUpgradeControllerTest {
     @Test
     void favoriteEndpoint_returnsSuccess() throws Exception {
         MealPlanDtos.MealPlanResponse res = new MealPlanDtos.MealPlanResponse(
-                10L, "Thực đơn tuần", "Tăng cơ", List.of(), LocalDateTime.now(), LocalDateTime.now(), 1, true
+                10L, "Thực đơn tuần", "Tăng cơ", List.of(), LocalDateTime.now(), LocalDateTime.now(), 1, true, null
         );
         when(service.favorite(42L, 10L)).thenReturn(res);
 
@@ -80,7 +80,7 @@ class MealPlanUpgradeControllerTest {
     @Test
     void listFavoritesEndpoint_returnsPagedResponse() throws Exception {
         MealPlanDtos.MealPlanResponse item = new MealPlanDtos.MealPlanResponse(
-                10L, "Thực đơn tuần", "Tăng cơ", List.of(), LocalDateTime.now(), LocalDateTime.now(), 1, true
+                10L, "Thực đơn tuần", "Tăng cơ", List.of(), LocalDateTime.now(), LocalDateTime.now(), 1, true, null
         );
         PageResponse<MealPlanDtos.MealPlanResponse> pageRes = PageResponse.<MealPlanDtos.MealPlanResponse>builder()
                 .content(List.of(item))
@@ -104,7 +104,7 @@ class MealPlanUpgradeControllerTest {
     @Test
     void getFavoriteDetailEndpoint_returnsSuccess() throws Exception {
         MealPlanDtos.MealPlanResponse item = new MealPlanDtos.MealPlanResponse(
-                10L, "Thực đơn tuần", "Tăng cơ", List.of(), LocalDateTime.now(), LocalDateTime.now(), 1, true
+                10L, "Thực đơn tuần", "Tăng cơ", List.of(), LocalDateTime.now(), LocalDateTime.now(), 1, true, null
         );
         when(service.getFavoriteDetail(42L, 10L)).thenReturn(item);
 

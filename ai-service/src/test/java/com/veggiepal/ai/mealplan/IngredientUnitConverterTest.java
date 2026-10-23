@@ -106,6 +106,14 @@ class IngredientUnitConverterTest {
     }
 
     @Test
+    void convertsBanhMiLoafCount() {
+        // Seed recipes 6 and 7 use "2 QUA" of bread; without a loaf weight they were silently excluded.
+        Optional<BigDecimal> grams = IngredientUnitConverter.toGrams(new BigDecimal("2"), "QUA", "Bánh mì lúa mì", "banh mi");
+        assertTrue(grams.isPresent());
+        assertEquals(new BigDecimal("160.00"), grams.get());
+    }
+
+    @Test
     void rejectsUngroundedPieceUnitsAndInvalidInputs() {
         // Unknown fruit/piece should NOT guess a generic weight
         Optional<BigDecimal> unknownPiece = IngredientUnitConverter.toGrams(new BigDecimal("1"), "quả", "Trái thần bí", "trai than bi");
