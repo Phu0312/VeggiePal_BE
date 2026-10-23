@@ -81,7 +81,7 @@ Việc kiểm tra tuổi nằm trong bước tính, nên chỉ chạy khi BE t�
 - **Enum mới** `GoalType { LOSE, MAINTAIN, GAIN }`, đặt trong package `mealplan`.
 - **`GenerateRequest`:** thêm `@NotNull GoalType goalType`. Trường `healthGoal` giữ nguyên, vẫn là mô tả tự do đưa vào prompt.
 - **Lưu vào DB:**
-  - Flyway `V5__meal_plan_goal_type.sql`: `ALTER TABLE ai_meal_plans ADD COLUMN goal_type VARCHAR(20) NULL;`
+  - Flyway `V7__meal_plan_goal_type.sql` (ban đầu là V5, đổi sang V7 vì trùng `V5__async_video_jobs.sql` khi merge vào dev): `ALTER TABLE ai_meal_plans ADD COLUMN goal_type VARCHAR(20) NULL;`
   - Entity `MealPlan` thêm `String goalType`, lưu dạng chuỗi như các cột trạng thái khác của ai-service (`ddl-auto=validate`).
   - `MealPlanResponse` thêm `goalType`.
 - **Thực đơn cũ có `goal_type` null:** tiếp tục dò chữ trong `goal` như hiện tại. Hàm dò chữ chỉ còn dùng cho trường hợp này.
