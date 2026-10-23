@@ -34,11 +34,18 @@ public class PaymentService {
 
     @Transactional
     public PaymentOrderResponse checkout(Long userId, PlanCode planCode) {
-        SubscriptionPlan plan = plans.findByCodeAndActiveTrue(planCode)
+        // The catalog row is a stable database mutex for this plan. It closes the
+        // first-checkout race where no user/plan order exists yet, across app instances.
+        SubscriptionPlan plan = plans.findByCodeAndActiveTrueForUpdate(planCode)
                 .orElseThrow(() -> new AppException(ErrorCode.PLAN_NOT_FOUND));
         if (plan.getCode() == PlanCode.FREE || plan.getPrice() <= 0) {
             throw new AppException(ErrorCode.PLAN_NOT_PURCHASABLE);
         }
+        Optional<PaymentOrder> reusable = orders
+                .findAllByUserIdAndPlanIdAndStatusOrderByCreatedAtDesc(userId, plan.getId(), PaymentStatus.PENDING)
+                .stream().filter(this::isReusable).findFirst();
+        if (reusable.isPresent()) return response(reusable.get());
+
         PaymentOrder order = orders.save(PaymentOrder.builder().orderCode(orderCodes.next()).userId(userId)
                 .plan(plan).amount(plan.getPrice()).status(PaymentStatus.PENDING).createdAt(clock.instant()).build());
         try {
@@ -46,10 +53,41 @@ public class PaymentService {
                     "VeggiePal " + plan.getCode(), returnUrl, cancelUrl);
             order.setPaymentLinkId(link.paymentLinkId());
             order.setCheckoutUrl(link.checkoutUrl());
-            return response(orders.save(order), link.qrCode());
+            order.setQrCode(link.qrCode());
+            order.setAccountName(link.accountName());
+            order.setAccountNumber(link.accountNumber());
+            order.setBin(link.bin());
+            order.setDescription(link.description());
+            order.setExpiredAt(link.expiredAt());
+            return response(orders.save(order));
         } catch (PayOsOperationException exception) {
             throw new AppException(ErrorCode.PAYOS_UNAVAILABLE);
         }
+    }
+
+    @Transactional
+    public PaymentOrderResponse cancel(Long userId, Long orderId) {
+        PaymentOrder order = orders.findByIdAndUserIdForUpdate(orderId, userId)
+                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_ORDER_NOT_FOUND));
+        if (order.getStatus() == PaymentStatus.CANCELLED) return response(order);
+        if (order.getStatus() != PaymentStatus.PENDING) {
+            throw new AppException(ErrorCode.PAYMENT_ORDER_NOT_CANCELLABLE);
+        }
+
+        PaymentCancellationResult result;
+        try {
+            result = payOs.cancelPaymentLink(order.getOrderCode(), "Cancelled by customer");
+        } catch (PayOsOperationException exception) {
+            throw new AppException(ErrorCode.PAYOS_UNAVAILABLE);
+        }
+        if (result == PaymentCancellationResult.PAID) {
+            throw new AppException(ErrorCode.PAYMENT_ORDER_NOT_CANCELLABLE);
+        }
+        if (result != PaymentCancellationResult.CANCELLED) {
+            throw new AppException(ErrorCode.PAYMENT_CANCELLATION_NOT_CONFIRMED);
+        }
+        order.setStatus(PaymentStatus.CANCELLED);
+        return response(orders.save(order));
     }
 
     @Transactional(readOnly = true)
@@ -60,7 +98,7 @@ public class PaymentService {
 
     @Transactional(readOnly = true)
     public List<PaymentOrderResponse> history(Long userId) {
-        return orders.findAllByUserIdOrderByCreatedAtDesc(userId).stream().map(PaymentService::response).toList();
+        return orders.findAllByUserIdOrderByCreatedAtDesc(userId).stream().map(this::response).toList();
     }
 
     @Transactional
@@ -78,6 +116,7 @@ public class PaymentService {
         // changing payment or subscription state.
         if (order == null) return;
         if (order.getStatus() == PaymentStatus.PAID) return;
+        if (order.getStatus() == PaymentStatus.CANCELLED) return;
         if (payment.amount() == null || payment.amount() != order.getAmount()) {
             throw new AppException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
@@ -93,12 +132,18 @@ public class PaymentService {
         subscriptionService.activate(order.getUserId(), order.getPlan(), paidAt);
     }
 
-    private static PaymentOrderResponse response(PaymentOrder o) {
-        return response(o, null);
+    private PaymentOrderResponse response(PaymentOrder o) {
+        boolean qrVisible = o.getStatus() == PaymentStatus.PENDING
+                && (o.getExpiredAt() == null || o.getExpiredAt().isAfter(clock.instant()));
+        return new PaymentOrderResponse(o.getId(), o.getOrderCode(), o.getPlan().getCode(), o.getAmount(),
+                o.getStatus(), o.getCheckoutUrl(), qrVisible ? o.getQrCode() : null,
+                o.getAccountName(), o.getAccountNumber(), o.getBin(), o.getDescription(), o.getExpiredAt(),
+                o.getCreatedAt(), o.getPaidAt());
     }
 
-    private static PaymentOrderResponse response(PaymentOrder o, String qrCode) {
-        return new PaymentOrderResponse(o.getId(), o.getOrderCode(), o.getPlan().getCode(), o.getAmount(),
-                o.getStatus(), o.getCheckoutUrl(), qrCode, o.getCreatedAt(), o.getPaidAt());
+    private boolean isReusable(PaymentOrder order) {
+        return order.getStatus() == PaymentStatus.PENDING
+                && (order.getExpiredAt() == null || order.getExpiredAt().isAfter(clock.instant()))
+                && order.getPaymentLinkId() != null && order.getCheckoutUrl() != null && order.getQrCode() != null;
     }
 }

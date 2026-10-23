@@ -47,6 +47,20 @@ public class QuotaService {
         return limit - quota.getRequestCount();
     }
 
+    @Transactional
+    public void refundFeature(String principalKey, String feature, QuotaPeriod period) {
+        LocalDate today = LocalDate.now();
+        LocalDate periodDate = period == QuotaPeriod.MONTHLY ? today.withDayOfMonth(1) : today;
+        repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, periodDate)
+                .ifPresent(DailyQuota::refund);
+    }
+
+    @Transactional
+    public void refundFeature(String principalKey, String feature, LocalDate usageDate) {
+        repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, usageDate)
+                .ifPresent(DailyQuota::refund);
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void addTokens(String principalKey, String feature, int input, int output) {
         repository.ensureExists(principalKey, feature, LocalDate.now());

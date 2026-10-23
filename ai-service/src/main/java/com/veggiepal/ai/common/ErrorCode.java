@@ -25,6 +25,11 @@ public enum ErrorCode {
     RECIPE_CONTAINS_ALLERGEN(6019, "Món ăn chứa thành phần gây dị ứng của bạn.", HttpStatus.BAD_REQUEST),
     PROFILE_INCOMPLETE(6020, "Vui lòng cập nhật ngày sinh, giới tính và mức độ vận động trong hồ sơ trước khi lập thực đơn.", HttpStatus.BAD_REQUEST),
     AGE_NOT_SUPPORTED(6021, "Thực đơn theo mục tiêu calo hiện chỉ dành cho người từ 18 tuổi trở lên.", HttpStatus.BAD_REQUEST),
+    VIDEO_QUEUE_FULL(6020, "Video processing queue is full", HttpStatus.SERVICE_UNAVAILABLE),
+    VIDEO_SOURCE_UNSUPPORTED(6021, "Video source is not supported", HttpStatus.UNPROCESSABLE_ENTITY),
+    VIDEO_EXTRACTION_IN_PROGRESS(6022, "Video recipe extraction is in progress", HttpStatus.CONFLICT),
+    VIDEO_EXTRACTION_FAILED(6023, "Video recipe extraction failed", HttpStatus.UNPROCESSABLE_ENTITY),
+    INSUFFICIENT_INFORMATION(6024, "Video does not contain sufficient recipe information", HttpStatus.UNPROCESSABLE_ENTITY),
     UNCATEGORIZED(6999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
     public final int code;

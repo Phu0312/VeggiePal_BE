@@ -8,6 +8,7 @@ import com.veggiepal.ai.groq.dto.GroqResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.core.io.FileSystemResource;
@@ -22,11 +23,19 @@ import org.springframework.web.client.RestClientResponseException;
 public class GroqClient {
     private static final Logger log = LoggerFactory.getLogger(GroqClient.class);
     private final RestClient restClient;
+    private final RestClient transcriptionRestClient;
     private final GroqProperties properties;
 
-    public GroqClient(@Qualifier("groqRestClient") RestClient restClient, GroqProperties properties) {
-        this.restClient = restClient;
+    @Autowired
+    public GroqClient(@Qualifier("groqRestClient") RestClient restClient,
+                      @Qualifier("groqTranscriptionRestClient") RestClient transcriptionRestClient,
+                      GroqProperties properties) {
+        this.restClient = restClient; this.transcriptionRestClient = transcriptionRestClient;
         this.properties = properties;
+    }
+
+    public GroqClient(RestClient restClient, GroqProperties properties) {
+        this(restClient, restClient, properties);
     }
 
     public GroqResult complete(String model, List<GroqRequest.Message> messages, double temperature, int maxTokens) {
@@ -46,8 +55,10 @@ public class GroqClient {
                     throw new AppException(ErrorCode.INVALID_AI_RESPONSE);
                 }
                 var usage = response.usage();
-                return new GroqResult(response.choices().getFirst().message().content(),
-                        usage == null ? 0 : usage.prompt_tokens(), usage == null ? 0 : usage.completion_tokens());
+                var choice = response.choices().getFirst();
+                return new GroqResult(choice.message().content(),
+                        usage == null ? 0 : usage.prompt_tokens(), usage == null ? 0 : usage.completion_tokens(),
+                        choice.finishReason());
             } catch (RestClientResponseException exception) {
                 int status = exception.getStatusCode().value();
                 logSafeHttpResponseError("complete", model, attempt, status, exception.getResponseBodyAsString());
@@ -78,7 +89,7 @@ public class GroqClient {
             body.add("model", model);
             body.add("response_format", "json");
             try {
-                com.fasterxml.jackson.databind.JsonNode response = restClient.post().uri("/audio/transcriptions")
+                com.fasterxml.jackson.databind.JsonNode response = transcriptionRestClient.post().uri("/audio/transcriptions")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.key())
                         .contentType(MediaType.MULTIPART_FORM_DATA).body(body).retrieve()
                         .body(com.fasterxml.jackson.databind.JsonNode.class);
@@ -137,6 +148,11 @@ public class GroqClient {
             throw new AppException(ErrorCode.GROQ_UNAVAILABLE, exception);
         }
     }
-    public record GroqResult(String content, int promptTokens, int completionTokens) {}
+    public record GroqResult(String content, int promptTokens, int completionTokens, String finishReason) {
+        public GroqResult(String content, int promptTokens, int completionTokens) {
+            this(content, promptTokens, completionTokens, null);
+        }
+        public boolean isLengthTruncated() { return "length".equalsIgnoreCase(finishReason); }
+    }
 }
 

@@ -6,7 +6,9 @@ import lombok.*;
 
 @Getter @Setter @Builder @NoArgsConstructor @AllArgsConstructor
 @Entity @Table(name = "payment_orders", indexes = {
-        @Index(name = "idx_payment_orders_user_created", columnList = "user_id,created_at")
+        @Index(name = "idx_payment_orders_user_created", columnList = "user_id,created_at"),
+        @Index(name = "idx_payment_orders_reusable", columnList = "user_id,plan_id,status,created_at"),
+        @Index(name = "idx_payment_orders_status_paid", columnList = "status,paid_at")
 }, uniqueConstraints = @UniqueConstraint(name = "uk_payment_orders_order_code", columnNames = "order_code"))
 public class PaymentOrder {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,6 +28,18 @@ public class PaymentOrder {
     private String paymentLinkId;
     @Column(name = "checkout_url", length = 1000)
     private String checkoutUrl;
+    @Column(name = "qr_code", length = 4096)
+    private String qrCode;
+    @Column(name = "account_name", length = 255)
+    private String accountName;
+    @Column(name = "account_number", length = 100)
+    private String accountNumber;
+    @Column(length = 20)
+    private String bin;
+    @Column(length = 255)
+    private String description;
+    @Column(name = "expired_at")
+    private Instant expiredAt;
     @Column(name = "payment_reference", length = 100)
     private String paymentReference;
     @Column(name = "created_at", nullable = false, updatable = false)
