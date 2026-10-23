@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringJoiner;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -32,24 +33,26 @@ public class MealPlanValidator {
     public static final List<String> STANDARD_MEALS = List.of(
             "BREAKFAST", "LUNCH", "DINNER"
     );
+    // Share of the day's calorie target each meal aims for (spec: breakfast 25%, lunch 40%, dinner 35%).
+    private static final Map<String, BigDecimal> MEAL_SHARES = Map.of(
+            "BREAKFAST", new BigDecimal("0.25"),
+            "LUNCH", new BigDecimal("0.40"),
+            "DINNER", new BigDecimal("0.35"));
 
     private final ObjectMapper mapper;
-    private final double toleranceRatio;
     private final double minPortionScale;
     private final double maxPortionScale;
 
     public MealPlanValidator(ObjectMapper mapper) {
-        this(mapper, 0.15, 0.75, 1.50);
+        this(mapper, 0.75, 2.00);
     }
 
     @Autowired
     public MealPlanValidator(
             ObjectMapper mapper,
-            @Value("${ai.meal-plan.target-tolerance-ratio:0.15}") double toleranceRatio,
             @Value("${ai.meal-plan.min-portion-scale:0.75}") double minPortionScale,
-            @Value("${ai.meal-plan.max-portion-scale:1.50}") double maxPortionScale) {
+            @Value("${ai.meal-plan.max-portion-scale:2.00}") double maxPortionScale) {
         this.mapper = mapper;
-        this.toleranceRatio = toleranceRatio;
         this.minPortionScale = minPortionScale;
         this.maxPortionScale = maxPortionScale;
     }
@@ -120,19 +123,24 @@ public class MealPlanValidator {
     }
 
     public void validateAndEnrich(ObjectNode plan, JsonNode recipes, JsonNode allergies,
-            MealPlanDtos.NutritionTarget target) {
+            MealPlanDtos.NutritionTarget target, boolean repick) {
         if (recipes == null || !recipes.isArray()) throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
 
         Map<Long, JsonNode> byId = new LinkedHashMap<>();
+        Map<Long, Macro> baseMacros = new HashMap<>();
         List<JsonNode> candidateList = new ArrayList<>();
         for (JsonNode recipe : recipes) {
-            if (isVegan(recipe) && isAllergySafe(recipe, allergies) && canCalculateMacro(recipe)) {
-                long id = recipe.path("id").asLong();
-                byId.put(id, recipe);
-                candidateList.add(recipe);
-            }
+            if (!isVegan(recipe) || !isAllergySafe(recipe, allergies)) continue;
+            Optional<Macro> macro = tryCalculateMacro(recipe);
+            if (macro.isEmpty()) continue;
+            long id = recipe.path("id").asLong();
+            byId.put(id, recipe);
+            baseMacros.put(id, macro.get());
+            candidateList.add(recipe);
         }
         if (byId.isEmpty()) throw new AppException(ErrorCode.NO_VALID_RECIPES);
+
+        BigDecimal mid = midCalories(target);
 
         Map<String, ObjectNode> existingDays = new HashMap<>();
         JsonNode daysNode = plan.path("days");
@@ -172,10 +180,10 @@ public class MealPlanValidator {
 
             ArrayNode finalMealsArray = mapper.createArrayNode();
             Set<Long> sameDayRecipeIds = new HashSet<>();
-            List<ObjectNode> processedMeals = new ArrayList<>();
-            List<Macro> mealBaseMacros = new ArrayList<>();
+            Macro dayTotal = new Macro();
 
-            for (String mealType : STANDARD_MEALS) {
+            for (int i = 0; i < STANDARD_MEALS.size(); i++) {
+                String mealType = STANDARD_MEALS.get(i);
                 ObjectNode mealNode = existingMeals.get(mealType);
                 if (mealNode == null) {
                     mealNode = mapper.createObjectNode();
@@ -183,51 +191,39 @@ public class MealPlanValidator {
                 }
                 mealNode.put("mealType", mealType);
 
+                // Budgets are taken one meal at a time, so a meal that falls short leaves more for the next.
+                BigDecimal budget = mid == null ? null : mealBudget(i, mid, dayTotal.calories);
                 long currentRecipeId = mealNode.path("recipeId").asLong(-1);
-                boolean isValid = byId.containsKey(currentRecipeId)
-                        && (byId.size() < 3 || !sameDayRecipeIds.contains(currentRecipeId));
-
-                long selectedRecipeId;
-                if (isValid) {
-                    selectedRecipeId = currentRecipeId;
-                } else {
-                    selectedRecipeId = selectBestCandidate(candidateList, sameDayRecipeIds, weeklyUsage, byId.size());
-                    mealNode.put("recipeId", selectedRecipeId);
+                boolean keep = byId.containsKey(currentRecipeId)
+                        && (byId.size() < 3 || !sameDayRecipeIds.contains(currentRecipeId))
+                        && (!repick || reachable(baseMacros.get(currentRecipeId).calories, budget));
+                long selectedRecipeId = keep ? currentRecipeId
+                        : selectBestCandidate(candidateList, baseMacros, sameDayRecipeIds, weeklyUsage, byId.size(), budget);
+                // The existing note describes the recipe it was written for, not the one swapped in.
+                if (selectedRecipeId != currentRecipeId && existingMeals.containsKey(mealType)) {
+                    mealNode.put("note", "Bữa ăn cân bằng dinh dưỡng");
                 }
+                mealNode.put("recipeId", selectedRecipeId);
 
                 sameDayRecipeIds.add(selectedRecipeId);
                 weeklyUsage.merge(selectedRecipeId, 1, Integer::sum);
 
-                JsonNode recipe = byId.get(selectedRecipeId);
-                Macro baseMacro = macroFor(recipe);
-                processedMeals.add(mealNode);
-                mealBaseMacros.add(baseMacro);
-            }
-
-            Macro dayBaseTotal = new Macro();
-            for (Macro m : mealBaseMacros) dayBaseTotal.add(m);
-
-            BigDecimal scaleFactor = computePortionScale(dayBaseTotal, target);
-
-            Macro dayScaledTotal = new Macro();
-            for (int i = 0; i < 3; i++) {
-                ObjectNode mealNode = processedMeals.get(i);
-                Macro base = mealBaseMacros.get(i);
-                Macro scaled = (scaleFactor.compareTo(BigDecimal.ONE) == 0) ? base : base.multiply(scaleFactor);
-
+                Macro base = baseMacros.get(selectedRecipeId);
+                BigDecimal scale = portionScale(base.calories, budget);
+                Macro scaled = (scale.compareTo(BigDecimal.ONE) == 0) ? base : base.multiply(scale);
                 mealNode.set("nutrition", scaled.toJson(mapper));
-                if (scaleFactor.compareTo(BigDecimal.ONE) != 0) {
-                    mealNode.put("servingMultiplier", scaleFactor.setScale(2, RoundingMode.HALF_UP));
+                if (scale.compareTo(BigDecimal.ONE) != 0) {
+                    mealNode.put("servingMultiplier", scale);
                 } else {
                     mealNode.remove("servingMultiplier");
                 }
-                dayScaledTotal.add(scaled);
+                dayTotal.add(scaled);
                 finalMealsArray.add(mealNode);
             }
 
             dayNode.set("meals", finalMealsArray);
-            dayNode.set("nutritionTotals", dayScaledTotal.toJson(mapper));
-            markTarget(dayNode, dayScaledTotal, target);
+            dayNode.set("nutritionTotals", dayTotal.toJson(mapper));
+            markTarget(dayNode, dayTotal, target);
 
             finalDaysArray.add(dayNode);
         }
@@ -235,12 +231,57 @@ public class MealPlanValidator {
         plan.set("days", finalDaysArray);
     }
 
-    private long selectBestCandidate(List<JsonNode> candidates, Set<Long> sameDayUsed,
-            Map<Long, Integer> weeklyUsage, int totalDistinctCandidates) {
-        List<JsonNode> eligible = new ArrayList<>();
+    public Map<String, BigDecimal> mealBudgets(MealPlanDtos.NutritionTarget target) {
+        Map<String, BigDecimal> budgets = new LinkedHashMap<>();
+        BigDecimal mid = midCalories(target);
+        if (mid == null) return budgets;
+        for (String meal : STANDARD_MEALS) {
+            budgets.put(meal, mid.multiply(MEAL_SHARES.get(meal)).setScale(2, RoundingMode.HALF_UP));
+        }
+        return budgets;
+    }
+
+    public String mealBudgetHint(MealPlanDtos.NutritionTarget target) {
+        Map<String, BigDecimal> budgets = mealBudgets(target);
+        if (budgets.isEmpty()) return "";
+        StringJoiner parts = new StringJoiner(", ");
+        budgets.forEach((meal, kcal) -> parts.add(meal + " khoảng " + kcal.setScale(0, RoundingMode.HALF_UP).toPlainString() + " kcal"));
+        return " Ngân sách calo từng bữa: " + parts + ". Khẩu phần sẽ được nhân từ " + scaleText(minPortionScale)
+                + " đến " + scaleText(maxPortionScale)
+                + " lần cho khớp, nên chọn món có nutritionPerServing.calories gần ngân sách của bữa.";
+    }
+
+    public boolean reachesBudget(JsonNode recipe, BigDecimal budget) {
+        return budget == null || tryCalculateMacro(recipe).map(m -> reachable(m.calories, budget)).orElse(false);
+    }
+
+    public long pickReplacement(JsonNode candidates, Set<Long> excluded, BigDecimal budget) {
+        List<JsonNode> remaining = new ArrayList<>();
+        Map<Long, Macro> macros = new HashMap<>();
         for (JsonNode c : candidates) {
             long id = c.path("id").asLong();
-            if (totalDistinctCandidates < 3 || !sameDayUsed.contains(id)) {
+            if (excluded.contains(id)) continue;
+            Optional<Macro> macro = tryCalculateMacro(c);
+            if (macro.isEmpty()) continue;
+            remaining.add(c);
+            macros.put(id, macro.get());
+        }
+        if (remaining.isEmpty()) throw new AppException(ErrorCode.NO_VALID_RECIPES);
+        return selectBestCandidate(remaining, macros, Set.of(), Map.of(), remaining.size(), budget);
+    }
+
+    private String scaleText(double scale) {
+        return BigDecimal.valueOf(scale).stripTrailingZeros().toPlainString().replace('.', ',');
+    }
+
+    // Prefers recipes that can reach the budget within the portion range (least used this week first);
+    // when none can, the one whose clamped portion lands closest. Ties keep candidate order, which
+    // already favours recipes using the user's available ingredients. No budget = least used.
+    private long selectBestCandidate(List<JsonNode> candidates, Map<Long, Macro> baseMacros, Set<Long> excluded,
+            Map<Long, Integer> weeklyUsage, int totalDistinctCandidates, BigDecimal budget) {
+        List<JsonNode> eligible = new ArrayList<>();
+        for (JsonNode c : candidates) {
+            if (totalDistinctCandidates < 3 || !excluded.contains(c.path("id").asLong())) {
                 eligible.add(c);
             }
         }
@@ -248,49 +289,67 @@ public class MealPlanValidator {
             eligible = candidates;
         }
 
-        JsonNode best = eligible.get(0);
-        int minUsage = weeklyUsage.getOrDefault(best.path("id").asLong(), 0);
-        for (int i = 1; i < eligible.size(); i++) {
-            JsonNode cur = eligible.get(i);
-            int curUsage = weeklyUsage.getOrDefault(cur.path("id").asLong(), 0);
-            if (curUsage < minUsage) {
-                best = cur;
-                minUsage = curUsage;
+        JsonNode best = null;
+        boolean bestReachable = false;
+        BigDecimal bestError = null;
+        int bestUsage = 0;
+        for (JsonNode c : eligible) {
+            long id = c.path("id").asLong();
+            BigDecimal kcal = baseMacros.get(id).calories;
+            boolean canReach = reachable(kcal, budget);
+            BigDecimal error = canReach ? BigDecimal.ZERO
+                    : portionScale(kcal, budget).multiply(kcal).subtract(budget).abs();
+            int usage = weeklyUsage.getOrDefault(id, 0);
+            boolean better = best == null
+                    || (canReach && !bestReachable)
+                    || (canReach && bestReachable && usage < bestUsage)
+                    || (!canReach && !bestReachable && error.compareTo(bestError) < 0);
+            if (better) {
+                best = c;
+                bestReachable = canReach;
+                bestError = error;
+                bestUsage = usage;
             }
         }
         return best.path("id").asLong();
     }
 
-    private BigDecimal computePortionScale(Macro dayBaseTotal, MealPlanDtos.NutritionTarget target) {
-        if (target == null) return BigDecimal.ONE;
-
+    // The day's aim: the midpoint of the range; a single-ended target aims 5% inside its bound, so the
+    // 2-decimal rounding of the portion multipliers cannot land the day just outside it.
+    private BigDecimal midCalories(MealPlanDtos.NutritionTarget target) {
+        if (target == null) return null;
         BigDecimal min = target.minCalories();
         BigDecimal max = target.maxCalories();
+        if (min != null && max != null) return min.add(max).divide(BigDecimal.valueOf(2), 4, RoundingMode.HALF_UP);
+        if (min != null) return min.multiply(new BigDecimal("1.05")).setScale(4, RoundingMode.HALF_UP);
+        return max == null ? null : max.multiply(new BigDecimal("0.95")).setScale(4, RoundingMode.HALF_UP);
+    }
 
-        if (inside(dayBaseTotal.calories, min, max)) {
-            return BigDecimal.ONE;
+    private BigDecimal mealBudget(int index, BigDecimal mid, BigDecimal consumed) {
+        BigDecimal remainingShare = BigDecimal.ZERO;
+        for (int j = index; j < STANDARD_MEALS.size(); j++) {
+            remainingShare = remainingShare.add(MEAL_SHARES.get(STANDARD_MEALS.get(j)));
         }
+        BigDecimal remaining = mid.subtract(consumed).max(BigDecimal.ZERO);
+        return remaining.multiply(MEAL_SHARES.get(STANDARD_MEALS.get(index)))
+                .divide(remainingShare, 4, RoundingMode.HALF_UP);
+    }
 
-        BigDecimal targetCal;
-        if (min != null && max != null) {
-            targetCal = min.add(max).divide(BigDecimal.valueOf(2), 4, RoundingMode.HALF_UP);
-        } else if (min != null) {
-            targetCal = min;
-        } else if (max != null) {
-            targetCal = max;
-        } else {
-            return BigDecimal.ONE;
-        }
+    private boolean reachable(BigDecimal kcal, BigDecimal budget) {
+        if (budget == null) return true;
+        if (kcal.signum() <= 0) return false;
+        BigDecimal ratio = budget.divide(kcal, 4, RoundingMode.HALF_UP);
+        return ratio.compareTo(BigDecimal.valueOf(minPortionScale)) >= 0
+                && ratio.compareTo(BigDecimal.valueOf(maxPortionScale)) <= 0;
+    }
 
-        if (dayBaseTotal.calories.compareTo(BigDecimal.ZERO) <= 0) {
-            return BigDecimal.ONE;
-        }
-
-        BigDecimal desired = targetCal.divide(dayBaseTotal.calories, 4, RoundingMode.HALF_UP);
-        BigDecimal minScale = BigDecimal.valueOf(minPortionScale);
-        BigDecimal maxScale = BigDecimal.valueOf(maxPortionScale);
-
-        return desired.max(minScale).min(maxScale);
+    // Rounded to 2 decimals before it multiplies anything, so servingMultiplier x base = shown nutrition.
+    private BigDecimal portionScale(BigDecimal kcal, BigDecimal budget) {
+        if (budget == null || kcal.signum() <= 0) return BigDecimal.ONE;
+        return budget.divide(kcal, 4, RoundingMode.HALF_UP)
+                .max(BigDecimal.valueOf(minPortionScale))
+                .min(BigDecimal.valueOf(maxPortionScale))
+                .setScale(2, RoundingMode.HALF_UP);
     }
 
     private String normalizeDay(String raw) {
@@ -463,39 +522,27 @@ public class MealPlanValidator {
     }
 
     // A day that misses the target is flagged, not rejected: one off metric on one day used to fail
-    // the whole 7-day plan. Stale flags are cleared first because replace() re-runs this on a stored plan.
+    // the whole 7-day plan. Only calories decide targetMet (task sheet US10: within ±10% of the target);
+    // protein, carbohydrate and fat are still reported. Stale flags are cleared first because replace()
+    // re-runs this on a stored plan.
     public void markTarget(ObjectNode dayNode, Macro value, MealPlanDtos.NutritionTarget target) {
         dayNode.remove(List.of("targetMet", "targetDeviations"));
         if (target == null) return;
-        BigDecimal tol = BigDecimal.valueOf(toleranceRatio);
         ObjectNode deviations = mapper.createObjectNode();
-        addDeviation(deviations, "calories", value.calories, target.minCalories(), target.maxCalories(), tol);
-        addDeviation(deviations, "protein", value.protein, target.minProtein(), target.maxProtein(), tol);
-        addDeviation(deviations, "carbohydrate", value.carbohydrate, target.minCarbohydrate(), target.maxCarbohydrate(), tol);
-        addDeviation(deviations, "fat", value.fat, target.minFat(), target.maxFat(), tol);
-        dayNode.put("targetMet", deviations.isEmpty());
+        addDeviation(deviations, "calories", value.calories, target.minCalories(), target.maxCalories());
+        addDeviation(deviations, "protein", value.protein, target.minProtein(), target.maxProtein());
+        addDeviation(deviations, "carbohydrate", value.carbohydrate, target.minCarbohydrate(), target.maxCarbohydrate());
+        addDeviation(deviations, "fat", value.fat, target.minFat(), target.maxFat());
+        dayNode.put("targetMet", !deviations.has("calories"));
         if (!deviations.isEmpty()) dayNode.set("targetDeviations", deviations);
     }
 
-    private void addDeviation(ObjectNode deviations, String metric, BigDecimal value,
-            BigDecimal min, BigDecimal max, BigDecimal tol) {
-        if (insideWithTolerance(value, min, max, tol)) return;
+    private void addDeviation(ObjectNode deviations, String metric, BigDecimal value, BigDecimal min, BigDecimal max) {
+        if (inside(value, min, max)) return;
         ObjectNode deviation = deviations.putObject(metric);
         deviation.put("actual", value.setScale(2, RoundingMode.HALF_UP));
         if (min != null) deviation.put("min", min);
         if (max != null) deviation.put("max", max);
-    }
-
-    private boolean insideWithTolerance(BigDecimal value, BigDecimal min, BigDecimal max, BigDecimal tol) {
-        if (min != null) {
-            BigDecimal effectiveMin = min.multiply(BigDecimal.ONE.subtract(tol));
-            if (value.compareTo(effectiveMin) < 0) return false;
-        }
-        if (max != null) {
-            BigDecimal effectiveMax = max.multiply(BigDecimal.ONE.add(tol));
-            if (value.compareTo(effectiveMax) > 0) return false;
-        }
-        return true;
     }
 
     private boolean inside(BigDecimal value, BigDecimal min, BigDecimal max) {

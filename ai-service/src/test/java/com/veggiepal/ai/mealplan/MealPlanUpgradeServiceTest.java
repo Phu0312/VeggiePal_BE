@@ -70,6 +70,7 @@ class MealPlanUpgradeServiceTest {
                 http,
                 "http://recipe-service",
                 "http://nutrition-service",
+                "http://identity-service",
                 groq,
                 models,
                 mapper,
@@ -240,18 +241,25 @@ class MealPlanUpgradeServiceTest {
     // ==========================================
 
     @Test
-    void calculateTargetFromHealth_calculatesAppropriateMacros() {
-        ObjectNode health = mapper.createObjectNode();
-        health.put("heightCm", 170).put("weightKg", 65).put("bmi", 22.5);
+    void updateFromHealth_oldPlanWithoutGoalTypeStillReadsTheFreeTextGoal() {
+        // goal_type is null, so "Giảm cân" must be read as LOSE; the stub profile is FEMALE, LIGHT, born 1995-01-01
+        MealPlan plan = new MealPlan(USER_ID, "Kế hoạch tuần", "Giảm cân", samplePlanJson(), 1);
+        when(repository.findByIdAndUserId(PLAN_ID, USER_ID)).thenReturn(Optional.of(plan));
+        ObjectNode healthResult = mapper.createObjectNode();
+        healthResult.putObject("result").put("heightCm", 175).put("weightKg", 70);
+        ObjectNode allergyResult = mapper.createObjectNode();
+        allergyResult.putArray("result");
+        ObjectNode recipeResult = mapper.createObjectNode();
+        recipeResult.putObject("result").putArray("content").add(sampleRecipe(1, "Đậu hũ kho", true, false));
+        stubDownstreams(healthResult, allergyResult, recipeResult);
 
-        MealPlanDtos.NutritionTarget target = service.calculateTargetFromHealth(health, "Giảm mỡ toàn thân");
+        MealPlanDtos.UpdateFromHealthResponse res = service.updateFromHealth(USER_ID, PLAN_ID, "jwt-token",
+                new MealPlanDtos.UpdateFromHealthRequest(false, null, null));
 
-        assertNotNull(target);
-        assertTrue(target.minCalories().compareTo(BigDecimal.valueOf(1400)) > 0);
-        assertTrue(target.maxCalories().compareTo(target.minCalories()) > 0);
-        assertTrue(target.minProtein().compareTo(BigDecimal.ZERO) > 0);
-        assertTrue(target.minCarbohydrate().compareTo(BigDecimal.ZERO) > 0);
-        assertTrue(target.minFat().compareTo(BigDecimal.ZERO) > 0);
+        MealPlanDtos.NutritionTarget expected = NutritionTargetCalculator.calculate(BigDecimal.valueOf(175),
+                BigDecimal.valueOf(70), java.time.LocalDate.of(1995, 1, 1), "FEMALE", "LIGHT", GoalType.LOSE,
+                java.time.LocalDate.now()).target();
+        assertEquals(expected, res.recalculatedTarget());
     }
 
     @Test
@@ -556,6 +564,15 @@ class MealPlanUpgradeServiceTest {
         when(healthUriSpec.header(eq(HttpHeaders.AUTHORIZATION), anyString())).thenReturn(healthUriSpec);
         when(healthUriSpec.retrieve()).thenReturn(healthRespSpec);
         when(healthRespSpec.body(any(Class.class))).thenReturn(healthResult);
+
+        RestClient.RequestHeadersUriSpec profileUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec profileRespSpec = mock(RestClient.ResponseSpec.class);
+        ObjectNode profile = mapper.createObjectNode();
+        profile.putObject("result").put("dateOfBirth", "1995-01-01").put("gender", "FEMALE").put("activityLevel", "LIGHT");
+        when(http.get().uri("http://identity-service/users/me")).thenReturn(profileUriSpec);
+        when(profileUriSpec.header(eq(HttpHeaders.AUTHORIZATION), anyString())).thenReturn(profileUriSpec);
+        when(profileUriSpec.retrieve()).thenReturn(profileRespSpec);
+        when(profileRespSpec.body(any(Class.class))).thenReturn(profile);
 
         stubAllergiesAndRecipes(allergyResult, recipeResult);
     }

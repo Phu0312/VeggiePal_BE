@@ -22,6 +22,7 @@ public final class IngredientUnitConverter {
             Map.entry("la rong bien", new BigDecimal("2.5")),
             Map.entry("rong bien", new BigDecimal("2.5")),
             Map.entry("nam dui ga", new BigDecimal("80")),
+            Map.entry("banh mi", new BigDecimal("80")),
             Map.entry("khoai tay", new BigDecimal("150")),
             Map.entry("khoai lang", new BigDecimal("130")),
             Map.entry("ca chua", new BigDecimal("120")),

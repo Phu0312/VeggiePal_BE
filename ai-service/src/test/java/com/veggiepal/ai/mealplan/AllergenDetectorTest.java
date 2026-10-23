@@ -45,6 +45,15 @@ class AllergenDetectorTest {
     }
 
     @Test
+    void detectsGlutenInWheatNoodleAndWontonWrapper() {
+        Set<String> instantNoodle = AllergenDetector.detectAllergenCodes("Mì ăn liền", "mi an lien");
+        assertTrue(instantNoodle.contains("GLUTEN"));
+
+        Set<String> wontonWrapper = AllergenDetector.detectAllergenCodes("Vỏ hoành thánh", "vo hoanh thanh");
+        assertTrue(wontonWrapper.contains("GLUTEN"));
+    }
+
+    @Test
     void returnsEmptyForSafeIngredients() {
         Set<String> rice = AllergenDetector.detectAllergenCodes("Gạo lứt", "gao lut");
         assertTrue(rice.isEmpty());

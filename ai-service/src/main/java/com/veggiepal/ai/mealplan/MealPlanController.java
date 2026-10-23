@@ -31,6 +31,13 @@ public class MealPlanController {
         return ApiResponse.success(service.list(CurrentUser.id(jwt)));
     }
 
+    @GetMapping("/nutrition-target")
+    public ApiResponse<NutritionTargetResponse> nutritionTarget(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam GoalType goalType) {
+        return ApiResponse.success(service.nutritionTarget(jwt.getTokenValue(), goalType));
+    }
+
     // ==========================================
     // FEATURE 1: FAVORITES
     // ==========================================

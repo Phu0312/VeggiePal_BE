@@ -4,10 +4,13 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -26,6 +29,14 @@ public class GlobalExceptionHandler {
     ResponseEntity<ApiResponse<Void>> validation(MethodArgumentNotValidException exception) {
         String message = Objects.requireNonNull(exception.getFieldError()).getDefaultMessage();
         return ResponseEntity.badRequest().body(new ApiResponse<>(ErrorCode.INVALID_REQUEST.code, message, null));
+    }
+
+    // Malformed requests (bad enum value, missing or mistyped query parameter) are the client's error,
+    // not a 500 from the catch-all below.
+    @ExceptionHandler({HttpMessageNotReadableException.class, MissingServletRequestParameterException.class,
+            MethodArgumentTypeMismatchException.class})
+    ResponseEntity<ApiResponse<Void>> malformed(Exception exception) {
+        return ResponseEntity.badRequest().body(new ApiResponse<>(ErrorCode.INVALID_REQUEST.code, ErrorCode.INVALID_REQUEST.message, null));
     }
 
     @ExceptionHandler(AccessDeniedException.class)
