@@ -146,6 +146,7 @@ services:
     environment:
       <<: *database-environment
       AI_SERVICE_PORT: "8086"
+      IDENTITY_SERVICE_URL: http://identity-service:8081
       BLOG_SERVICE_URL: http://blog-service:8083
       RECIPE_SERVICE_URL: http://recipe-service:8084
       NUTRITION_SERVICE_URL: http://nutrition-service:8082
@@ -155,6 +156,8 @@ services:
       FFPROBE_PATH: ffprobe
     depends_on:
       mysql:
+        condition: service_healthy
+      identity-service:
         condition: service_healthy
       nutrition-service:
         condition: service_healthy
