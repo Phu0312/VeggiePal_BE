@@ -10,14 +10,19 @@ x-service-defaults: &service-defaults
     - backend
 
 x-database-environment: &database-environment
-  DB_HOST: mysql
-  DB_PORT: "3306"
-  DB_USERNAME: ${DB_USERNAME:-root}
+  DB_HOST: ${DB_HOST:-veggiepal-mysql-veggiepal-web.f.aivencloud.com}
+  DB_PORT: ${DB_PORT:-19457}
+  DB_USERNAME: ${DB_USERNAME:-avnadmin}
   DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+  DB_SSL_MODE: ${DB_SSL_MODE:-REQUIRED}
+  DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-2}
+  DB_POOL_MIN_IDLE: ${DB_POOL_MIN_IDLE:-1}
+  INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN must be set in .env}
   JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
 
 services:
   mysql:
+    profiles: [local-db]
     image: mysql:8.4
     restart: unless-stopped
     ports:
@@ -36,13 +41,14 @@ services:
       start_period: 30s
   
   ngrok:
+    profiles: [tunnel]
     image: ngrok/ngrok:latest
     restart: unless-stopped
     command:
       - http
       - api-gateway:8080
     environment:
-      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:?NGROK_AUTHTOKEN must be set}
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-}
     ports:
       - "127.0.0.1:4040:4040"
     networks:
@@ -58,15 +64,13 @@ services:
     environment:
       <<: *database-environment
       IDENTITY_SERVICE_PORT: "8081"
-    depends_on:
-      mysql:
-        condition: service_healthy
+      DB_IDENTITY_NAME: ${DB_IDENTITY_NAME:-veggiepal_identity_clean}
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8081/v3/api-docs"]
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 45s
+      start_period: 120s
 
   nutrition-service:
     <<: *service-defaults
@@ -75,15 +79,13 @@ services:
     environment:
       <<: *database-environment
       NUTRITION_SERVICE_PORT: "8082"
-    depends_on:
-      mysql:
-        condition: service_healthy
+      DB_NUTRITION_NAME: ${DB_NUTRITION_NAME:-veggiepal_nutrition_clean}
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8082/v3/api-docs"]
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 45s
+      start_period: 120s
 
   blog-service:
     <<: *service-defaults
@@ -92,10 +94,9 @@ services:
     environment:
       <<: *database-environment
       BLOG_SERVICE_PORT: "8083"
+      DB_BLOG_NAME: ${DB_BLOG_NAME:-veggiepal_blog_clean}
       AI_SERVICE_URL: http://ai-service:8086
     depends_on:
-      mysql:
-        condition: service_healthy
       ai-service:
         condition: service_healthy
     healthcheck:
@@ -103,7 +104,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 45s
+      start_period: 120s
 
   recipe-service:
     <<: *service-defaults
@@ -112,15 +113,13 @@ services:
     environment:
       <<: *database-environment
       RECIPE_SERVICE_PORT: "8084"
-    depends_on:
-      mysql:
-        condition: service_healthy
+      DB_RECIPE_NAME: ${DB_RECIPE_NAME:-veggiepal_recipe_clean}
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8084/v3/api-docs"]
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 45s
+      start_period: 5m
 
   location-service:
     <<: *service-defaults
@@ -129,15 +128,13 @@ services:
     environment:
       <<: *database-environment
       LOCATION_SERVICE_PORT: "8085"
-    depends_on:
-      mysql:
-        condition: service_healthy
+      DB_LOCATION_NAME: ${DB_LOCATION_NAME:-veggiepal_location_clean}
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8085/v3/api-docs"]
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 45s
+      start_period: 120s
 
   ai-service:
     <<: *service-defaults
@@ -146,6 +143,7 @@ services:
     environment:
       <<: *database-environment
       AI_SERVICE_PORT: "8086"
+      DB_AI_NAME: ${DB_AI_NAME:-veggiepal_ai_clean}
       IDENTITY_SERVICE_URL: http://identity-service:8081
       BLOG_SERVICE_URL: http://blog-service:8083
       RECIPE_SERVICE_URL: http://recipe-service:8084
@@ -155,8 +153,6 @@ services:
       FFMPEG_PATH: ffmpeg
       FFPROBE_PATH: ffprobe
     depends_on:
-      mysql:
-        condition: service_healthy
       identity-service:
         condition: service_healthy
       nutrition-service:
@@ -170,7 +166,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 60s
+      start_period: 120s
 
   payment-service:
     <<: *service-defaults
@@ -179,16 +175,14 @@ services:
     environment:
       <<: *database-environment
       PAYMENT_SERVICE_PORT: "8087"
+      DB_PAYMENT_NAME: ${DB_PAYMENT_NAME:-veggiepal_payment_clean}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN must be set in .env}
-    depends_on:
-      mysql:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8087/v3/api-docs"]
       interval: 15s
       timeout: 5s
       retries: 8
-      start_period: 45s
+      start_period: 120s
 
   api-gateway:
     <<: *service-defaults

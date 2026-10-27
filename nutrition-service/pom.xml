@@ -26,6 +26,16 @@
 	</properties>
 
 	<dependencies>
+        <!-- Versioned schema and reference data; matches ai-service. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-mysql</artifactId>
+        </dependency>
+
 
 		<!-- REST API -->
 		<dependency>

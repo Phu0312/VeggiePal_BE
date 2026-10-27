@@ -37,3 +37,47 @@ build/
 .env.*
 !.env.example
 
+
+# Local verification tools
+/.local-tools/
+
+# Python data tooling cache
+__pycache__/
+*.pyc
+### Build and tool caches ###
+.m2/
+.gradle/
+.cache/
+
+### Runtime logs and diagnostics ###
+logs/
+*.log
+*.class
+*.hprof
+*.jfr
+hs_err_pid*
+replay_pid*
+
+### Temporary runtime files ###
+/tmp/
+/temp/
+/*-service/tmp/
+/*-service/temp/
+/api-gateway/tmp/
+/api-gateway/temp/
+
+### Python environments and caches ###
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+### Operating system files ###
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local data sources and maintenance scripts
+/data/
+/scripts/

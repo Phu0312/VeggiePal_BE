@@ -23,7 +23,7 @@ import com.veggiepal.location.entity.Restaurant;
 import com.veggiepal.location.repository.RestaurantRepository;
 
 /**
- * End-to-end tests against a real MySQL schema seeded by {@code data.sql}.
+ * End-to-end tests against a real MySQL schema seeded by versioned demo migrations.
  *
  * <p>The nearby search is a native query: Hibernate does not check it at startup and a mocked
  * repository never runs it, so this is the only test that catches a swapped
@@ -34,12 +34,14 @@ import com.veggiepal.location.repository.RestaurantRepository;
  * <p>Runs against its own schema so a test run never leaves rows in {@code veggiepal_location}.
  * Needs Docker up ({@code docker compose up -d mysql}); it is excluded from the fast loop for
  * that reason, and {@code CLAUDE.md} records that it is a required gate before committing a
- * change to the entity, the repository or {@code data.sql}.
+ * change to the entity, the repository or the location fixture.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:mysql://localhost:3307/veggiepal_location_it?createDatabaseIfNotExist=true",
+        "spring.datasource.url=jdbc:mysql://${TEST_DB_HOST:localhost}:${TEST_DB_PORT:3307}/veggiepal_location_it?createDatabaseIfNotExist=true&sslMode=DISABLED&allowPublicKeyRetrieval=true",
+        "spring.datasource.username=${TEST_DB_USERNAME:root}",
+        "spring.datasource.password=${TEST_DB_PASSWORD:}",
         "spring.jpa.show-sql=false"
 })
 class LocationServiceIntegrationTests {
@@ -62,9 +64,9 @@ class LocationServiceIntegrationTests {
                 .andExpect(jsonPath("$.result[0].name").value("Shamballa Vegetarian Restaurant"))
                 .andExpect(jsonPath("$.result[0].phoneNumber").value("0917876788"))
                 .andExpect(jsonPath("$.result[0].veganOnly").value(true))
-                // Seeded by data.sql: Shamballa has a photo of its own, hotlinked from its website.
+                // The old restaurant endpoint returned HTML; demo uses a verified interior illustration.
                 .andExpect(jsonPath("$.result[0].imageUrl").value(
-                        "https://www.shamballa.co/wp-content/uploads/2024/09/banner-m-1.jpg"))
+                        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1000&q=85"))
                 .andExpect(jsonPath("$.result[0].distanceKm", closeTo(0.53, 0.02)))
                 .andExpect(jsonPath("$.result[6].distanceKm", lessThanOrEqualTo(1.0)));
     }

@@ -45,8 +45,14 @@ class RecipeSqlDataInitTest {
         assertEquals(508, countRows("recipe_ingredients"), "recipe_ingredients must contain exactly 508 rows");
         assertEquals(363, countRows("recipe_steps"), "recipe_steps must contain exactly 363 rows");
 
-        // Verify each recipe has ingredients and steps
+        ingredientRepository.findAll().forEach(i ->
+                assertTrue(i.getImageUrl() != null && i.getImageUrl().startsWith("https://"),
+                        "Every ingredient must have a real image URL"));
+
+        // Verify each recipe has an image, ingredients and steps
         recipeRepository.findAll().forEach(r -> {
+            assertTrue(r.getImageUrl() != null && r.getImageUrl().startsWith("https://"),
+                    "Every recipe must have a real image URL");
             assertTrue(!r.getIngredients().isEmpty(), "Recipe '" + r.getTitle() + "' must have ingredients");
             assertTrue(!r.getSteps().isEmpty(), "Recipe '" + r.getTitle() + "' must have steps");
         });
@@ -59,7 +65,7 @@ class RecipeSqlDataInitTest {
         long initialRecipeIngredients = countRows("recipe_ingredients");
         long initialRecipeSteps = countRows("recipe_steps");
 
-        // Re-execute data.sql a second time to simulate application restart
+        // Re-run the generated TEST fixture. Production/demo initialization is owned by Flyway.
         try (Connection connection = dataSource.getConnection()) {
             ScriptUtils.executeSqlScript(connection, new ClassPathResource("data.sql"));
         }

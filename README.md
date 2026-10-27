@@ -1,5 +1,7 @@
 # VeggiePal Backend
 
+Chạy Docker và tự nạp dữ liệu lên Aiven cho cả 7 service: xem [hướng dẫn dữ liệu](data/README.md).
+
 Backend microservice cho VeggiePal / VeganApp — nền tảng cộng đồng và dinh dưỡng thuần chay. Repository hiện cung cấp xác thực người dùng, hồ sơ cá nhân, theo dõi BMI, quản lý dị ứng, blog cộng đồng, danh mục, bình luận và bình chọn qua một API Gateway thống nhất.
 
 > Dự án đang trong quá trình phát triển. Recipe, video, AI chatbot, meal plan và tìm nhà hàng chưa được triển khai. Xem [roadmap tiếng Việt](IMPLEMENTATION_PHASES_VI.md) hoặc [roadmap tiếng Anh](IMPLEMENTATION_PHASES.md) để biết trạng thái và thứ tự triển khai đề xuất.
@@ -10,7 +12,7 @@ Backend microservice cho VeggiePal / VeganApp — nền tảng cộng đồng v�
 - [Công nghệ](#công-nghệ)
 - [Cấu trúc repository](#cấu-trúc-repository)
 - [Yêu cầu môi trường](#yêu-cầu-môi-trường)
-- [Khởi chạy local](#khởi-chạy-local)
+- [Chạy backend bằng Docker](#chạy-backend-bằng-docker)
 - [Cấu hình](#cấu-hình)
 - [API và Swagger](#api-và-swagger)
 - [Kiểm thử](#kiểm-thử)
@@ -110,81 +112,31 @@ src/main/java/.../
 
 Không cần cài Maven toàn cục vì mỗi service có Maven Wrapper.
 
-## Khởi chạy local
+## Chạy backend bằng Docker
 
-### 1. Khởi động MySQL
-
-Tại thư mục gốc repository:
+Bật Docker Desktop, mở terminal tại thư mục gốc project và chạy:
 
 ```powershell
-docker compose up -d mysql
+docker compose up -d --build
 docker compose ps
 ```
 
-Lệnh trên chỉ khởi động MySQL. `docker-compose.yml` còn định nghĩa container `identity-service` (port 8081); đừng bật nó khi chạy identity-service bằng Maven ở bước 4, vì hai bên trùng port.
+Docker Compose lấy cấu hình từ `.env`. Backend tự kết nối Aiven qua SSL và chạy Flyway để tạo bảng, nạp dữ liệu chưa có. Không cần Spring profile hoặc script import riêng. Mỗi service dùng database `veggiepal_<service>_clean` có đầy đủ dữ liệu khởi tạo.
 
-### 2. Tạo database cho identity-service
+`.env` hiện tại đã có thông tin database và JWT/internal token. Trên máy khác, copy `.env.example` thành `.env` và điền credential. Cấu hình thêm Groq, Cloudinary, Google, PayOS để dùng các chức năng tương ứng.
 
-`nutrition-service` và `blog-service` có `createDatabaseIfNotExist=true`. `identity-service` hiện chưa có tùy chọn này nên cần tạo schema một lần:
-
-```powershell
-docker exec veggiepal-mysql mysql -uroot -p12345 -e "CREATE DATABASE IF NOT EXISTS veggiepal_identity"
-```
-
-Các schema được dùng:
-
-- `veggiepal_identity`
-- `veggiepal_nutrition`
-- `veggiepal_blog`
-
-### 3. Cấu hình Cloudinary (`.env`)
-
-Ảnh avatar và thumbnail được lưu trên Cloudinary. Credential nằm trong file `.env` ở thư mục gốc repository. File này đã bị `.gitignore` chặn và **không bao giờ được commit**.
+Lần đầu nạp dữ liệu có thể mất vài phút. Xem log bằng:
 
 ```powershell
-Copy-Item .env.example .env
+docker compose logs -f identity-service recipe-service
 ```
 
-Điền ba giá trị, lấy từ Cloudinary Console (Settings → API Keys) hoặc từ trưởng nhóm:
+- Gateway: `http://localhost:8080`.
+- Swagger: `http://localhost:8080/swagger-ui.html`.
 
-```properties
-CLOUDINARY_CLOUD_NAME=...
-CLOUDINARY_API_KEY=...
-CLOUDINARY_API_SECRET=...
-```
+Dừng backend bằng `docker compose down`. Dữ liệu vẫn nằm trên Aiven. Khi restart, Flyway không nạp trùng hay ghi đè dữ liệu đã chỉnh sửa.
 
-identity-service và blog-service tự đọc file này qua `spring.config.import`. Thiếu `.env` thì service vẫn khởi động, chỉ riêng upload ảnh trả 503 (`FILE_UPLOAD_FAILED`).
-
-### 4. Khởi động từng service
-
-Mở bốn terminal riêng biệt từ thư mục gốc:
-
-```powershell
-cd identity-service
-.\mvnw.cmd spring-boot:run
-```
-
-```powershell
-cd nutrition-service
-.\mvnw.cmd spring-boot:run
-```
-
-```powershell
-cd blog-service
-.\mvnw.cmd spring-boot:run
-```
-
-```powershell
-cd api-gateway
-.\mvnw.cmd spring-boot:run
-```
-
-### 5. Kiểm tra
-
-- Gateway: `http://localhost:8080`
-- Swagger tổng hợp: `http://localhost:8080/swagger-ui.html`
-
-Mọi request từ frontend nên đi qua Gateway thay vì gọi thẳng service.
+Xem [hướng dẫn dữ liệu](data/README.md) để biết tài khoản khởi tạo, nguồn ảnh và cách cập nhật migration.
 
 ## Cấu hình
 
@@ -197,7 +149,7 @@ Các service hiện có giá trị mặc định phục vụ phát triển local
 | `CLOUDINARY_API_KEY` | identity, blog | API key Cloudinary | Rỗng (đọc từ `.env`) |
 | `CLOUDINARY_API_SECRET` | identity, blog | API secret Cloudinary | Rỗng (đọc từ `.env`) |
 
-Datasource username/password/URL hiện được đặt trực tiếp trong từng `application.properties`. Roadmap yêu cầu chuyển chúng sang cấu hình môi trường và bổ sung migration trước khi triển khai production.
+Datasource đọc `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_SSL_MODE` và `DB_<SERVICE>_NAME` từ biến môi trường hoặc `.env`. Khi deploy backend, đặt các biến này trong cấu hình môi trường của nền tảng deploy; `.env` không được commit vào repository.
 
 ### JWT
 
