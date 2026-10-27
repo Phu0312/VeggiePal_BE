@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "VeggiePal · Cổng vào và 7 service nghiệp vụ",
+    "locale": "vi",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Phu0312/VeggiePal_BE.git",
+      "revision": "21a45e9ec09316fd5293151ad891ef990c45e159",
+      "link_mode": "web"
+    },
+    "output": ".archify/architecture-veggiepal-workflow-20261027-114048/ban-do-service.html"
+  },
+  "components": [
+    {
+      "id": "client",
+      "type": "external",
+      "label": "Client HTTP",
+      "sublabel": "Web, app hoặc Swagger",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        180,
+        80
+      ],
+      "sources": [
+        {
+          "path": "api-gateway/src/main/resources/application.properties",
+          "line": 20,
+          "end_line": 28
+        }
+      ]
+    },
+    {
+      "id": "gateway",
+      "type": "backend",
+      "label": "api-gateway :8080",
+      "sublabel": "Chọn route theo URL",
+      "tag": "Bỏ /api bằng StripPrefix=1",
+      "pos": [
+        330,
+        300
+      ],
+      "size": [
+        220,
+        180
+      ],
+      "sources": [
+        {
+          "path": "api-gateway/src/main/resources/application.properties",
+          "line": 1,
+          "end_line": 114
+        },
+        {
+          "path": "api-gateway/src/main/resources/application.properties",
+          "line": 127,
+          "end_line": 153
+        }
+      ]
+    },
+    {
+      "id": "identity",
+      "type": "backend",
+      "label": "identity-service",
+      "sublabel": ":8081 · Tài khoản, hồ sơ",
+      "pos": [
+        800,
+        40
+      ],
+      "size": [
+        240,
+        74
+      ],
+      "sources": [
+        {
+          "path": "identity-service/src/main/java/com/veggiepal/service/UserService.java",
+          "line": 39,
+          "end_line": 105
+        }
+      ]
+    },
+    {
+      "id": "nutrition",
+      "type": "backend",
+      "label": "nutrition-service",
+      "sublabel": ":8082 · Sức khỏe, dị ứng",
+      "pos": [
+        800,
+        150
+      ],
+      "size": [
+        240,
+        74
+      ],
+      "sources": [
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/service/HealthRecordService.java",
+          "line": 38,
+          "end_line": 101
+        }
+      ]
+    },
+    {
+      "id": "blog",
+      "type": "backend",
+      "label": "blog-service",
+      "sublabel": ":8083 · Bài viết, video",
+      "pos": [
+        800,
+        260
+      ],
+      "size": [
+        240,
+        74
+      ],
+      "sources": [
+        {
+          "path": "blog-service/src/main/java/com/veggiepal/blog/service/BlogService.java",
+          "line": 61,
+          "end_line": 108
+        }
+      ]
+    },
+    {
+      "id": "recipe",
+      "type": "backend",
+      "label": "recipe-service",
+      "sublabel": ":8084 · Công thức, nguyên liệu",
+      "pos": [
+        800,
+        370
+      ],
+      "size": [
+        240,
+        74
+      ],
+      "sources": [
+        {
+          "path": "recipe-service/src/main/java/com/veggiepal/recipe/service/RecipeService.java",
+          "line": 57,
+          "end_line": 151
+        }
+      ]
+    },
+    {
+      "id": "location",
+      "type": "backend",
+      "label": "location-service",
+      "sublabel": ":8085 · Quán chay gần đây",
+      "pos": [
+        800,
+        480
+      ],
+      "size": [
+        240,
+        74
+      ],
+      "sources": [
+        {
+          "path": "location-service/src/main/java/com/veggiepal/location/service/RestaurantService.java",
+          "line": 27,
+          "end_line": 58
+        }
+      ]
+    },
+    {
+      "id": "ai",
+      "type": "backend",
+      "label": "ai-service",
+      "sublabel": ":8086 · Chat, thực đơn, AI",
+      "pos": [
+        800,
+        590
+      ],
+      "size": [
+        240,
+        74
+      ],
+      "sources": [
+        {
+          "path": "ai-service/src/main/java/com/veggiepal/ai/mealplan/MealPlanService.java",
+          "line": 88,
+          "end_line": 139
+        }
+      ]
+    },
+    {
+      "id": "payment",
+      "type": "backend",
+      "label": "payment-service",
+      "sublabel": ":8087 · Thanh toán, gói dùng",
+      "pos": [
+        800,
+        700
+      ],
+      "size": [
+        240,
+        74
+      ],
+      "sources": [
+        {
+          "path": "payment-service/src/main/java/com/veggiepal/payment/service/PaymentService.java",
+          "line": 104,
+          "end_line": 132
+        }
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "client-gateway",
+      "from": "client",
+      "to": "gateway",
+      "label": "HTTP",
+      "variant": "emphasis"
+    },
+    {
+      "id": "route-identity",
+      "from": "gateway",
+      "to": "identity",
+      "label": "/auth · /users",
+      "variant": "default"
+    },
+    {
+      "id": "route-nutrition",
+      "from": "gateway",
+      "to": "nutrition",
+      "label": "/nutrition",
+      "variant": "default"
+    },
+    {
+      "id": "route-blog",
+      "from": "gateway",
+      "to": "blog",
+      "label": "/blogs · /videos…",
+      "variant": "default"
+    },
+    {
+      "id": "route-recipe",
+      "from": "gateway",
+      "to": "recipe",
+      "label": "/recipes · /ingredients",
+      "variant": "default"
+    },
+    {
+      "id": "route-location",
+      "from": "gateway",
+      "to": "location",
+      "label": "/restaurants",
+      "variant": "default"
+    },
+    {
+      "id": "route-ai",
+      "from": "gateway",
+      "to": "ai",
+      "label": "/ai",
+      "variant": "default"
+    },
+    {
+      "id": "route-payment",
+      "from": "gateway",
+      "to": "payment",
+      "label": "/payments · /subscriptions…",
+      "variant": "default"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Đọc bản đồ",
+      "items": [
+        "Mỗi service là một Maven project và ứng dụng Spring Boot độc lập.",
+        "Cổng là mặc định cấu hình; bản đồ không khẳng định các tiến trình đang chạy.",
+        "Đây là bản đồ định tuyến. Các lời gọi giữa service được giải thích trong bài hướng dẫn."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Dữ liệu thuộc về ai?",
+      "items": [
+        "7 service nghiệp vụ dùng 7 schema MySQL riêng; Gateway không quản lý dữ liệu nghiệp vụ.",
+        "Cùng một máy MySQL vẫn có thể chứa nhiều schema. Không suy ra 7 máy database.",
+        "DTO là dữ liệu API; entity là dữ liệu lưu; mapper chuyển đổi giữa chúng."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Hai điểm dễ nhầm",
+      "items": [
+        "Spring Security ở service bảo vệ API; Gateway chủ yếu định tuyến và cấu hình CORS.",
+        "AI còn nhận /ai/** trực tiếp qua Gateway mà không bỏ prefix; /api/ai/** thì bỏ /api.",
+        "Nội dung sơ đồ bằng tiếng Việt; một số nút điều khiển Viewer có thể dùng tiếng Anh."
+      ]
+    }
+  ]
+}

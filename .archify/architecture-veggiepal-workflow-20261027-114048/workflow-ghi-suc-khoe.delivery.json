@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "44766d5d-a930-4c8e-9449-e0e8370fbd2a",
+  "status": "current",
+  "command": "deliver",
+  "type": "workflow",
+  "input": "D:\\FPT\\SWP\\VeggiePal\\VeggiePal_BE\\.archify\\architecture-veggiepal-workflow-20261027-114048\\workflow.candidate.json",
+  "output": "D:\\FPT\\SWP\\VeggiePal\\VeggiePal_BE\\.archify\\architecture-veggiepal-workflow-20261027-114048\\workflow-ghi-suc-khoe.html",
+  "specification": {
+    "sha256": "9fcef7aa9505fc1b31960417577a70350e8fe40574609edbbff62fb0d454c38a",
+    "bytes": 8468
+  },
+  "artifact": {
+    "sha256": "fd198c2d5a78573f3538caef710b31a92566a2646b2845c75135761b04858b50",
+    "bytes": 829661
+  }
+}

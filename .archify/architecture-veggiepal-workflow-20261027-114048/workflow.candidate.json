@@ -1,0 +1,320 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "VeggiePal · Một request ghi sức khỏe đi qua những lớp nào?",
+    "locale": "vi",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Phu0312/VeggiePal_BE.git",
+      "revision": "21a45e9ec09316fd5293151ad891ef990c45e159",
+      "link_mode": "web"
+    },
+    "output": ".archify/architecture-veggiepal-workflow-20261027-114048/workflow-ghi-suc-khoe.html"
+  },
+  "lanes": [
+    {
+      "id": "request",
+      "label": "Tiếp nhận và xử lý"
+    },
+    {
+      "id": "result",
+      "label": "Lưu dữ liệu và trả kết quả"
+    }
+  ],
+  "mainPath": [
+    "request",
+    "route",
+    "auth",
+    "controller",
+    "service",
+    "repository",
+    "database"
+  ],
+  "nodes": [
+    {
+      "id": "request",
+      "lane": "request",
+      "col": 0,
+      "type": "external",
+      "label": "Gửi request",
+      "sublabel": "POST /api/nutrition/…",
+      "sources": [
+        {
+          "path": "api-gateway/src/main/resources/application.properties",
+          "line": 38,
+          "end_line": 41
+        }
+      ]
+    },
+    {
+      "id": "route",
+      "lane": "request",
+      "col": 1,
+      "type": "backend",
+      "label": "Gateway",
+      "sublabel": "Bỏ /api, chuyển :8082",
+      "sources": [
+        {
+          "path": "api-gateway/src/main/resources/application.properties",
+          "line": 10,
+          "end_line": 10
+        },
+        {
+          "path": "api-gateway/src/main/resources/application.properties",
+          "line": 38,
+          "end_line": 41
+        }
+      ]
+    },
+    {
+      "id": "auth",
+      "lane": "request",
+      "col": 2,
+      "type": "security",
+      "label": "Spring Security",
+      "sublabel": "Xác thực Bearer JWT",
+      "sources": [
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/configuration/SecurityConfig.java",
+          "line": 39,
+          "end_line": 73
+        }
+      ]
+    },
+    {
+      "id": "controller",
+      "lane": "request",
+      "col": 3,
+      "type": "backend",
+      "label": "DTO + Controller",
+      "sublabel": "@Valid · lấy userId",
+      "sources": [
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/controller/HealthRecordController.java",
+          "line": 23,
+          "end_line": 44
+        },
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/dto/request/HealthRecordRequest.java",
+          "line": 18,
+          "end_line": 30
+        }
+      ]
+    },
+    {
+      "id": "service",
+      "lane": "request",
+      "col": 4,
+      "type": "backend",
+      "label": "HealthRecordService",
+      "sublabel": "Tính BMI, tạo entity",
+      "sources": [
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/service/HealthRecordService.java",
+          "line": 38,
+          "end_line": 49
+        },
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/service/HealthRecordService.java",
+          "line": 104,
+          "end_line": 109
+        }
+      ]
+    },
+    {
+      "id": "repository",
+      "lane": "request",
+      "col": 5,
+      "type": "backend",
+      "label": "JPA Repository",
+      "sublabel": "save(healthRecord)",
+      "sources": [
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/repository/HealthRecordRepository.java",
+          "line": 12,
+          "end_line": 19
+        },
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/service/HealthRecordService.java",
+          "line": 38,
+          "end_line": 49
+        }
+      ]
+    },
+    {
+      "id": "database",
+      "lane": "result",
+      "col": 5,
+      "type": "database",
+      "label": "MySQL",
+      "sublabel": "Bảng health_records",
+      "sources": [
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/entity/HealthRecord.java",
+          "line": 16,
+          "end_line": 47
+        },
+        {
+          "path": "nutrition-service/src/main/resources/application.properties",
+          "line": 5,
+          "end_line": 9
+        }
+      ]
+    },
+    {
+      "id": "mapper",
+      "lane": "result",
+      "col": 4,
+      "type": "backend",
+      "label": "Service gọi mapper",
+      "sublabel": "Entity → Response DTO",
+      "sources": [
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/service/HealthRecordService.java",
+          "line": 38,
+          "end_line": 49
+        },
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/mapper/HealthRecordMapper.java",
+          "line": 8,
+          "end_line": 11
+        }
+      ]
+    },
+    {
+      "id": "response",
+      "lane": "result",
+      "col": 3,
+      "type": "backend",
+      "label": "JSON cho client",
+      "sublabel": "ApiResponse · code 1000",
+      "sources": [
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/controller/HealthRecordController.java",
+          "line": 35,
+          "end_line": 44
+        },
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/dto/response/ApiResponse.java",
+          "line": 8,
+          "end_line": 21
+        },
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/exception/GlobalExceptionHandler.java",
+          "line": 119,
+          "end_line": 130
+        }
+      ]
+    },
+    {
+      "id": "error",
+      "lane": "result",
+      "col": 2,
+      "type": "security",
+      "label": "Phản hồi lỗi",
+      "sublabel": "401 hoặc lỗi validation",
+      "sources": [
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/configuration/SecurityConfig.java",
+          "line": 53,
+          "end_line": 63
+        },
+        {
+          "path": "nutrition-service/src/main/java/com/veggiepal/nutrition/exception/GlobalExceptionHandler.java",
+          "line": 67,
+          "end_line": 116
+        }
+      ]
+    }
+  ],
+  "edges": [
+    {
+      "from": "request",
+      "to": "route",
+      "role": "main"
+    },
+    {
+      "from": "route",
+      "to": "auth",
+      "role": "main"
+    },
+    {
+      "from": "auth",
+      "to": "controller",
+      "label": "Hợp lệ",
+      "role": "main"
+    },
+    {
+      "from": "controller",
+      "to": "service",
+      "label": "DTO hợp lệ",
+      "role": "main"
+    },
+    {
+      "from": "service",
+      "to": "repository",
+      "role": "main"
+    },
+    {
+      "from": "repository",
+      "to": "database",
+      "label": "Ghi SQL",
+      "role": "main"
+    },
+    {
+      "from": "database",
+      "to": "mapper",
+      "label": "Entity đã lưu",
+      "role": "return"
+    },
+    {
+      "from": "mapper",
+      "to": "response",
+      "role": "return"
+    },
+    {
+      "from": "auth",
+      "to": "error",
+      "label": "JWT lỗi",
+      "variant": "security",
+      "role": "error"
+    },
+    {
+      "from": "controller",
+      "to": "error",
+      "label": "DTO lỗi",
+      "variant": "security",
+      "role": "error"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ví dụ để tự lần code",
+      "items": [
+        "Body: {\"heightCm\":170,\"weightKg\":65}. userId lấy từ JWT, không lấy từ body.",
+        "Service tính 65 / (1.7 × 1.7), làm tròn HALF_UP một chữ số: BMI = 22.5.",
+        "Đọc source từ Controller → Service → Repository, rồi quay lại Mapper → ApiResponse."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Đường quay về được rút gọn",
+      "items": [
+        "Database không gọi mapper trực tiếp: service nhận entity sau save rồi gọi mapper.",
+        "Response được Controller bọc bằng ApiResponse và trả qua Gateway tới client.",
+        "HealthRecordRequest được Spring kiểm tra trước khi chạy thân method Controller."
+      ]
+    },
+    {
+      "dot": "rose",
+      "title": "Hai nơi xử lý lỗi",
+      "items": [
+        "SecurityExceptionHandler xử lý lỗi xác thực/phân quyền trong filter chain.",
+        "GlobalExceptionHandler chuyển lỗi DTO hoặc AppException thành JSON và HTTP status.",
+        "Nhánh lỗi là kết thúc request; không tiếp tục ghi database."
+      ]
+    }
+  ]
+}

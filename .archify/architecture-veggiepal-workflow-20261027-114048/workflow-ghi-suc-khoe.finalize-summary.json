@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "workflow",
+  "quality": "showcase",
+  "specification": {
+    "path": "D:\\FPT\\SWP\\VeggiePal\\VeggiePal_BE\\.archify\\architecture-veggiepal-workflow-20261027-114048\\workflow.candidate.json",
+    "sha256": "9fcef7aa9505fc1b31960417577a70350e8fe40574609edbbff62fb0d454c38a",
+    "bytes": 8468
+  },
+  "artifact": {
+    "path": "D:\\FPT\\SWP\\VeggiePal\\VeggiePal_BE\\.archify\\architecture-veggiepal-workflow-20261027-114048\\workflow-ghi-suc-khoe.html",
+    "sha256": "fd198c2d5a78573f3538caef710b31a92566a2646b2845c75135761b04858b50",
+    "bytes": 829661
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [
+    {
+      "code": "i18n/locale-fallback",
+      "severity": "warning",
+      "message": "meta.locale \"vi\" has no bundled catalog and no usable meta.translations; the Viewer chrome and <html lang> fall back to English.",
+      "subject": {
+        "diagramType": "workflow",
+        "path": "/meta/locale"
+      },
+      "evidence": {
+        "locale": "vi",
+        "bundledLocales": [
+          "en",
+          "zh-CN",
+          "zh-TW",
+          "es",
+          "ko",
+          "ar"
+        ]
+      },
+      "supportedFixes": [
+        "Supply meta.translations for this locale.",
+        "Use a bundled locale: en, zh-CN, zh-TW, es, ko, ar."
+      ]
+    }
+  ],
+  "diagnosticSummary": {
+    "total": 1,
+    "shown": 1,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "D:\\FPT\\SWP\\VeggiePal\\VeggiePal_BE\\.archify\\architecture-veggiepal-workflow-20261027-114048\\workflow-ghi-suc-khoe.finalize.json",
+    "summaryReceipt": "D:\\FPT\\SWP\\VeggiePal\\VeggiePal_BE\\.archify\\architecture-veggiepal-workflow-20261027-114048\\workflow-ghi-suc-khoe.finalize-summary.json",
+    "browserCheckReceipt": "D:\\FPT\\SWP\\VeggiePal\\VeggiePal_BE\\.archify\\architecture-veggiepal-workflow-20261027-114048\\workflow-ghi-suc-khoe.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-10-27T04:42:07.366Z",
+    "source": "cache",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 4219,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}
