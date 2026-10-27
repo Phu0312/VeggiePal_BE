@@ -60,7 +60,7 @@ public class IngredientController {
             int page,
 
             @RequestParam(
-                    defaultValue = "10"
+                    defaultValue = "20"
             )
             int size
     ) {

@@ -31,6 +31,13 @@ public enum ErrorCode {
 
     ALLERGEN_NOT_EXISTED(2007, "Allergen not existed", HttpStatus.BAD_REQUEST),
 
+    INVALID_DIARY_SERVINGS(2010, "Servings must be between 0.01 and 100, with at most 2 decimals", HttpStatus.BAD_REQUEST),
+    INVALID_WATER_AMOUNT(2011, "Water amount must be a positive integer in ml, at most 100000", HttpStatus.BAD_REQUEST),
+    INVALID_ACTIVITY(2012, "Activity type is required (max 100 characters); minutes must be between 1 and 1440", HttpStatus.BAD_REQUEST),
+    DIARY_ENTRY_NOT_FOUND(2013, "Diary entry not found", HttpStatus.NOT_FOUND),
+    MEAL_PLAN_MEAL_NOT_FOUND(2014, "Meal plan or meal not found for the current user and date", HttpStatus.NOT_FOUND),
+    DIARY_SOURCE_UNAVAILABLE(2015, "Meal plan snapshot is temporarily unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+
     INVALID_REQUEST(1018, "Invalid request data", HttpStatus.BAD_REQUEST);
 
     ErrorCode(

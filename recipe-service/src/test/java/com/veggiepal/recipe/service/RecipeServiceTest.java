@@ -190,4 +190,16 @@ class RecipeServiceTest {
                         RecipeStepRequest.builder().stepNumber(secondStep).instruction("Second").build()))
                 .build();
     }
+
+    @Test void publishedPageSizeIsCappedAt100WithStableOrdering() {
+        when(recipes.searchPublished(eq(null),eq(RecipeStatus.PUBLISHED),any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        service.getPublishedRecipes(null,-1,200);
+        var pageable=org.mockito.ArgumentCaptor.forClass(Pageable.class);
+        verify(recipes).searchPublished(eq(null),eq(RecipeStatus.PUBLISHED),pageable.capture());
+        assertEquals(0,pageable.getValue().getPageNumber());
+        assertEquals(100,pageable.getValue().getPageSize());
+        assertNotNull(pageable.getValue().getSort().getOrderFor("id"));
+    }
+
 }

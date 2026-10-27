@@ -145,12 +145,6 @@ public class IngredientService {
                 .totalPages(
                         ingredientPage.getTotalPages()
                 )
-                .first(
-                        ingredientPage.isFirst()
-                )
-                .last(
-                        ingredientPage.isLast()
-                )
                 .build();
     }
 

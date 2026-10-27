@@ -17,6 +17,8 @@ import com.veggiepal.blog.enums.ContentStatus;
 @Repository
 public interface BlogRepository extends JpaRepository<Blog, Long> {
 
+    Page<Blog> findByAuthorIdInAndStatus(java.util.Collection<Long> authorIds, ContentStatus status, Pageable pageable);
+
     Page<Blog> findByAuthorId(Long authorId, Pageable pageable);
 
     Page<Blog> findByAuthorIdAndStatus(Long authorId, ContentStatus status, Pageable pageable);

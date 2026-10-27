@@ -173,8 +173,7 @@ public class VideoProcessingService {
         return PageResponse.<VideoJobResponse>builder()
                 .content(result.getContent().stream().map(this::view).toList())
                 .page(result.getNumber()).size(result.getSize())
-                .totalElements(result.getTotalElements()).totalPages(result.getTotalPages())
-                .first(result.isFirst()).last(result.isLast()).build();
+                .totalElements(result.getTotalElements()).totalPages(result.getTotalPages()).build();
     }
 
     private void validateUpload(MultipartFile file) {

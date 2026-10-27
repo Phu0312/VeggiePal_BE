@@ -37,3 +37,8 @@ build/
 .env.*
 !.env.example
 
+### Local directories ###
+/.local-tools/
+/data/
+/docs/
+/scripts/

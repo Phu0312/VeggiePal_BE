@@ -53,7 +53,15 @@ public enum ErrorCode {
 
     INVALID_RECIPE_UNIT(4107, "Ingredient unit is not supported", HttpStatus.BAD_REQUEST),
 
-    INVALID_RECIPE_STATUS_TRANSITION(4108, "Recipe is not in a state that allows this action", HttpStatus.BAD_REQUEST);
+    INVALID_RECIPE_STATUS_TRANSITION(4108, "Recipe is not in a state that allows this action", HttpStatus.BAD_REQUEST),
+
+    RECIPE_TITLE_TOO_LONG(4110, "Recipe title must not exceed 200 characters", HttpStatus.BAD_REQUEST),
+    RECIPE_DESCRIPTION_TOO_LONG(4111, "Recipe description must not exceed 2000 characters", HttpStatus.BAD_REQUEST),
+    RECIPE_IMAGE_URL_TOO_LONG(4112, "Recipe image URL must not exceed 500 characters", HttpStatus.BAD_REQUEST),
+    RECIPE_UNIT_TOO_LONG(4113, "Ingredient unit must not exceed 30 characters", HttpStatus.BAD_REQUEST),
+    RECIPE_NOTE_TOO_LONG(4114, "Ingredient note must not exceed 300 characters", HttpStatus.BAD_REQUEST),
+    RECIPE_INSTRUCTION_TOO_LONG(4115, "Step instruction must not exceed 2000 characters", HttpStatus.BAD_REQUEST),
+    INVALID_REQUEST(1018, "Invalid request data", HttpStatus.BAD_REQUEST);
 
     ErrorCode(
             int code,

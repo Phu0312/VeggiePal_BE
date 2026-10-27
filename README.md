@@ -382,3 +382,7 @@ Phiên bản hiện tại phù hợp cho local development/demo, chưa nên tri�
 ## License
 
 Repository hiện chưa khai báo license. Không nên giả định quyền phân phối hoặc sử dụng thương mại cho đến khi dự án bổ sung tệp `LICENSE`.
+
+## Backend API updates
+
+See [BACKEND_CHANGES.md](BACKEND_CHANGES.md) for approved validation/pagination contracts, daily diaries, follow APIs, following feed and manual schema scripts.

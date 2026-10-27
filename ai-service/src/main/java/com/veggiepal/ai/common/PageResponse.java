@@ -15,8 +15,6 @@ public class PageResponse<T> {
     int size;
     long totalElements;
     int totalPages;
-    boolean first;
-    boolean last;
 
     public List<T> getItems() {
         return content;

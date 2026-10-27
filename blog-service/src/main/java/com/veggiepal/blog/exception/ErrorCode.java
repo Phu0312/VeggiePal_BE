@@ -47,6 +47,8 @@ public enum ErrorCode {
 
     INVALID_BLOG_CONTENT(3013, "Blog content must be at least {min} characters", HttpStatus.BAD_REQUEST),
 
+    BLOG_CONTENT_TOO_LONG(3016, "Blog content must not exceed 50000 Unicode characters, including markup", HttpStatus.BAD_REQUEST),
+
     BLOG_NOT_EXISTED(3014, "Blog not existed", HttpStatus.NOT_FOUND),
 
     INVALID_BLOG_STATUS_TRANSITION(3015, "Blog is not in a state that allows this action", HttpStatus.BAD_REQUEST),
@@ -101,6 +103,8 @@ public enum ErrorCode {
     INVALID_YOUTUBE_URL(3067, "YouTube link is not valid", HttpStatus.BAD_REQUEST),
 
     INVALID_VIDEO_STATUS_TRANSITION(3068, "Video is not in a state that allows this action", HttpStatus.BAD_REQUEST),
+
+    COMMUNITY_UNAVAILABLE(3070, "Community service is temporarily unavailable", HttpStatus.SERVICE_UNAVAILABLE),
 
     MODERATION_UNAVAILABLE(3050, "AI moderation is temporarily unavailable", HttpStatus.SERVICE_UNAVAILABLE),
 

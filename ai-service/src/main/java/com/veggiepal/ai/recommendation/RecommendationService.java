@@ -72,14 +72,16 @@ public class RecommendationService {
     private List<Candidate> fetchCandidates(String keywordQuery) {
         List<Candidate> output=new ArrayList<>();
         boolean blogs=readItems(blogUrl+"/blogs?size=20"+keywordQuery,"items","BLOG",output);
-        boolean recipes=readItems(recipeUrl+"/recipes?size=20"+keywordQuery,"content","RECIPE",output);
+        boolean recipes=readItems(recipeUrl+"/recipes?size=20"+keywordQuery,"items","RECIPE",output);
         if (!blogs && !recipes) throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
         return output;
     }
     private boolean readItems(String url,String field,String type,List<Candidate> output) {
         try {
             JsonNode root=http.get().uri(url).retrieve().body(JsonNode.class);
-            JsonNode items=root==null?null:root.path("result").path(field);
+            JsonNode page=root==null?null:root.path("result");
+            JsonNode items=page==null?null:page.path(field);
+            if (page!=null && (items==null || items.isMissingNode()) && field.equals("items")) items=page.path("content");
             if(items!=null&&items.isArray()) items.forEach(n -> { if(n.path("id").canConvertToLong()) output.add(new Candidate(type,n.path("id").asLong(),n)); });
             return true;
         } catch (Exception e) { log.warn("Recommendation candidates unavailable from {}: {}",url,e.getMessage()); return false; }

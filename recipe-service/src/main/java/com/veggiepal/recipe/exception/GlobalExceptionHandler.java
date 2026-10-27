@@ -49,7 +49,7 @@ public class GlobalExceptionHandler {
 
         } catch (Exception e) {
 
-            errorCode = ErrorCode.INVALID_KEY;
+            errorCode = ErrorCode.INVALID_REQUEST;
         }
 
         ApiResponse<Void> response = ApiResponse

@@ -86,6 +86,9 @@ class BlogServiceIntegrationTests {
     @MockitoBean
     private ContentModerationService contentModerationService;
 
+    @MockitoBean
+    com.veggiepal.blog.feed.FollowingAuthorClient followingAuthors;
+
     @BeforeEach
     void setUpModeration() {
         when(contentModerationService.moderate(any(), any(), any(), any()))
@@ -640,5 +643,33 @@ class BlogServiceIntegrationTests {
                 .as("the multipart limit must exceed MAX_THUMBNAIL_BYTES, or the service's "
                         + "own size check is unreachable and THUMBNAIL_TOO_LARGE is dead code")
                 .isGreaterThan(5L * 1024 * 1024);
+    }
+
+
+    @Test void followingFeedFiltersAuthorsAndStatusAndHasAccuratePagination() throws Exception {
+        long category=createRootCategory("Feed "+unique());
+        long followedAuthor=70000001L;
+        createPublishedBlog(category,"Other "+unique(),body(unique()));
+        long published=idOf(mockMvc.perform(authed(post("/blogs"),followedAuthor,"USER")
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                {"title":"Followed author","content":"Healthy vegan food and nutrition","categoryId":%d,"publish":true}
+                """.formatted(category))).andExpect(status().isOk()).andReturn());
+        mockMvc.perform(authed(post("/blogs"),followedAuthor,"USER")
+                .contentType(MediaType.APPLICATION_JSON).content("""
+                {"title":"Draft","content":"Healthy vegan food and nutrition","categoryId":%d,"publish":false}
+                """.formatted(category))).andExpect(status().isOk());
+        org.mockito.Mockito.when(followingAuthors.activeFollowingIds(any())).thenReturn(java.util.List.of(followedAuthor));
+        mockMvc.perform(get("/blogs/feed/following")).andExpect(status().isUnauthorized());
+        mockMvc.perform(authed(get("/blogs/feed/following").param("size","1"),OTHER_MEMBER_ID,"USER"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.size").value(1))
+                .andExpect(jsonPath("$.result.items[0].id").value((int)published))
+                .andExpect(jsonPath("$.result.items[0].authorId").value((int)followedAuthor))
+                .andExpect(jsonPath("$.result.items[0].status").value("PUBLISHED"))
+                .andExpect(jsonPath("$.result.items[0].categoryName").isNotEmpty())
+                .andExpect(jsonPath("$.result.totalElements").value(1));
+        org.mockito.Mockito.when(followingAuthors.activeFollowingIds(any())).thenReturn(java.util.List.of());
+        mockMvc.perform(authed(get("/blogs/feed/following"),OTHER_MEMBER_ID,"USER"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.items").isEmpty())
+                .andExpect(jsonPath("$.result.totalElements").value(0));
     }
 }

@@ -149,7 +149,7 @@ class BlogControllerTest {
 
     @Test
     void getOwnBlogs_withToken_reachesTheService() throws Exception {
-        when(blogService.getOwnBlogs(USER_ID, null, 0, 10))
+        when(blogService.getOwnBlogs(USER_ID, null, 0, 20))
                 .thenReturn(PageResponse.<com.veggiepal.blog.dto.response.BlogSummaryResponse>builder()
                         .items(java.util.List.of()).page(0).size(20).totalElements(0).totalPages(0).build());
 
@@ -157,7 +157,7 @@ class BlogControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.totalElements").value(0));
 
-        verify(blogService).getOwnBlogs(USER_ID, null, 0, 10);
+        verify(blogService).getOwnBlogs(USER_ID, null, 0, 20);
     }
 
     @Test
@@ -178,7 +178,7 @@ class BlogControllerTest {
 
     @Test
     void getPublishedBlogs_withoutToken_isPublic() throws Exception {
-        when(blogService.getPublishedBlogs(null, null, null, 0, 10))
+        when(blogService.getPublishedBlogs(null, null, null, 0, 20))
                 .thenReturn(PageResponse.<BlogSummaryResponse>builder()
                         .items(List.of()).page(0).size(20).totalElements(0).totalPages(0).build());
 
@@ -187,14 +187,14 @@ class BlogControllerTest {
                 .andExpect(jsonPath("$.code").value(1000));
     }
 
-    // Task sheet US3: "Mặc định trả về 10 bài/trang". The verify is what pins it — the
-    // test above would pass with any size, since an unmatched stub still yields code 1000.
+    // A07: the shared contract defaults to 20 items per page.
+    // Verify the arguments so an unmatched mock cannot hide a default-size regression.
     @Test
-    void getPublishedBlogs_withoutSize_defaultsToTenPerPage() throws Exception {
+    void getPublishedBlogs_withoutSize_defaultsToTwentyPerPage() throws Exception {
         mockMvc.perform(get("/blogs"))
                 .andExpect(status().isOk());
 
-        verify(blogService).getPublishedBlogs(null, null, null, 0, 10);
+        verify(blogService).getPublishedBlogs(null, null, null, 0, 20);
     }
 
     @Test
@@ -210,7 +210,7 @@ class BlogControllerTest {
     // A guest arriving with a leftover expired token must still be able to read
     @Test
     void getPublishedBlogs_withExpiredLookingToken_stillPublic() throws Exception {
-        when(blogService.getPublishedBlogs(null, null, null, 0, 10))
+        when(blogService.getPublishedBlogs(null, null, null, 0, 20))
                 .thenReturn(PageResponse.<BlogSummaryResponse>builder()
                         .items(List.of()).page(0).size(20).totalElements(0).totalPages(0).build());
 
@@ -276,5 +276,26 @@ class BlogControllerTest {
         mockMvc.perform(get("/blogs/me/votes").param("blogIds", "10,11").with(member()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result[0].myVote").value(1));
+    }
+
+    @Test void oversizedVietnameseBlogIsRejectedBeforeCreateAndUpdate() throws Exception {
+        String content="\u0111".repeat(50001);
+        String body="{\"title\":\"Healthy food\",\"categoryId\":3,\"publish\":true,\"content\":\""+content+"\"}";
+        for(var builder:List.of(post("/blogs"),put("/blogs/1"))) {
+            mockMvc.perform(builder.with(member()).contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isBadRequest()).andExpect(jsonPath("$.code").value(3016))
+                    .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("50000")));
+        }
+        org.mockito.Mockito.verifyNoInteractions(blogService,voteService);
+    }
+    @Test void exactly50000UnicodeCodePointsIncludingMarkupAreAccepted() throws Exception {
+        String content="<p>"+"\uD83E\uDD6C".repeat(49993)+"</p>";
+        var request=BlogRequest.builder().title("Healthy food").content(content).categoryId(3L).build();
+        try(var factory=jakarta.validation.Validation.buildDefaultValidatorFactory()) {
+            org.assertj.core.api.Assertions.assertThat(factory.getValidator().validate(request)).isEmpty();
+            request.setContent(content+"\u0111");
+            org.assertj.core.api.Assertions.assertThat(factory.getValidator().validate(request))
+                    .extracting(jakarta.validation.ConstraintViolation::getMessage).contains("BLOG_CONTENT_TOO_LONG");
+        }
     }
 }

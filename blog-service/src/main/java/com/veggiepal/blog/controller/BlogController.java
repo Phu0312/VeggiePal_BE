@@ -58,7 +58,7 @@ public class BlogController {
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
             @RequestParam(name = "status", required = false) ContentStatus status,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size
+            @RequestParam(name = "size", defaultValue = "20") int size
     ) {
 
         return ApiResponse
@@ -127,7 +127,7 @@ public class BlogController {
             @RequestParam(name = "keyword", required = false) String keyword,
             @RequestParam(name = "sort", required = false) String sort,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size
+            @RequestParam(name = "size", defaultValue = "20") int size
     ) {
 
         return ApiResponse

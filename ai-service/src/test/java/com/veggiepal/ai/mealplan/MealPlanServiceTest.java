@@ -105,7 +105,7 @@ class MealPlanServiceTest {
         // Use specific uri stubbing
         RestClient.RequestHeadersUriSpec recipeUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
         RestClient.ResponseSpec recipeRespSpec = mock(RestClient.ResponseSpec.class);
-        when(http.get().uri("http://recipe-service/recipes?size=200")).thenReturn(recipeUriSpec);
+        when(http.get().uri("http://recipe-service/recipes?page=0&size=100")).thenReturn(recipeUriSpec);
         when(recipeUriSpec.retrieve()).thenReturn(recipeRespSpec);
         when(recipeRespSpec.body(any(Class.class))).thenReturn(recipeResult);
 
@@ -148,7 +148,7 @@ class MealPlanServiceTest {
 
         RestClient.RequestHeadersUriSpec recipeUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
         RestClient.ResponseSpec recipeRespSpec = mock(RestClient.ResponseSpec.class);
-        when(http.get().uri("http://recipe-service/recipes?size=200")).thenReturn(recipeUriSpec);
+        when(http.get().uri("http://recipe-service/recipes?page=0&size=100")).thenReturn(recipeUriSpec);
         when(recipeUriSpec.retrieve()).thenReturn(recipeRespSpec);
         when(recipeRespSpec.body(any(Class.class))).thenReturn(recipeResult);
 
@@ -183,7 +183,7 @@ class MealPlanServiceTest {
     @Test
     void throwsDownstreamUnavailableWhenNetworkConnectionTimesOut() {
         RestClient.RequestHeadersUriSpec recipeUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
-        when(http.get().uri("http://recipe-service/recipes?size=200")).thenReturn(recipeUriSpec);
+        when(http.get().uri("http://recipe-service/recipes?page=0&size=100")).thenReturn(recipeUriSpec);
         when(recipeUriSpec.retrieve()).thenThrow(new ResourceAccessException("Connection timed out"));
 
         MealPlanDtos.GenerateRequest request = new MealPlanDtos.GenerateRequest(
@@ -214,7 +214,7 @@ class MealPlanServiceTest {
 
         RestClient.RequestHeadersUriSpec recipeUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
         RestClient.ResponseSpec recipeRespSpec = mock(RestClient.ResponseSpec.class);
-        when(http.get().uri("http://recipe-service/recipes?size=200")).thenReturn(recipeUriSpec);
+        when(http.get().uri("http://recipe-service/recipes?page=0&size=100")).thenReturn(recipeUriSpec);
         when(recipeUriSpec.retrieve()).thenReturn(recipeRespSpec);
         when(recipeRespSpec.body(any(Class.class))).thenReturn(recipeResult);
 
@@ -316,7 +316,7 @@ class MealPlanServiceTest {
 
         RestClient.RequestHeadersUriSpec recipeUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
         RestClient.ResponseSpec recipeRespSpec = mock(RestClient.ResponseSpec.class);
-        when(http.get().uri("http://recipe-service/recipes?size=200")).thenReturn(recipeUriSpec);
+        when(http.get().uri("http://recipe-service/recipes?page=0&size=100")).thenReturn(recipeUriSpec);
         when(recipeUriSpec.retrieve()).thenReturn(recipeRespSpec);
         when(recipeRespSpec.body(any(Class.class))).thenReturn(recipeResult);
 
@@ -392,7 +392,7 @@ class MealPlanServiceTest {
     private void stubGenerateDownstreams() {
         ObjectNode recipes = mapper.createObjectNode();
         addRecipe(recipes.putObject("result").putArray("content"), 1, 600);
-        stubGet("http://recipe-service/recipes?size=200", recipes, false);
+        stubGet("http://recipe-service/recipes?page=0&size=100", recipes, false);
         ObjectNode allergies = mapper.createObjectNode();
         allergies.putArray("result");
         stubGet("http://nutrition-service/nutrition/me/allergies", allergies, true);
@@ -501,7 +501,7 @@ class MealPlanServiceTest {
     void generatePromptCarriesTheMealBudgets() {
         ObjectNode recipes = mapper.createObjectNode();
         addRecipe(recipes.putObject("result").putArray("content"), 1, 600);
-        stubGet("http://recipe-service/recipes?size=200", recipes, false);
+        stubGet("http://recipe-service/recipes?page=0&size=100", recipes, false);
         ObjectNode allergies = mapper.createObjectNode();
         allergies.putArray("result");
         stubGet("http://nutrition-service/nutrition/me/allergies", allergies, true);
@@ -544,7 +544,7 @@ class MealPlanServiceTest {
         addRecipe(content, 4, 700);
         addRecipe(content, 5, 650);
         addRecipe(content, 6, 800);
-        stubGet("http://recipe-service/recipes?size=200", recipes, false);
+        stubGet("http://recipe-service/recipes?page=0&size=100", recipes, false);
         ObjectNode allergies = mapper.createObjectNode();
         allergies.putArray("result");
         stubGet("http://nutrition-service/nutrition/me/allergies", allergies, true);
@@ -592,7 +592,7 @@ class MealPlanServiceTest {
         ArrayNode content = recipes.putObject("result").putArray("content");
         addRecipe(content, 1, 700);
         addRecipe(content, 2, 650);
-        stubGet("http://recipe-service/recipes?size=200", recipes, false);
+        stubGet("http://recipe-service/recipes?page=0&size=100", recipes, false);
         ObjectNode allergies = mapper.createObjectNode();
         allergies.putArray("result");
         stubGet("http://nutrition-service/nutrition/me/allergies", allergies, true);
@@ -629,7 +629,7 @@ class MealPlanServiceTest {
         ArrayNode content = recipes.putObject("result").putArray("content");
         addRecipe(content, 1, 700);
         addRecipe(content, 2, 650);
-        stubGet("http://recipe-service/recipes?size=200", recipes, false);
+        stubGet("http://recipe-service/recipes?page=0&size=100", recipes, false);
         ObjectNode allergies = mapper.createObjectNode();
         allergies.putArray("result");
         stubGet("http://nutrition-service/nutrition/me/allergies", allergies, true);
@@ -643,5 +643,17 @@ class MealPlanServiceTest {
 
         var monday = mapper.valueToTree(response.plan()).path("days").get(0).path("meals");
         assertEquals(true, Set.of(1L, 2L).contains(monday.get(0).path("recipeId").asLong()));
+    }
+
+    @Test void recipeCandidatesReadsItemsAcrossTwoCappedPages() {
+        ObjectNode first=mapper.createObjectNode();
+        first.putObject("result").put("totalPages",3).putArray("items").addObject().put("id",11);
+        ObjectNode second=mapper.createObjectNode();
+        second.putObject("result").putArray("items").addObject().put("id",22);
+        stubGet("http://recipe-service/recipes?page=0&size=100",first,false);
+        stubGet("http://recipe-service/recipes?page=1&size=100",second,false);
+        var result=service.recipeCandidates();
+        assertEquals(2,result.size());assertEquals(11,result.get(0).path("id").asLong());
+        assertEquals(22,result.get(1).path("id").asLong());
     }
 }

@@ -22,7 +22,6 @@ public class PageResponse<T> {
 
     int totalPages;
 
-    boolean first;
 
-    boolean last;
+    public List<T> getItems() { return content; }
 }

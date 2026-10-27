@@ -88,8 +88,6 @@ class MealPlanUpgradeControllerTest {
                 .size(10)
                 .totalElements(1)
                 .totalPages(1)
-                .first(true)
-                .last(true)
                 .build();
 
         when(service.listFavorites(42L, 0, 10)).thenReturn(pageRes);
@@ -98,7 +96,10 @@ class MealPlanUpgradeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.content[0].id").value(10))
                 .andExpect(jsonPath("$.result.content[0].isFavorite").value(true))
-                .andExpect(jsonPath("$.result.totalElements").value(1));
+                .andExpect(jsonPath("$.result.totalElements").value(1))
+                .andExpect(jsonPath("$.result.items[0].id").value(10))
+                .andExpect(jsonPath("$.result.first").doesNotExist())
+                .andExpect(jsonPath("$.result.last").doesNotExist());
     }
 
     @Test
