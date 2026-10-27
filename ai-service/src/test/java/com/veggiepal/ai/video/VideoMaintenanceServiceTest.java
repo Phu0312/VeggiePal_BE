@@ -35,6 +35,7 @@ class VideoMaintenanceServiceTest {
         verify(storage).delete(Path.of("build/restart.upload"));
         verify(storage).delete(Path.of("build/stale.upload"));
         verify(states).purgeBefore(any());
+        verify(storage).cleanupOrphans(Duration.ZERO);
         verify(storage, org.mockito.Mockito.atLeastOnce()).cleanupOrphans(Duration.ofMinutes(20));
     }
 }
