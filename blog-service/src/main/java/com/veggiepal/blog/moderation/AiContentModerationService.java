@@ -5,11 +5,7 @@ import com.veggiepal.blog.exception.ErrorCode;
 import java.time.Duration;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -19,19 +15,26 @@ import tools.jackson.databind.JsonNode;
 @Service
 public class AiContentModerationService implements ContentModerationService {
 
+    static final String INTERNAL_TOKEN_HEADER = "X-Internal-Service-Token";
+
     private final RestClient client;
+    private final String internalToken;
 
     public AiContentModerationService(
             @Value("${services.ai.base-url}") String baseUrl,
             @Value("${services.ai.connect-timeout:3s}") Duration connectTimeout,
-            @Value("${services.ai.read-timeout:20s}") Duration readTimeout
+            @Value("${services.ai.read-timeout:20s}") Duration readTimeout,
+            @Value("${services.internal-token:}") String internalToken
     ) {
         var requestFactory = new SimpleClientHttpRequestFactory();
         requestFactory.setConnectTimeout(connectTimeout);
         requestFactory.setReadTimeout(readTimeout);
         this.client = RestClient.builder().baseUrl(baseUrl).requestFactory(requestFactory).build();
+        this.internalToken = internalToken;
     }
 
+    // The service token, not the caller's JWT: blog moderation runs on a background thread with
+    // no request behind it, and moderation is a platform cost that must not eat the user's AI quota.
     @Override
     public ModerationResult moderate(
             String contentType,
@@ -39,11 +42,10 @@ public class AiContentModerationService implements ContentModerationService {
             Long authorId,
             String text
     ) {
-        String token = currentToken();
         try {
             JsonNode response = client.post()
-                    .uri("/ai/moderation/check")
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .uri("/internal/moderation/check")
+                    .header(INTERNAL_TOKEN_HEADER, internalToken)
                     .body(Map.of(
                             "contentType", contentType,
                             "externalContentId", externalContentId,
@@ -70,13 +72,5 @@ public class AiContentModerationService implements ContentModerationService {
         } catch (RestClientException exception) {
             throw new AppException(ErrorCode.MODERATION_UNAVAILABLE);
         }
-    }
-
-    private String currentToken() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication instanceof JwtAuthenticationToken jwtAuthentication) {
-            return jwtAuthentication.getToken().getTokenValue();
-        }
-        throw new AppException(ErrorCode.UNAUTHENTICATED);
     }
 }

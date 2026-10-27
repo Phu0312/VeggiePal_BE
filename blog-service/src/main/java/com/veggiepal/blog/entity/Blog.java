@@ -64,6 +64,15 @@ public class Blog {
     @Column(name = "published_at")
     LocalDateTime publishedAt;
 
+    // Set when the post is handed to AI, cleared once AI (or an admin) has answered. PENDING with
+    // this set = still waiting for AI, which the retry job picks up; PENDING without = waiting for an admin.
+    @Column(name = "moderation_requested_at")
+    LocalDateTime moderationRequestedAt;
+
+    // Why AI or an admin rejected the post, or sent it to an admin. Same length as ai-service's moderation_cases.reason.
+    @Column(name = "moderation_reason", length = 1000)
+    String moderationReason;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     LocalDateTime createdAt;
 

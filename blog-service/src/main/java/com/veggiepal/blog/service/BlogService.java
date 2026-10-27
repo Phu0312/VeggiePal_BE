@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -22,7 +23,7 @@ import com.veggiepal.blog.enums.ImageType;
 import com.veggiepal.blog.exception.AppException;
 import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.mapper.BlogMapper;
-import com.veggiepal.blog.moderation.ContentModerationService;
+import com.veggiepal.blog.moderation.BlogModerationRequested;
 import com.veggiepal.blog.moderation.ModerationResult;
 import com.veggiepal.blog.repository.BlogRepository;
 
@@ -54,7 +55,7 @@ public class BlogService {
 
     BlogRepository blogRepository;
     CategoryService categoryService;
-    ContentModerationService contentModerationService;
+    ApplicationEventPublisher eventPublisher;
     BlogMapper blogMapper;
     FileStorageService fileStorageService;
 
@@ -71,16 +72,15 @@ public class BlogService {
                 .voteScore(0)
                 .build();
 
-        // Persist first so the moderation case can point to a real resource id. The
-        // surrounding transaction rolls this insert back if moderation is unavailable.
+        // Persist first so the moderation event carries a real blog id
         blogRepository.saveAndFlush(blog);
 
-        String reason = Boolean.TRUE.equals(request.getPublish())
-                ? applyModeration(blog)
-                : null;
+        if (Boolean.TRUE.equals(request.getPublish())) {
+            requestModeration(blog);
+        }
 
         blogRepository.save(blog);
-        return withReason(blog, reason);
+        return blogMapper.toBlogResponse(blog);
     }
 
     @Transactional
@@ -100,12 +100,12 @@ public class BlogService {
 
         // A draft is not public yet, so editing it needs no moderation. Anything
         // else has been (or is being) considered already and must be reconsidered.
-        String reason = blog.getStatus() == ContentStatus.DRAFT
-                ? null
-                : applyModeration(blog);
+        if (blog.getStatus() != ContentStatus.DRAFT) {
+            requestModeration(blog);
+        }
 
         blogRepository.save(blog);
-        return withReason(blog, reason);
+        return blogMapper.toBlogResponse(blog);
     }
 
     @Transactional
@@ -121,10 +121,10 @@ public class BlogService {
         // under a category that has been deactivated since it was written.
         categoryService.requireActiveCategory(blog.getCategory().getId());
 
-        String reason = applyModeration(blog);
+        requestModeration(blog);
 
         blogRepository.save(blog);
-        return withReason(blog, reason);
+        return blogMapper.toBlogResponse(blog);
     }
 
     @Transactional
@@ -137,6 +137,7 @@ public class BlogService {
         // US3/US6). An owner removing their own post — admin or not — is a real delete.
         if (!blog.getAuthorId().equals(userId)) {
             blog.setStatus(ContentStatus.BANNED);
+            blog.setModerationRequestedAt(null);
             blogRepository.save(blog);
             return;
         }
@@ -325,37 +326,60 @@ public class BlogService {
     }
 
     /**
-     * BR-02. Returns the moderation reason, or null when the content was approved.
-     * Mutates the blog's status in place.
+     * BR-02 + task sheet US12: hide the post and let AI decide in the background
+     * (BlogModerationWorker, once this transaction commits).
      */
-    private String applyModeration(Blog blog) {
+    private void requestModeration(Blog blog) {
 
-        ModerationResult result = contentModerationService.moderate(
-                "BLOG",
-                blog.getId(),
-                blog.getAuthorId(),
-                blog.getTitle() + "\n" + blog.getContent()
-        );
+        blog.setStatus(ContentStatus.PENDING);
+        blog.setModerationReason(null);
+        blog.setModerationRequestedAt(LocalDateTime.now());
+
+        eventPublisher.publishEvent(
+                new BlogModerationRequested(blog.getId(), blog.getAuthorId(), moderationText(blog)));
+    }
+
+    /** What AI judges, and how a late verdict recognises it still applies. */
+    public static String moderationText(Blog blog) {
+        return blog.getTitle() + "\n" + blog.getContent();
+    }
+
+    /** Applies AI's verdict, unless the post moved on while AI was deciding. */
+    @Transactional
+    public void applyAiModeration(Long blogId, String moderatedText, ModerationResult result) {
+
+        Blog blog = blogRepository.findForModeration(blogId).orElse(null);
+
+        // Deleted, banned or decided by an admin, already answered, or edited again since
+        if (blog == null
+                || blog.getStatus() != ContentStatus.PENDING
+                || blog.getModerationRequestedAt() == null
+                || !moderationText(blog).equals(moderatedText)) {
+            return;
+        }
+
+        blog.setModerationRequestedAt(null);
 
         switch (result.decision()) {
 
             case APPROVED -> {
                 blog.setStatus(ContentStatus.PUBLISHED);
+                blog.setModerationReason(null);
 
                 // Stamped once: re-publishing an edited post must not reshuffle the feed
                 if (blog.getPublishedAt() == null) {
                     blog.setPublishedAt(LocalDateTime.now());
                 }
-
-                return null;
             }
 
-            case REJECTED -> blog.setStatus(ContentStatus.REJECTED);
+            case REJECTED -> {
+                blog.setStatus(ContentStatus.REJECTED);
+                blog.setModerationReason(result.reason());
+            }
 
-            case REVIEW_REQUIRED -> blog.setStatus(ContentStatus.PENDING);
+            // Stays PENDING; ai-service has queued the case for an admin
+            case REVIEW_REQUIRED -> blog.setModerationReason(result.reason());
         }
-
-        return result.reason();
     }
 
     @Transactional
@@ -370,8 +394,13 @@ public class BlogService {
             throw new AppException(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
         }
         blog.setStatus(approved ? ContentStatus.PUBLISHED : ContentStatus.REJECTED);
-        if (approved && blog.getPublishedAt() == null) {
-            blog.setPublishedAt(LocalDateTime.now());
+        // The admin's word is final: a late AI verdict must not override it, nor the retry job resend it
+        blog.setModerationRequestedAt(null);
+        if (approved) {
+            blog.setModerationReason(null);
+            if (blog.getPublishedAt() == null) {
+                blog.setPublishedAt(LocalDateTime.now());
+            }
         }
     }
 
@@ -392,13 +421,6 @@ public class BlogService {
         }
 
         return blog;
-    }
-
-    private BlogResponse withReason(Blog blog, String reason) {
-
-        BlogResponse response = blogMapper.toBlogResponse(blog);
-        response.setModerationReason(reason);
-        return response;
     }
 
     static PageRequest pageRequest(int page, int size, Sort sort) {

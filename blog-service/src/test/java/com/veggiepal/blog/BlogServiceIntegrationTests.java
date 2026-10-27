@@ -1,6 +1,7 @@
 package com.veggiepal.blog;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
@@ -10,8 +11,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,9 +33,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.unit.DataSize;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.jayway.jsonpath.JsonPath;
@@ -39,8 +52,13 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import com.veggiepal.blog.configuration.VideoProperties;
+import com.veggiepal.blog.enums.ContentStatus;
+import com.veggiepal.blog.exception.AppException;
+import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.moderation.ContentModerationService;
 import com.veggiepal.blog.moderation.ModerationResult;
+import com.veggiepal.blog.repository.BlogRepository;
+import com.veggiepal.blog.service.BlogService;
 
 /**
  * End-to-end tests against a real MySQL schema and the real filter chain.
@@ -79,6 +97,15 @@ class BlogServiceIntegrationTests {
 
     @Autowired
     VideoProperties videoProperties;
+
+    @Autowired
+    BlogService blogService;
+
+    @Autowired
+    BlogRepository blogRepository;
+
+    @Autowired
+    PlatformTransactionManager transactionManager;
 
     @Value("${spring.servlet.multipart.max-file-size}")
     DataSize multipartMaxFileSize;
@@ -281,6 +308,102 @@ class BlogServiceIntegrationTests {
                                 """.formatted(suffix, body(suffix), categoryId)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value(3015));
+    }
+
+    @Test
+    void adminBan_duringAiApprovalCommit_remainsBanned() throws Exception {
+        String suffix = unique();
+        String title = "Ban race " + suffix;
+        String content = body(suffix);
+        long categoryId = createRootCategory("Danh mục " + suffix);
+        long blogId = createDraftBlog(categoryId, title, content);
+        TransactionTemplate transaction = new TransactionTemplate(transactionManager);
+        // Commit setup without publishing an event that could start another AI worker.
+        transaction.executeWithoutResult(status -> {
+            var blog = blogRepository.findById(blogId).orElseThrow();
+            blog.setStatus(ContentStatus.PENDING);
+            blog.setModerationRequestedAt(LocalDateTime.now());
+        });
+
+        CountDownLatch aiApplied = new CountDownLatch(1);
+        CountDownLatch releaseAiCommit = new CountDownLatch(1);
+        CountDownLatch adminPrepared = new CountDownLatch(1);
+        CountDownLatch adminCommitStarted = new CountDownLatch(1);
+        CountDownLatch adminCommitted = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+        try {
+            var ai = executor.submit(() -> transaction.executeWithoutResult(status -> {
+                blogService.applyAiModeration(blogId, title + "\n" + content, ModerationResult.approved());
+                aiApplied.countDown();
+                awaitLatch(releaseAiCommit);
+            }));
+            awaitLatch(aiApplied);
+
+            var admin = executor.submit(() -> {
+                transaction.executeWithoutResult(status -> {
+                    blogService.deleteBlog(ADMIN_ID, true, blogId);
+                    adminPrepared.countDown();
+                    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                        @Override
+                        public void beforeCommit(boolean readOnly) {
+                            adminCommitStarted.countDown();
+                        }
+                    });
+                });
+                adminCommitted.countDown();
+            });
+            awaitLatch(adminPrepared);
+            awaitLatch(adminCommitStarted);
+            // Without the row lock the admin commits first, then stale AI overwrites BANNED.
+            // With the lock, the admin's UPDATE waits until the held AI transaction commits.
+            boolean adminCommittedBeforeAi = adminCommitted.await(2, TimeUnit.SECONDS);
+            releaseAiCommit.countDown();
+            ai.get(10, TimeUnit.SECONDS);
+            admin.get(10, TimeUnit.SECONDS);
+
+            assertThat(blogRepository.findById(blogId).orElseThrow().getStatus())
+                    .isEqualTo(ContentStatus.BANNED);
+            assertThat(adminCommittedBeforeAi).as("admin UPDATE must wait for the AI row lock").isFalse();
+            mockMvc.perform(get("/blogs/" + blogId).header("Authorization", bearer(AUTHOR_ID, "USER")))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.status").value("BANNED"))
+                    .andExpect(jsonPath("$.result.aiReviewInProgress").value(false));
+        } finally {
+            releaseAiCommit.countDown();
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(10, TimeUnit.SECONDS)).isTrue();
+        }
+    }
+
+    // Task sheet US12: an AI outage no longer fails the request; the post waits, hidden, for the retry job
+    @Test
+    void publishWhileAiIsDown_staysPendingAndHidden() throws Exception {
+        when(contentModerationService.moderate(any(), any(), any(), any()))
+                .thenThrow(new AppException(ErrorCode.MODERATION_UNAVAILABLE));
+        String suffix = unique();
+        long categoryId = createRootCategory("Danh mục " + suffix);
+
+        long blogId = idOf(mockMvc.perform(authed(post("/blogs"), AUTHOR_ID, "USER")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"title":"AI nghỉ %s","content":"%s","categoryId":%d,"publish":true}
+                                """.formatted(suffix, body(suffix), categoryId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.status").value("PENDING"))
+                .andExpect(jsonPath("$.result.aiReviewInProgress").value(true))
+                .andReturn());
+
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+                verify(contentModerationService, atLeastOnce()).moderate(eq("BLOG"), eq(blogId), any(), any()));
+
+        mockMvc.perform(get("/blogs/" + blogId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(3014));
+
+        mockMvc.perform(get("/blogs/" + blogId).header("Authorization", bearer(AUTHOR_ID, "USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.status").value("PENDING"))
+                .andExpect(jsonPath("$.result.aiReviewInProgress").value(true));
     }
 
     // ---------------------------------------------------------------- comments
@@ -523,6 +646,15 @@ class BlogServiceIntegrationTests {
 
     // ---------------------------------------------------------------- helpers
 
+    private static void awaitLatch(CountDownLatch latch) {
+        try {
+            assertThat(latch.await(10, TimeUnit.SECONDS)).as("concurrent transaction reached its checkpoint").isTrue();
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(exception);
+        }
+    }
+
     private static String unique() {
         return UUID.randomUUID().toString().substring(0, 8);
     }
@@ -588,6 +720,9 @@ class BlogServiceIntegrationTests {
         return idOf(result);
     }
 
+    // Moderation is asynchronous (task sheet US12): the post answers PENDING and is published once
+    // the (mocked, approving) AI call has run after commit. Polls the owner's list, not GET /blogs/{id},
+    // which would bump the view counter some tests assert on.
     private long createPublishedBlog(long categoryId, String title, String content) throws Exception {
         MvcResult result = mockMvc.perform(authed(post("/blogs"), AUTHOR_ID, "USER")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -595,10 +730,18 @@ class BlogServiceIntegrationTests {
                                 {"title":"%s","content":"%s","categoryId":%d,"publish":true}
                                 """.formatted(title, content, categoryId)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.status").value("PUBLISHED"))
+                .andExpect(jsonPath("$.result.status").value("PENDING"))
                 .andReturn();
 
-        return idOf(result);
+        long blogId = idOf(result);
+
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+                mockMvc.perform(get("/blogs/me").header("Authorization", bearer(AUTHOR_ID, "USER"))
+                                .param("status", "PUBLISHED"))
+                        .andExpect(jsonPath("$.result.items[?(@.id == %d)].status".formatted(blogId))
+                                .value("PUBLISHED")));
+
+        return blogId;
     }
 
     private long createDraftBlog(long categoryId, String title, String content) throws Exception {
