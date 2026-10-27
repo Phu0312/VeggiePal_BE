@@ -96,6 +96,7 @@ services:
       BLOG_SERVICE_PORT: "8083"
       IDENTITY_SERVICE_URL: http://identity-service:8081
       AI_SERVICE_URL: http://ai-service:8086
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN must be set in .env}
     depends_on:
       mysql:
         condition: service_healthy

@@ -42,4 +42,7 @@ public class BlogResponse {
 
     /** Only filled when moderation rejected or deferred the content. */
     String moderationReason;
+
+    /** True until AI has answered; the FE polls GET /blogs/{id} until it turns false. */
+    Boolean aiReviewInProgress;
 }

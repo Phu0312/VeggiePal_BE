@@ -25,8 +25,19 @@ public class ModerationService {
     private final UsageService usage;
     private final ModerationOwnerClient ownerClient;
 
+    static final String SERVICE_PRINCIPAL = "service:moderation";
+
     public ModerationResponse moderate(Long callerId, ModerationRequest request) {
         usage.checkBudget("user:"+callerId);
+        return classify(callerId, "user:"+callerId, request);
+    }
+
+    /** blog-service's background moderation (task B spec §2.8): a platform cost, so no per-user budget. */
+    public ModerationResponse moderateForService(ModerationRequest request) {
+        return classify(request.authorId(), SERVICE_PRINCIPAL, request);
+    }
+
+    private ModerationResponse classify(Long userId, String principal, ModerationRequest request) {
         String prompt = """
                 Phân loại nội dung cộng đồng sau. Vi phạm gồm: hate, harassment, sexual, violence, self_harm,
                 illegal, spam, misinformation_dangerous. Trả duy nhất JSON:
@@ -37,7 +48,7 @@ public class ModerationService {
         long start=System.nanoTime();
         try {
             var result=groq.complete(models.moderation(), List.of(new GroqRequest.Message("system","Bạn là bộ kiểm duyệt an toàn VeggiePal."), new GroqRequest.Message("user",prompt)),0,350);
-            usage.success(callerId,"user:"+callerId,"MODERATION",models.moderation(),result,elapsed(start));
+            usage.success(userId,principal,"MODERATION",models.moderation(),result,elapsed(start));
             JsonNode json=mapper.readTree(cleanJson(result.content()));
             Decision decision=Decision.valueOf(json.path("decision").asText("REVIEW_REQUIRED"));
             BigDecimal confidence=BigDecimal.valueOf(json.path("confidence").asDouble(0));
@@ -59,9 +70,9 @@ public class ModerationService {
             ModerationCase saved=repository.save(item);
             return view(saved);
         } catch (AppException exception) {
-            usage.failure(callerId,"user:"+callerId,"MODERATION",models.moderation(),elapsed(start),exception); throw exception;
+            usage.failure(userId,principal,"MODERATION",models.moderation(),elapsed(start),exception); throw exception;
         } catch (Exception exception) {
-            usage.failure(callerId,"user:"+callerId,"MODERATION",models.moderation(),elapsed(start),exception);
+            usage.failure(userId,principal,"MODERATION",models.moderation(),elapsed(start),exception);
             throw new AppException(ErrorCode.INVALID_AI_RESPONSE,exception);
         }
     }

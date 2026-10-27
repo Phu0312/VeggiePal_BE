@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mapstruct.factory.Mappers;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.mock.web.MockMultipartFile;
@@ -39,7 +40,7 @@ import com.veggiepal.blog.enums.ContentStatus;
 import com.veggiepal.blog.exception.AppException;
 import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.mapper.BlogMapper;
-import com.veggiepal.blog.moderation.ContentModerationService;
+import com.veggiepal.blog.moderation.BlogModerationRequested;
 import com.veggiepal.blog.moderation.ModerationDecision;
 import com.veggiepal.blog.moderation.ModerationResult;
 import com.veggiepal.blog.repository.BlogRepository;
@@ -58,7 +59,7 @@ class BlogServiceTest {
     CategoryService categoryService;
 
     @Mock
-    ContentModerationService contentModerationService;
+    ApplicationEventPublisher eventPublisher;
 
     @Mock
     FileStorageService fileStorageService;
@@ -98,6 +99,20 @@ class BlogServiceTest {
                 .build();
     }
 
+    static final String MODERATED_TEXT = "Đậu hũ sốt cà\n" + "x".repeat(50);
+
+    static Blog awaitingAi() {
+        Blog blog = blog(ContentStatus.PENDING);
+        blog.setModerationRequestedAt(LocalDateTime.now());
+        return blog;
+    }
+
+    private BlogModerationRequested publishedEvent() {
+        ArgumentCaptor<Object> event = ArgumentCaptor.forClass(Object.class);
+        verify(eventPublisher).publishEvent(event.capture());
+        return (BlogModerationRequested) event.getValue();
+    }
+
     @Test
     void createBlog_publishFalse_savesDraftAndSkipsModeration() {
         when(categoryService.requireActiveCategory(3L)).thenReturn(category());
@@ -107,46 +122,57 @@ class BlogServiceTest {
 
         assertThat(response.getStatus()).isEqualTo(ContentStatus.DRAFT);
         assertThat(response.getPublishedAt()).isNull();
-        verify(contentModerationService, never()).moderate(anyString(), any(), any(), anyString());
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
     }
 
+    // Task sheet US12: answer at once, hidden until AI has decided in the background
     @Test
-    void createBlog_publishTrueAndApproved_publishesAndStampsPublishedAt() {
+    void createBlog_publishTrue_hidesItAndRequestsModeration() {
         when(categoryService.requireActiveCategory(3L)).thenReturn(category());
-        when(contentModerationService.moderate(anyString(), any(), any(), anyString())).thenReturn(ModerationResult.approved());
-        when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
-
-        BlogResponse response = blogService.createBlog(AUTHOR_ID, request(true));
-
-        assertThat(response.getStatus()).isEqualTo(ContentStatus.PUBLISHED);
-        assertThat(response.getPublishedAt()).isNotNull();
-    }
-
-    @Test
-    void createBlog_publishTrueButRejected_returnsRejectedWithReason() {
-        when(categoryService.requireActiveCategory(3L)).thenReturn(category());
-        when(contentModerationService.moderate(anyString(), any(), any(), anyString()))
-                .thenReturn(new ModerationResult(ModerationDecision.REJECTED, "spam"));
-        when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
-
-        BlogResponse response = blogService.createBlog(AUTHOR_ID, request(true));
-
-        assertThat(response.getStatus()).isEqualTo(ContentStatus.REJECTED);
-        assertThat(response.getModerationReason()).isEqualTo("spam");
-        assertThat(response.getPublishedAt()).isNull();
-    }
-
-    @Test
-    void createBlog_moderationPending_holdsContentBackFromPublic() {
-        when(categoryService.requireActiveCategory(3L)).thenReturn(category());
-        when(contentModerationService.moderate(anyString(), any(), any(), anyString()))
-                .thenReturn(new ModerationResult(ModerationDecision.REVIEW_REQUIRED, "queued"));
         when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
 
         BlogResponse response = blogService.createBlog(AUTHOR_ID, request(true));
 
         assertThat(response.getStatus()).isEqualTo(ContentStatus.PENDING);
+        assertThat(response.getAiReviewInProgress()).isTrue();
         assertThat(response.getPublishedAt()).isNull();
+        assertThat(publishedEvent().text()).isEqualTo(MODERATED_TEXT);
+    }
+
+    // BR-02: editing something already public sends it back through moderation
+    @Test
+    void updateBlog_onPublished_hidesItUntilModeratedAgain() {
+        LocalDateTime original = LocalDateTime.now().minusDays(3);
+        Blog existing = blog(ContentStatus.PUBLISHED);
+        existing.setPublishedAt(original);
+
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(categoryService.requireActiveCategory(3L)).thenReturn(category());
+        when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
+
+        BlogResponse response = blogService.updateBlog(AUTHOR_ID, false, 10L, request(true));
+
+        assertThat(response.getStatus()).isEqualTo(ContentStatus.PENDING);
+        assertThat(existing.getPublishedAt()).isEqualTo(original);
+        assertThat(publishedEvent().blogId()).isEqualTo(10L);
+    }
+
+    // How a member fixes a rejected post and tries again
+    @Test
+    void updateBlog_onRejected_clearsTheOldReasonAndRequestsModeration() {
+        Blog existing = blog(ContentStatus.REJECTED);
+        existing.setModerationReason("spam");
+
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(categoryService.requireActiveCategory(3L)).thenReturn(category());
+        when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
+
+        BlogResponse response = blogService.updateBlog(AUTHOR_ID, false, 10L, request(true));
+
+        assertThat(response.getStatus()).isEqualTo(ContentStatus.PENDING);
+        assertThat(response.getModerationReason()).isNull();
+        assertThat(existing.getModerationRequestedAt()).isNotNull();
+        publishedEvent();
     }
 
     @Test
@@ -162,23 +188,6 @@ class BlogServiceTest {
         verify(blogRepository, never()).save(any());
     }
 
-    // BR-02: editing something already public sends it back through moderation
-    @Test
-    void updateBlog_onPublished_reModerates() {
-        Blog existing = blog(ContentStatus.PUBLISHED);
-        existing.setPublishedAt(LocalDateTime.now().minusDays(3));
-
-        when(blogRepository.findById(10L)).thenReturn(Optional.of(existing));
-        when(categoryService.requireActiveCategory(3L)).thenReturn(category());
-        when(contentModerationService.moderate(anyString(), any(), any(), anyString())).thenReturn(ModerationResult.approved());
-        when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
-
-        BlogResponse response = blogService.updateBlog(AUTHOR_ID, false, 10L, request(true));
-
-        assertThat(response.getStatus()).isEqualTo(ContentStatus.PUBLISHED);
-        verify(contentModerationService).moderate(anyString(), any(), any(), anyString());
-    }
-
     @Test
     void updateBlog_onDraft_staysDraftWithoutModeration() {
         when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.DRAFT)));
@@ -188,37 +197,7 @@ class BlogServiceTest {
         BlogResponse response = blogService.updateBlog(AUTHOR_ID, false, 10L, request(false));
 
         assertThat(response.getStatus()).isEqualTo(ContentStatus.DRAFT);
-        verify(contentModerationService, never()).moderate(anyString(), any(), any(), anyString());
-    }
-
-    // How a member fixes a rejected post and tries again
-    @Test
-    void updateBlog_onRejected_reModeratesAndCanBecomePublished() {
-        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.REJECTED)));
-        when(categoryService.requireActiveCategory(3L)).thenReturn(category());
-        when(contentModerationService.moderate(anyString(), any(), any(), anyString())).thenReturn(ModerationResult.approved());
-        when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
-
-        BlogResponse response = blogService.updateBlog(AUTHOR_ID, false, 10L, request(true));
-
-        assertThat(response.getStatus()).isEqualTo(ContentStatus.PUBLISHED);
-        assertThat(response.getPublishedAt()).isNotNull();
-    }
-
-    @Test
-    void updateBlog_republished_keepsOriginalPublishedAt() {
-        LocalDateTime original = LocalDateTime.now().minusDays(3);
-        Blog existing = blog(ContentStatus.PUBLISHED);
-        existing.setPublishedAt(original);
-
-        when(blogRepository.findById(10L)).thenReturn(Optional.of(existing));
-        when(categoryService.requireActiveCategory(3L)).thenReturn(category());
-        when(contentModerationService.moderate(anyString(), any(), any(), anyString())).thenReturn(ModerationResult.approved());
-        when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
-
-        blogService.updateBlog(AUTHOR_ID, false, 10L, request(true));
-
-        assertThat(existing.getPublishedAt()).isEqualTo(original);
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
     }
 
     @Test
@@ -246,6 +225,25 @@ class BlogServiceTest {
         assertThat(existing.getStatus()).isEqualTo(ContentStatus.BANNED);
         verify(blogRepository).save(existing);
         verify(blogRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteBlog_byAdminWhileAiReviewPending_stopsOwnerPolling() {
+        Blog existing = awaitingAi();
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(existing));
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(existing));
+
+        blogService.deleteBlog(ADMIN_ID, true, 10L);
+        BlogResponse response = blogService.getBlog(10L, AUTHOR_ID, false);
+
+        assertThat(response.getStatus()).isEqualTo(ContentStatus.BANNED);
+        assertThat(response.getAiReviewInProgress()).isFalse();
+
+        blogService.applyAiModeration(10L, MODERATED_TEXT, ModerationResult.approved());
+        BlogResponse afterLateVerdict = blogService.getBlog(10L, AUTHOR_ID, false);
+
+        assertThat(afterLateVerdict.getStatus()).isEqualTo(ContentStatus.BANNED);
+        assertThat(afterLateVerdict.getAiReviewInProgress()).isFalse();
     }
 
     @Test
@@ -281,7 +279,7 @@ class BlogServiceTest {
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
 
-        verify(contentModerationService, never()).moderate(anyString(), any(), any(), anyString());
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
         verify(blogRepository, never()).save(any());
     }
 
@@ -310,15 +308,125 @@ class BlogServiceTest {
     }
 
     @Test
-    void submitBlog_fromDraft_runsModeration() {
+    void submitBlog_fromDraft_hidesItAndRequestsModeration() {
         when(blogRepository.findById(10L)).thenReturn(Optional.of(blog(ContentStatus.DRAFT)));
         when(categoryService.requireActiveCategory(3L)).thenReturn(category());
-        when(contentModerationService.moderate(anyString(), any(), any(), anyString())).thenReturn(ModerationResult.approved());
         when(blogRepository.save(any(Blog.class))).thenAnswer(call -> call.getArgument(0));
 
         BlogResponse response = blogService.submitBlog(AUTHOR_ID, 10L);
 
-        assertThat(response.getStatus()).isEqualTo(ContentStatus.PUBLISHED);
+        assertThat(response.getStatus()).isEqualTo(ContentStatus.PENDING);
+        assertThat(publishedEvent().text()).isEqualTo(MODERATED_TEXT);
+    }
+
+    @Test
+    void applyAiModeration_approved_publishesAndStampsPublishedAt() {
+        Blog blog = awaitingAi();
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
+
+        blogService.applyAiModeration(10L, MODERATED_TEXT, ModerationResult.approved());
+
+        assertThat(blog.getStatus()).isEqualTo(ContentStatus.PUBLISHED);
+        assertThat(blog.getPublishedAt()).isNotNull();
+        assertThat(blog.getModerationRequestedAt()).isNull();
+        assertThat(blog.getModerationReason()).isNull();
+    }
+
+    @Test
+    void applyAiModeration_approvedRepublish_keepsOriginalPublishedAt() {
+        LocalDateTime original = LocalDateTime.now().minusDays(3);
+        Blog blog = awaitingAi();
+        blog.setPublishedAt(original);
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
+
+        blogService.applyAiModeration(10L, MODERATED_TEXT, ModerationResult.approved());
+
+        assertThat(blog.getPublishedAt()).isEqualTo(original);
+    }
+
+    @Test
+    void applyAiModeration_rejected_keepsTheReasonForTheOwner() {
+        Blog blog = awaitingAi();
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
+
+        blogService.applyAiModeration(10L, MODERATED_TEXT, new ModerationResult(ModerationDecision.REJECTED, "spam"));
+
+        assertThat(blog.getStatus()).isEqualTo(ContentStatus.REJECTED);
+        assertThat(blog.getModerationReason()).isEqualTo("spam");
+        assertThat(blog.getPublishedAt()).isNull();
+        assertThat(blog.getModerationRequestedAt()).isNull();
+    }
+
+    // PENDING with no moderation_requested_at = waiting for an admin, so the retry job leaves it alone
+    @Test
+    void applyAiModeration_reviewRequired_staysPendingForAnAdmin() {
+        Blog blog = awaitingAi();
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
+
+        blogService.applyAiModeration(10L, MODERATED_TEXT,
+                new ModerationResult(ModerationDecision.REVIEW_REQUIRED, "queued"));
+
+        assertThat(blog.getStatus()).isEqualTo(ContentStatus.PENDING);
+        assertThat(blog.getModerationReason()).isEqualTo("queued");
+        assertThat(blog.getModerationRequestedAt()).isNull();
+    }
+
+    // The owner edited again while AI was busy; that edit has its own request in flight
+    @Test
+    void applyAiModeration_textChangedSince_isIgnored() {
+        Blog blog = awaitingAi();
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
+
+        blogService.applyAiModeration(10L, "older title\nolder content", ModerationResult.approved());
+
+        assertThat(blog.getStatus()).isEqualTo(ContentStatus.PENDING);
+        assertThat(blog.getModerationRequestedAt()).isNotNull();
+    }
+
+    // An admin's ban while AI was busy must not be lifted by a late approval
+    @Test
+    void applyAiModeration_bannedMeanwhile_isIgnored() {
+        Blog blog = blog(ContentStatus.BANNED);
+        blog.setModerationRequestedAt(LocalDateTime.now());
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
+
+        blogService.applyAiModeration(10L, MODERATED_TEXT, ModerationResult.approved());
+
+        assertThat(blog.getStatus()).isEqualTo(ContentStatus.BANNED);
+    }
+
+    @Test
+    void applyAiModeration_alreadyAnswered_isIgnored() {
+        Blog blog = blog(ContentStatus.PENDING);
+        blog.setModerationReason("queued");
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
+
+        blogService.applyAiModeration(10L, MODERATED_TEXT, ModerationResult.approved());
+
+        assertThat(blog.getStatus()).isEqualTo(ContentStatus.PENDING);
+        assertThat(blog.getModerationReason()).isEqualTo("queued");
+    }
+
+    @Test
+    void applyAiModeration_deletedMeanwhile_doesNothing() {
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.empty());
+
+        blogService.applyAiModeration(10L, MODERATED_TEXT, ModerationResult.approved());
+
+        verify(blogRepository, never()).save(any());
+    }
+
+    @Test
+    void applyAdminModeration_approved_clearsTheAiStateAndReason() {
+        Blog blog = awaitingAi();
+        blog.setModerationReason("queued");
+        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog));
+
+        blogService.applyAdminModeration(10L, AUTHOR_ID, true);
+
+        assertThat(blog.getStatus()).isEqualTo(ContentStatus.PUBLISHED);
+        assertThat(blog.getModerationRequestedAt()).isNull();
+        assertThat(blog.getModerationReason()).isNull();
     }
 
     @Test
@@ -344,7 +452,7 @@ class BlogServiceTest {
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.CATEGORY_INACTIVE);
 
-        verify(contentModerationService, never()).moderate(anyString(), any(), any(), anyString());
+        verify(eventPublisher, never()).publishEvent(any(Object.class));
         verify(blogRepository, never()).save(any());
     }
 
