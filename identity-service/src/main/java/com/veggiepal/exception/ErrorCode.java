@@ -46,6 +46,8 @@ public enum ErrorCode {
 
     INVALID_REQUEST(1018, "Invalid request data", HttpStatus.BAD_REQUEST),
 
+    CANNOT_FOLLOW_SELF(1020, "You cannot follow yourself", HttpStatus.BAD_REQUEST),
+
     GOOGLE_TOKEN_INVALID(1019, "Google sign-in failed", HttpStatus.UNAUTHORIZED);
 
     ErrorCode(

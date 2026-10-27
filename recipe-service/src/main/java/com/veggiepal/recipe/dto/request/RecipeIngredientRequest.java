@@ -5,6 +5,8 @@ import java.math.BigDecimal;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 
+import jakarta.validation.constraints.Size;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -23,7 +25,9 @@ public class RecipeIngredientRequest {
     BigDecimal quantity;
 
     @NotNull
+    @Size(max = 30, message = "RECIPE_UNIT_TOO_LONG")
     String unit;
 
+    @Size(max = 300, message = "RECIPE_NOTE_TOO_LONG")
     String note;
 }

@@ -189,7 +189,7 @@ public class RecipeService {
         int safeSize =
                 Math.min(
                         Math.max(size, 1),
-                        200
+                        100
                 );
 
         Pageable pageable =
@@ -197,8 +197,8 @@ public class RecipeService {
                         safePage,
                         safeSize,
                         Sort.by(
-                                Sort.Direction.DESC,
-                                "createdAt"
+                                Sort.Order.desc("createdAt"),
+                                Sort.Order.desc("id")
                         )
                 );
 
@@ -234,8 +234,8 @@ public class RecipeService {
                                 100
                         ),
                         Sort.by(
-                                Sort.Direction.DESC,
-                                "createdAt"
+                                Sort.Order.desc("createdAt"),
+                                Sort.Order.desc("id")
                         )
                 );
 
@@ -560,12 +560,6 @@ public class RecipeService {
                 .totalPages(
                         recipePage
                                 .getTotalPages()
-                )
-                .first(
-                        recipePage.isFirst()
-                )
-                .last(
-                        recipePage.isLast()
                 )
                 .build();
     }

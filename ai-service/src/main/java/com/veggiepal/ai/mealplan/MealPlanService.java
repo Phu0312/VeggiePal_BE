@@ -86,7 +86,7 @@ public class MealPlanService {
     }
 
     public MealPlanResponse generate(Long userId, String jwt, GenerateRequest request) {
-        JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
+        JsonNode allRecipes = recipeCandidates();
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
         JsonNode health = result(get(nutritionUrl + "/nutrition/me/health-records/latest", jwt));
         NutritionTarget target = request.dailyNutritionTarget() != null
@@ -156,7 +156,7 @@ public class MealPlanService {
                 ? null : mapper.convertValue(constraints.path("dailyNutritionTarget"), NutritionTarget.class);
         validator.validateTarget(target);
 
-        JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
+        JsonNode allRecipes = recipeCandidates();
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
         ArrayNode safeRecipes = validator.safeCandidates(allRecipes, allergies, List.of());
         ArrayNode candidates = validator.safeCandidates(allRecipes, allergies, available);
@@ -256,12 +256,12 @@ public class MealPlanService {
 
     @Transactional(readOnly = true)
     public PageResponse<MealPlanResponse> listFavorites(Long userId, int page, int size) {
+        int safeSize = Math.clamp(size, 1, 100);
+        int safePage = Math.min(Math.max(page, 0), Integer.MAX_VALUE / safeSize);
         if (favoriteRepository == null) {
             return PageResponse.<MealPlanResponse>builder()
-                    .content(List.of()).page(page).size(size).totalElements(0).totalPages(0).first(true).last(true).build();
+                    .content(List.of()).page(safePage).size(safeSize).totalElements(0).totalPages(0).build();
         }
-        int safePage = Math.max(page, 0);
-        int safeSize = Math.clamp(size, 1, 100);
         Page<MealPlanFavorite> favPage = favoriteRepository.findByUserIdOrderByCreatedAtDesc(
                 userId, PageRequest.of(safePage, safeSize));
         List<MealPlanResponse> items = favPage.getContent().stream()
@@ -274,8 +274,6 @@ public class MealPlanService {
                 .size(favPage.getSize())
                 .totalElements(favPage.getTotalElements())
                 .totalPages(favPage.getTotalPages())
-                .first(favPage.isFirst())
-                .last(favPage.isLast())
                 .build();
     }
 
@@ -313,7 +311,7 @@ public class MealPlanService {
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
         constraints.set("allergies", allergies.deepCopy());
 
-        JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
+        JsonNode allRecipes = recipeCandidates();
         validator.validateAndEnrich(root, allRecipes, allergies, recalculatedTarget, true);
 
         boolean confirmed = request != null && Boolean.TRUE.equals(request.confirm());
@@ -393,7 +391,7 @@ public class MealPlanService {
         MealPlan entity = owned(userId, mealPlanId);
         ObjectNode root = object(read(entity.getPlanJson())).deepCopy();
         JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
-        JsonNode allRecipes = result(get(recipeUrl + "/recipes?size=200", null)).path("content");
+        JsonNode allRecipes = recipeCandidates();
 
         JsonNode targetNode = root.path("constraints").path("dailyNutritionTarget");
         NutritionTarget target = (targetNode.isMissingNode() || targetNode.isNull())
@@ -432,6 +430,7 @@ public class MealPlanService {
                     ObjectNode mealNode = mapper.createObjectNode();
                     mealNode.put("mealType", mealType);
                     mealNode.put("recipeId", edit.recipeId());
+                    mealNode.put("recipeTitle", recipe.path("title").asText());
                     mealNode.put("note", edit.note() != null && !edit.note().isBlank() ? edit.note().trim() : "Bữa ăn bổ sung");
                     mealNode.set("nutrition", scaled.toJson(mapper));
                     if (mult.compareTo(BigDecimal.ONE) != 0) {
@@ -456,6 +455,7 @@ public class MealPlanService {
                         existing.put("mealType", mealType);
                     }
                     existing.put("recipeId", edit.recipeId());
+                    existing.put("recipeTitle", recipe.path("title").asText());
                     if (edit.note() != null && !edit.note().isBlank()) {
                         existing.put("note", edit.note().trim());
                     }
@@ -680,6 +680,23 @@ public class MealPlanService {
         } catch (Exception exception) {
             throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE, exception);
         }
+    }
+
+    // Keep the previous 200-candidate budget while obeying the shared 100-item page cap.
+    ArrayNode recipeCandidates() {
+        ArrayNode candidates = mapper.createArrayNode();
+        JsonNode first = result(get(recipeUrl + "/recipes?page=0&size=100", null));
+        candidates.addAll(pageItems(first));
+        if (first.path("totalPages").asInt(1) > 1) {
+            candidates.addAll(pageItems(result(get(recipeUrl + "/recipes?page=1&size=100", null))));
+        }
+        return candidates;
+    }
+
+    private ArrayNode pageItems(JsonNode page) {
+        JsonNode items = page.has("items") ? page.path("items") : page.path("content");
+        if (items instanceof ArrayNode array) return array;
+        throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
     }
 
     private JsonNode result(JsonNode envelope) {

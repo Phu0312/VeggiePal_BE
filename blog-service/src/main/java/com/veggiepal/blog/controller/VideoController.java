@@ -53,7 +53,7 @@ public class VideoController {
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
             @RequestParam(name = "status", required = false) ContentStatus status,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size
+            @RequestParam(name = "size", defaultValue = "20") int size
     ) {
 
         return ApiResponse
@@ -105,7 +105,7 @@ public class VideoController {
     ApiResponse<PageResponse<VideoResponse>> getPublishedVideos(
             @RequestParam(name = "categoryId", required = false) Long categoryId,
             @RequestParam(name = "page", defaultValue = "0") int page,
-            @RequestParam(name = "size", defaultValue = "10") int size
+            @RequestParam(name = "size", defaultValue = "20") int size
     ) {
 
         return ApiResponse

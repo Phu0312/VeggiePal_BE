@@ -368,6 +368,8 @@ class MealPlanUpgradeServiceTest {
 
         MealPlanDtos.MealPlanEditResponse res = service.manualEdit(USER_ID, PLAN_ID, "jwt-token", req);
 
+        var dinner=mapper.valueToTree(res.plan()).path("days").get(0).path("meals").get(2);
+        assertEquals(content.get(1).path("title").asText(),dinner.path("recipeTitle").asText());
         assertNotNull(res);
         assertFalse(res.preview());
         assertNotNull(res.updatedMealPlan());
@@ -587,7 +589,7 @@ class MealPlanUpgradeServiceTest {
 
         RestClient.RequestHeadersUriSpec recipeUriSpec = mock(RestClient.RequestHeadersUriSpec.class);
         RestClient.ResponseSpec recipeRespSpec = mock(RestClient.ResponseSpec.class);
-        when(http.get().uri("http://recipe-service/recipes?size=200")).thenReturn(recipeUriSpec);
+        when(http.get().uri("http://recipe-service/recipes?page=0&size=100")).thenReturn(recipeUriSpec);
         when(recipeUriSpec.retrieve()).thenReturn(recipeRespSpec);
         when(recipeRespSpec.body(any(Class.class))).thenReturn(recipeResult);
     }

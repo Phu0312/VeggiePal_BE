@@ -95,4 +95,27 @@ class RecipeControllerTest {
         mockMvc.perform(get("/recipes/me"))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test void unexpectedDatabaseFailureRemains500() throws Exception {
+        when(recipeService.createRecipe(eq(USER_ID),any())).thenThrow(new org.springframework.dao.DataIntegrityViolationException("database failure"));
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/recipes").with(member())
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON).content("""
+                {"title":"Tofu","servings":1,"ingredients":[{"ingredientId":1,"quantity":100,"unit":"g"}],
+                "steps":[{"stepNumber":1,"instruction":"Cook"}]}
+                """))
+                .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.code").value(9999));
+    }
+
+    @Test void listEmitsSharedPaginationAndTemporaryContentAlias() throws Exception {
+        when(recipeService.getPublishedRecipes(null,0,20)).thenReturn(
+            com.veggiepal.recipe.dto.response.PageResponse.<RecipeResponse>builder()
+                .content(java.util.List.of(RecipeResponse.builder().id(10L).build()))
+                .page(0).size(20).totalElements(1).totalPages(1).build());
+        mockMvc.perform(get("/recipes"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.result.items[0].id").value(10))
+                .andExpect(jsonPath("$.result.content[0].id").value(10))
+                .andExpect(jsonPath("$.result.size").value(20))
+                .andExpect(jsonPath("$.result.first").doesNotExist()).andExpect(jsonPath("$.result.last").doesNotExist());
+    }
+
 }

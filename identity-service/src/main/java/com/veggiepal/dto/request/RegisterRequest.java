@@ -17,7 +17,9 @@ public class RegisterRequest {
     @NotBlank(message = "EMAIL_REQUIRED")
     String email;
 
+    @NotBlank(message = "PASSWORD_REQUIRED")
     @Size(min = 6, message = "INVALID_PASSWORD")
+    @ToString.Exclude
     String password;
 
     @NotBlank(message = "FULL_NAME_REQUIRED")

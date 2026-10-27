@@ -45,7 +45,7 @@ public class MealPlanController {
     public ApiResponse<PageResponse<MealPlanResponse>> listFavorites(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "20") int size) {
         return ApiResponse.success(service.listFavorites(CurrentUser.id(jwt), page, size));
     }
 

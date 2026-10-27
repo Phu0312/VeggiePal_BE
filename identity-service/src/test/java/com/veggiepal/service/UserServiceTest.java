@@ -175,4 +175,15 @@ class UserServiceTest {
                 .emailVerified(emailVerified)
                 .build();
     }
+
+    @Test void registrationPersistsOnlyEncodedPassword() {
+        var request = com.veggiepal.dto.request.RegisterRequest.builder()
+                .email("member@example.com").password("secret123").fullName("Member").build();
+        when(userMapper.toUser(request)).thenReturn(new User());
+        when(passwordEncoder.encode("secret123")).thenReturn("bcrypt-hash");
+        userService.createUser(request);
+        var saved = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(saved.capture());
+        assertThat(saved.getValue().getPasswordHash()).isEqualTo("bcrypt-hash").isNotEqualTo(request.getPassword());
+    }
 }

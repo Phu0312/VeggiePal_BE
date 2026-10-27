@@ -204,6 +204,7 @@ public class MealPlanValidator {
                     mealNode.put("note", "Bữa ăn cân bằng dinh dưỡng");
                 }
                 mealNode.put("recipeId", selectedRecipeId);
+                mealNode.put("recipeTitle", byId.get(selectedRecipeId).path("title").asText());
 
                 sameDayRecipeIds.add(selectedRecipeId);
                 weeklyUsage.merge(selectedRecipeId, 1, Integer::sum);

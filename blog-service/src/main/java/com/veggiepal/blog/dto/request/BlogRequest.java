@@ -20,6 +20,7 @@ public class BlogRequest {
 
     @NotBlank(message = "BLOG_CONTENT_REQUIRED")
     @Size(min = 20, message = "INVALID_BLOG_CONTENT")
+    @com.veggiepal.blog.validation.CodePointLength(max = 50000)
     String content;
 
     // Not CATEGORY_NOT_EXISTED: that code carries HTTP 404, and a missing field

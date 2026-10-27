@@ -12,7 +12,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 // Runs the planner on the real seed catalogue (recipes-seed.json, exported from recipe-service's
-// GET /recipes?size=200). Re-export it whenever recipe-service's data.sql changes — see
+// GET /recipes?page=0&size=100). Re-export it whenever recipe-service's data.sql changes — see
 // docs/superpowers/plans/2026-10-21-recipe-nutrition-data.md, Task 6 Step 9.
 class MealPlanSeedAcceptanceTest {
     private final ObjectMapper mapper = new ObjectMapper();

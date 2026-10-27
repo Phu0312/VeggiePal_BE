@@ -41,7 +41,7 @@ public class RecipeController {
             int page,
 
             @RequestParam(
-                    defaultValue = "10"
+                    defaultValue = "20"
             )
             int size
     ) {
@@ -89,7 +89,7 @@ public class RecipeController {
             int page,
 
             @RequestParam(
-                    defaultValue = "10"
+                    defaultValue = "20"
             )
             int size
     ) {

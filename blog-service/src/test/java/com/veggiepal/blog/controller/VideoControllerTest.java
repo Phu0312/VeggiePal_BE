@@ -117,13 +117,13 @@ class VideoControllerTest {
     }
 
     @Test
-    void getPublishedVideos_isPublicAndDefaultsToTenPerPage() throws Exception {
-        when(videoService.getPublishedVideos(null, 0, 10))
-                .thenReturn(PageResponse.<VideoResponse>builder().items(List.of()).page(0).size(10).build());
+    void getPublishedVideos_isPublicAndDefaultsToTwentyPerPage() throws Exception {
+        when(videoService.getPublishedVideos(null, 0, 20))
+                .thenReturn(PageResponse.<VideoResponse>builder().items(List.of()).page(0).size(20).build());
 
         mockMvc.perform(get("/videos"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.size").value(10));
+                .andExpect(jsonPath("$.result.size").value(20));
     }
 
     @Test
@@ -138,13 +138,13 @@ class VideoControllerTest {
 
     @Test
     void getOwnVideos_usesUserIdFromClaim() throws Exception {
-        when(videoService.getOwnVideos(USER_ID, ContentStatus.DRAFT, 0, 10))
+        when(videoService.getOwnVideos(USER_ID, ContentStatus.DRAFT, 0, 20))
                 .thenReturn(PageResponse.<VideoResponse>builder().items(List.of()).build());
 
         mockMvc.perform(get("/videos/me").with(member()).param("status", "DRAFT"))
                 .andExpect(status().isOk());
 
-        verify(videoService).getOwnVideos(USER_ID, ContentStatus.DRAFT, 0, 10);
+        verify(videoService).getOwnVideos(USER_ID, ContentStatus.DRAFT, 0, 20);
     }
 
     @Test

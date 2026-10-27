@@ -37,4 +37,19 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.code").value(1018))
                 .andExpect(jsonPath("$.message").value("Invalid request data"));
     }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = {" ", "      ", "abc", "12345"})
+    void invalidRegistrationPasswordIsRejected(String password) throws Exception {
+        var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+        var body = new java.util.HashMap<String, Object>();
+        body.put("email", "member@example.com"); body.put("fullName", "Member"); body.put("password", password);
+        mockMvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                    .content(mapper.writeValueAsString(body)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(org.hamcrest.Matchers.isOneOf(1010, 1003)))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.not("Invalid validation key")));
+        org.mockito.Mockito.verifyNoInteractions(userService);
+    }
 }
