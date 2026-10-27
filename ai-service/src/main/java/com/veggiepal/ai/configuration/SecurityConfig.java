@@ -26,7 +26,9 @@ public class SecurityConfig {
             PathPatternRequestMatcher.withDefaults().matcher("/actuator/health"),
             PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/ai/chat/guest"),
             PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/ai/chat/guest-sessions"),
-            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/ai/videos/by-video/{videoId:[0-9]+}")
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/ai/videos/by-video/{videoId:[0-9]+}"),
+            // Guarded by X-Internal-Service-Token inside the controller, not by a JWT
+            PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.POST, "/internal/moderation/check")
     );
 
     @Bean
@@ -38,6 +40,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/ai/chat/guest").permitAll()
                         .requestMatchers(HttpMethod.POST, "/ai/chat/guest-sessions").permitAll()
                         .requestMatchers(HttpMethod.GET, "/ai/videos/by-video/{videoId:[0-9]+}").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/internal/moderation/check").permitAll()
                         .requestMatchers("/ai/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e.authenticationEntryPoint(errors).accessDeniedHandler(errors))

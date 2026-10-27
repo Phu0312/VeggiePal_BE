@@ -3,7 +3,11 @@ package com.veggiepal.ai.moderation;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -157,9 +161,33 @@ class ModerationServiceTest {
         org.mockito.Mockito.verifyNoInteractions(owner);
     }
 
+    // blog-service moderates in the background: a platform cost, never the author's AI quota
+    @Test
+    void serviceModerationSkipsTheUserBudgetAndLogsUnderTheServicePrincipal() {
+        ModerationRepository repository = mock(ModerationRepository.class);
+        GroqClient groq = mock(GroqClient.class);
+        UsageService usage = mock(UsageService.class);
+        when(groq.complete(any(), any(), any(Double.class), any(Integer.class))).thenReturn(
+                new GroqResult("{\"decision\":\"APPROVED\",\"categories\":[],\"reason\":\"ok\",\"confidence\":0.9}", 10, 5));
+        when(repository.save(any(ModerationCase.class))).thenAnswer(call -> call.getArgument(0));
+        ModerationService service = service(repository, groq, mock(ModerationOwnerClient.class), usage);
+
+        var response = service.moderateForService(
+                new ModerationDtos.ModerationRequest(ModerationDtos.ContentType.BLOG, 42L, 7L, "content"));
+
+        assertEquals(Decision.APPROVED, response.decision());
+        verify(usage, never()).checkBudget(anyString());
+        verify(usage).success(eq(7L), eq("service:moderation"), eq("MODERATION"), any(), any(), anyLong());
+    }
+
     private ModerationService service(ModerationRepository repository, GroqClient groq, ModerationOwnerClient owner) {
+        return service(repository, groq, owner, mock(UsageService.class));
+    }
+
+    private ModerationService service(ModerationRepository repository, GroqClient groq, ModerationOwnerClient owner,
+                                      UsageService usage) {
         return new ModerationService(repository, groq,
                 new ModelProperties("c", "m", "r", "p", "v", "w"), new ObjectMapper(),
-                mock(UsageService.class), owner);
+                usage, owner);
     }
 }
