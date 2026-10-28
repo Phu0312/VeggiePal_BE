@@ -32,4 +32,9 @@ public interface VideoRepository extends JpaRepository<Video, Long> {
     @Modifying
     @Query("update Video v set v.viewCount = v.viewCount + 1 where v.id = :id")
     void incrementViewCount(@Param("id") Long id);
+
+    /** Atomic, like BlogRepository.addVoteScore. */
+    @Modifying
+    @Query("update Video v set v.voteScore = v.voteScore + :delta where v.id = :id")
+    void addVoteScore(@Param("id") Long id, @Param("delta") int delta);
 }

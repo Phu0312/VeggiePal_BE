@@ -10,7 +10,11 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class VoteResponse {
 
+    /** Set on a blog vote; null on a video vote. */
     Long blogId;
+
+    /** Set on a video vote; null on a blog vote (task_be C13). */
+    Long videoId;
 
     /** The caller's own vote: 1, -1, or null when they have not voted. */
     Integer myVote;

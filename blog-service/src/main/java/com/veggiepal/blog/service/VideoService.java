@@ -122,6 +122,14 @@ public class VideoService {
         return toPageResponse(videos);
     }
 
+    /** For comments and votes: only published videos take them (task_be C13). */
+    public Video requirePublishedVideo(Long videoId) {
+
+        return videoRepository
+                .findByIdAndStatus(videoId, ContentStatus.PUBLISHED)
+                .orElseThrow(() -> new AppException(ErrorCode.VIDEO_NOT_EXISTED));
+    }
+
     @Transactional
     public VideoResponse getPublishedVideo(Long id) {
 

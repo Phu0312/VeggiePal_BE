@@ -28,6 +28,7 @@ import com.veggiepal.blog.dto.response.CommentResponse;
 import com.veggiepal.blog.dto.response.PageResponse;
 import com.veggiepal.blog.entity.Blog;
 import com.veggiepal.blog.entity.Comment;
+import com.veggiepal.blog.entity.Video;
 import com.veggiepal.blog.enums.CommentStatus;
 import com.veggiepal.blog.enums.TargetType;
 import com.veggiepal.blog.exception.AppException;
@@ -50,6 +51,9 @@ class CommentServiceTest {
 
     @Mock
     BlogService blogService;
+
+    @Mock
+    VideoService videoService;
 
     @Mock
     ContentModerationService contentModerationService;
@@ -123,16 +127,31 @@ class CommentServiceTest {
         verify(commentRepository, never()).save(any());
     }
 
-    // The column already accepts VIDEO; the API does not, yet
+    // task_be C13: videos take comments under the same rules as blogs
     @Test
-    void createComment_onVideo_throwsUnsupportedTargetType() {
+    void createComment_onPublishedVideo_isCheckedAgainstVideosAndSaved() {
         CommentRequest videoRequest = CommentRequest.builder()
                 .targetType(TargetType.VIDEO).targetId(10L).content("ngon quá").build();
+        when(videoService.requirePublishedVideo(10L)).thenReturn(Video.builder().id(10L).build());
+        when(contentModerationService.moderate(anyString(), any(), any(), anyString())).thenReturn(ModerationResult.approved());
+        when(commentRepository.save(any(Comment.class))).thenAnswer(call -> call.getArgument(0));
+
+        CommentResponse response = commentService.createComment(AUTHOR_ID, videoRequest);
+
+        assertThat(response.getContent()).isEqualTo("ngon quá");
+        verify(blogService, never()).requirePublishedBlog(any());
+    }
+
+    @Test
+    void createComment_onMissingVideo_propagatesVideoNotExisted() {
+        CommentRequest videoRequest = CommentRequest.builder()
+                .targetType(TargetType.VIDEO).targetId(10L).content("ngon quá").build();
+        when(videoService.requirePublishedVideo(10L)).thenThrow(new AppException(ErrorCode.VIDEO_NOT_EXISTED));
 
         assertThatThrownBy(() -> commentService.createComment(AUTHOR_ID, videoRequest))
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
-                .isEqualTo(ErrorCode.UNSUPPORTED_TARGET_TYPE);
+                .isEqualTo(ErrorCode.VIDEO_NOT_EXISTED);
 
         verify(commentRepository, never()).save(any());
     }
@@ -292,14 +311,15 @@ class CommentServiceTest {
                 .findByTargetTypeAndTargetIdAndParentIsNullAndStatusIn(any(), any(), any(), any());
     }
 
-    // A VIDEO target must answer UNSUPPORTED_TARGET_TYPE rather than have its id
-    // looked up against blogs (requireSupportedTarget must run before the blog check).
+    // A VIDEO target is looked up against videos, never against blogs
     @Test
-    void getRootComments_videoTarget_throwsUnsupportedTargetTypeWithoutLoadingBlog() {
+    void getRootComments_videoTarget_checksTheVideoNotABlog() {
+        when(videoService.requirePublishedVideo(10L)).thenThrow(new AppException(ErrorCode.VIDEO_NOT_EXISTED));
+
         assertThatThrownBy(() -> commentService.getRootComments(TargetType.VIDEO, 10L, 0, 20))
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
-                .isEqualTo(ErrorCode.UNSUPPORTED_TARGET_TYPE);
+                .isEqualTo(ErrorCode.VIDEO_NOT_EXISTED);
 
         verify(blogService, never()).requirePublishedBlog(any());
     }

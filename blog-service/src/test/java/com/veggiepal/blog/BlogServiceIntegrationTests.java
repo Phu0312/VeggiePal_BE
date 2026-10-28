@@ -409,6 +409,40 @@ class BlogServiceIntegrationTests {
                 .andExpect(jsonPath("$.result.aiReviewInProgress").value(true));
     }
 
+    // task_be C13: comments and toggled votes on a published video, through the real filter chain
+    @Test
+    void publishedVideo_takesCommentsAndToggledVotes() throws Exception {
+        String suffix = unique();
+        long categoryId = createRootCategory("Danh mục " + suffix);
+        long videoId = createVideo(categoryId, "Video " + suffix, true);
+
+        mockMvc.perform(authed(post("/comments"), OTHER_MEMBER_ID, "USER")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"targetType":"VIDEO","targetId":%d,"content":"hay quá"}
+                                """.formatted(videoId)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/comments").param("targetType", "VIDEO").param("targetId", String.valueOf(videoId)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.items[0].content").value("hay quá"));
+
+        mockMvc.perform(authed(post("/videos/" + videoId + "/vote"), OTHER_MEMBER_ID, "USER")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"value\":1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.videoId").value(videoId))
+                .andExpect(jsonPath("$.result.voteScore").value(1));
+
+        mockMvc.perform(get("/videos/" + videoId))
+                .andExpect(jsonPath("$.result.voteScore").value(1));
+
+        mockMvc.perform(authed(post("/videos/" + videoId + "/vote"), OTHER_MEMBER_ID, "USER")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"value\":1}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.myVote").doesNotExist())
+                .andExpect(jsonPath("$.result.voteScore").value(0));
+    }
+
     // ---------------------------------------------------------------- comments
 
     @Test
