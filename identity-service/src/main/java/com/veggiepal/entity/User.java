@@ -60,6 +60,16 @@ public class User {
     @Column(name = "email_verified", nullable = false)
     Boolean emailVerified;
 
+    // Admin lock audit fields, cleared on unlock.
+    @Column(name = "locked_reason", length = 500)
+    String lockedReason;
+
+    @Column(name = "locked_at")
+    LocalDateTime lockedAt;
+
+    @Column(name = "locked_by")
+    Long lockedBy;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     LocalDateTime createdAt;
 

@@ -15,4 +15,10 @@ public class LoginResponse {
     String email;
     String fullName;
     Role role;
+
+    /** task_be C11: one-use, 7 days; send to POST /auth/refresh for a new pair. */
+    String refreshToken;
+
+    /** Access token lifetime in seconds. */
+    Long expiresIn;
 }

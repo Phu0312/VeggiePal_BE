@@ -17,6 +17,7 @@ import com.veggiepal.configuration.SecurityConfig;
 import com.veggiepal.configuration.SecurityExceptionHandler;
 import com.veggiepal.controller.UserController;
 import com.veggiepal.service.UserService;
+import com.veggiepal.service.RefreshTokenService;
 
 @WebMvcTest(UserController.class)
 @Import({SecurityConfig.class, JwtConfig.class, SecurityExceptionHandler.class})
@@ -27,6 +28,9 @@ class GlobalExceptionHandlerTest {
 
     @MockitoBean
     UserService userService;
+
+    @MockitoBean
+    RefreshTokenService refreshTokenService;
 
     @Test
     void malformedJson_returnsInvalidRequest() throws Exception {

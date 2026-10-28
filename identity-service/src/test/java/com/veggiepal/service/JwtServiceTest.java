@@ -31,7 +31,7 @@ class JwtServiceTest {
         assertThat(jwt.getSubject()).isEqualTo("an@example.com");
         assertThat(((Number) jwt.getClaim("userId")).longValue()).isEqualTo(7L);
         assertThat(jwt.getClaimAsString("role")).isEqualTo("USER");
-        assertThat(jwt.getExpiresAt()).isAfter(jwt.getIssuedAt());
+        assertThat(java.time.Duration.between(jwt.getIssuedAt(), jwt.getExpiresAt()).toSeconds()).isEqualTo(900L);
     }
 
     @Test
@@ -39,5 +39,16 @@ class JwtServiceTest {
         assertThatThrownBy(() -> JwtConfig.signingKey("too-short"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("32");
+    }
+
+    @Test
+    void generateToken_usesConfiguredLifetime() {
+        JwtService service = new JwtService(SECRET, java.time.Duration.ofMinutes(3));
+        User user = User.builder().id(7L).email("an@example.com").role(Role.USER).build();
+
+        Jwt jwt = new JwtConfig().jwtDecoder(SECRET).decode(service.generateToken(user));
+
+        assertThat(java.time.Duration.between(jwt.getIssuedAt(), jwt.getExpiresAt()).toSeconds()).isEqualTo(180L);
+        assertThat(service.accessTtlSeconds()).isEqualTo(180L);
     }
 }

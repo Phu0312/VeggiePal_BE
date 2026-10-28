@@ -5,6 +5,10 @@ import java.util.UUID;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,15 +39,19 @@ public class ProfileService {
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
     FileStorageService fileStorageService;
+    RefreshTokenService refreshTokenService;
+    PlatformTransactionManager transactionManager;
 
     public UserProfileResponse getProfile(Long userId) {
 
         return userMapper.toUserProfileResponse(findUser(userId));
     }
 
+    @Transactional
     public UserProfileResponse updateProfile(Long userId, UpdateProfileRequest request) {
 
-        User user = findUser(userId);
+        User user = userRepository.lockById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         userMapper.updateProfile(user, request);
         user.setFullName(user.getFullName().trim());
@@ -57,9 +65,11 @@ public class ProfileService {
         return userMapper.toUserProfileResponse(user);
     }
 
+    @Transactional
     public void changePassword(Long userId, ChangePasswordRequest request) {
 
-        User user = findUser(userId);
+        User user = userRepository.lockById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
             throw new AppException(ErrorCode.WRONG_PASSWORD);
@@ -71,8 +81,11 @@ public class ProfileService {
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+        // Every session, this device's included, must sign in again with the new password
+        refreshTokenService.revokeAll(userId);
     }
 
+    @Transactional(propagation = Propagation.NEVER)
     public UserProfileResponse uploadAvatar(Long userId, MultipartFile file) {
 
         if (file == null || file.isEmpty()) {
@@ -95,24 +108,32 @@ public class ProfileService {
                         )
                 );
 
-        User user = findUser(userId);
-        String previousAvatarUrl = user.getAvatarUrl();
+        findUser(userId);
 
         String key = "avatars/" + userId + "/" + UUID.randomUUID() + "." + imageType.getExtension();
         String avatarUrl = fileStorageService.upload(key, content, imageType.getContentType());
 
-        user.setAvatarUrl(avatarUrl);
-
+        AvatarUpdate update;
         try {
-            userRepository.save(user);
+            update = new TransactionTemplate(transactionManager).execute(status -> {
+                User current = userRepository.lockById(userId)
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+                String previous = current.getAvatarUrl();
+                current.setAvatarUrl(avatarUrl);
+                userRepository.save(current);
+                return new AvatarUpdate(previous, userMapper.toUserProfileResponse(current));
+            });
         } catch (RuntimeException exception) {
             deleteQuietly(avatarUrl);
             throw exception;
         }
 
-        deleteQuietly(previousAvatarUrl);
-        return userMapper.toUserProfileResponse(user);
+        // execute returns only after commit, including the flush that may still fail.
+        deleteQuietly(update.previousUrl());
+        return update.response();
     }
+
+    private record AvatarUpdate(String previousUrl, UserProfileResponse response) {}
 
     private byte[] readContent(MultipartFile file) {
 

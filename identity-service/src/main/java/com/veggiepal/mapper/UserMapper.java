@@ -8,6 +8,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 
 import com.veggiepal.dto.request.RegisterRequest;
 import com.veggiepal.dto.request.UpdateProfileRequest;
+import com.veggiepal.dto.response.AdminUserResponse;
 import com.veggiepal.dto.response.PublicUserResponse;
 import com.veggiepal.dto.response.RegisterResponse;
 import com.veggiepal.dto.response.UserProfileResponse;
@@ -27,7 +28,12 @@ public interface UserMapper {
     @Mapping(target = "emailVerified", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "lockedReason", ignore = true)
+    @Mapping(target = "lockedAt", ignore = true)
+    @Mapping(target = "lockedBy", ignore = true)
     User toUser(RegisterRequest request);
+
+    AdminUserResponse toAdminUserResponse(User user);
 
     RegisterResponse toUserResponse(User user);
 
