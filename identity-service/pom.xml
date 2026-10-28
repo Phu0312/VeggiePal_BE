@@ -46,6 +46,12 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
+		<!-- task_be C10/C11: OTP emails over SMTP -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+
 		<!-- OAuth2 Resource Server: validate JWT -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

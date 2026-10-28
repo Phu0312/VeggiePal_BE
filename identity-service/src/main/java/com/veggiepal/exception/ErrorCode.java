@@ -48,6 +48,28 @@ public enum ErrorCode {
 
     CANNOT_FOLLOW_SELF(1020, "You cannot follow yourself", HttpStatus.BAD_REQUEST),
 
+    ACCOUNT_LOCKED(1021, "Your account has been locked", HttpStatus.FORBIDDEN),
+
+    ACCOUNT_NOT_ACTIVE(1022, "Your account is not active", HttpStatus.FORBIDDEN),
+
+    ACCOUNT_NOT_VERIFIED(1023, "Please verify your email before signing in", HttpStatus.FORBIDDEN),
+
+    CANNOT_MANAGE_SELF(1024, "You cannot change your own account here", HttpStatus.FORBIDDEN),
+
+    CANNOT_MANAGE_ADMIN(1025, "Administrator accounts cannot be changed here", HttpStatus.FORBIDDEN),
+
+    LOCK_REASON_REQUIRED(1026, "A reason (at most 500 characters) is required to lock an account", HttpStatus.BAD_REQUEST),
+
+    REFRESH_TOKEN_INVALID(1027, "Session expired, please sign in again", HttpStatus.UNAUTHORIZED),
+
+    OTP_INVALID(1028, "The code is incorrect", HttpStatus.BAD_REQUEST),
+
+    OTP_EXPIRED(1029, "The code has expired; request a new one", HttpStatus.BAD_REQUEST),
+
+    RESET_TOKEN_INVALID(1030, "This reset link has expired; start again", HttpStatus.BAD_REQUEST),
+
+    MAIL_UNAVAILABLE(1031, "Could not send the email, please try again later", HttpStatus.SERVICE_UNAVAILABLE),
+
     GOOGLE_TOKEN_INVALID(1019, "Google sign-in failed", HttpStatus.UNAUTHORIZED);
 
     ErrorCode(

@@ -33,6 +33,13 @@ public class SecurityConfig {
             "/auth/register",
             "/auth/login",
             "/auth/google",
+            "/auth/refresh",
+            "/auth/logout",
+            "/auth/verify-email",
+            "/auth/resend-verification",
+            "/auth/forgot-password",
+            "/auth/verify-otp",
+            "/auth/reset-password",
             "/auth/test",
             "/users/batch",
             "/swagger-ui/**",
@@ -52,6 +59,9 @@ public class SecurityConfig {
                         request -> request
                                 .requestMatchers(PUBLIC_ENDPOINTS)
                                 .permitAll()
+
+                                .requestMatchers("/admin/**")
+                                .hasRole("ADMIN")
 
                                 .anyRequest()
                                 .authenticated()

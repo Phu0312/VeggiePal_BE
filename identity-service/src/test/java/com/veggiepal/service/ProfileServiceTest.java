@@ -57,6 +57,12 @@ class ProfileServiceTest {
     @Spy
     UserMapper userMapper = Mappers.getMapper(UserMapper.class);
 
+    @Mock
+    RefreshTokenService refreshTokenService;
+
+    @Mock
+    org.springframework.transaction.PlatformTransactionManager transactionManager;
+
     @InjectMocks
     ProfileService profileService;
 
@@ -83,7 +89,7 @@ class ProfileServiceTest {
     @Test
     void updateProfile_nullFields_keepExistingValues() {
         User user = existingUser();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(user));
 
         profileService.updateProfile(USER_ID, new UpdateProfileRequest());
 
@@ -96,7 +102,7 @@ class ProfileServiceTest {
     @Test
     void updateProfile_trimsValuesAndClearsBlankPhone() {
         User user = existingUser();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(user));
         UpdateProfileRequest request = UpdateProfileRequest.builder()
                 .fullName("  Tran Thi Binh  ")
                 .phone("   ")
@@ -114,7 +120,7 @@ class ProfileServiceTest {
     @Test
     void updateProfile_trimsNewPhone() {
         User user = existingUser();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(user));
 
         profileService.updateProfile(USER_ID, UpdateProfileRequest.builder().phone(" 0987654321 ").build());
 
@@ -124,7 +130,7 @@ class ProfileServiceTest {
     @Test
     void updateProfile_setsGenderAndActivityLevel() {
         User user = existingUser();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(user));
 
         UserProfileResponse profile = profileService.updateProfile(USER_ID, UpdateProfileRequest.builder()
                 .gender(Gender.FEMALE).activityLevel(ActivityLevel.MODERATE).build());
@@ -140,7 +146,7 @@ class ProfileServiceTest {
         User user = existingUser();
         user.setGender(Gender.MALE);
         user.setActivityLevel(ActivityLevel.LIGHT);
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(user));
 
         profileService.updateProfile(USER_ID, new UpdateProfileRequest());
 
@@ -150,7 +156,7 @@ class ProfileServiceTest {
 
     @Test
     void changePassword_wrongCurrentPassword_throwsWrongPassword() {
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(existingUser()));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(existingUser()));
         when(passwordEncoder.matches("wrong-pass", "hashed-old-password")).thenReturn(false);
 
         assertThatThrownBy(() -> profileService.changePassword(
@@ -162,7 +168,7 @@ class ProfileServiceTest {
 
     @Test
     void changePassword_sameAsCurrent_throwsPasswordUnchanged() {
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(existingUser()));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(existingUser()));
         when(passwordEncoder.matches("old-secret", "hashed-old-password")).thenReturn(true);
 
         assertThatThrownBy(() -> profileService.changePassword(
@@ -175,7 +181,7 @@ class ProfileServiceTest {
     @Test
     void changePassword_success_storesNewHash() {
         User user = existingUser();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("old-secret", "hashed-old-password")).thenReturn(true);
         when(passwordEncoder.matches("new-secret", "hashed-old-password")).thenReturn(false);
         when(passwordEncoder.encode("new-secret")).thenReturn("hashed-new-password");
@@ -183,6 +189,7 @@ class ProfileServiceTest {
         profileService.changePassword(USER_ID, new ChangePasswordRequest("old-secret", "new-secret"));
 
         assertThat(user.getPasswordHash()).isEqualTo("hashed-new-password");
+        verify(refreshTokenService).revokeAll(USER_ID);
         verify(userRepository).save(user);
     }
 
@@ -238,6 +245,7 @@ class ProfileServiceTest {
         User user = existingUser();
         user.setAvatarUrl(OLD_AVATAR_URL);
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(user));
         when(fileStorageService.upload(anyString(), aryEq(PNG_BYTES), eq("image/png"))).thenReturn(NEW_AVATAR_URL);
         MockMultipartFile file = new MockMultipartFile("file", "a.png", "image/png", PNG_BYTES);
 
@@ -257,6 +265,7 @@ class ProfileServiceTest {
         User user = existingUser();
         user.setAvatarUrl(OLD_AVATAR_URL);
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(user));
         when(fileStorageService.upload(anyString(), aryEq(PNG_BYTES), eq("image/png"))).thenReturn(NEW_AVATAR_URL);
         doThrow(new AppException(ErrorCode.FILE_UPLOAD_FAILED)).when(fileStorageService).delete(OLD_AVATAR_URL);
         MockMultipartFile file = new MockMultipartFile("file", "a.png", "image/png", PNG_BYTES);
@@ -271,6 +280,7 @@ class ProfileServiceTest {
         User user = existingUser();
         user.setAvatarUrl(OLD_AVATAR_URL);
         when(userRepository.findById(USER_ID)).thenReturn(Optional.of(user));
+        when(userRepository.lockById(USER_ID)).thenReturn(Optional.of(user));
         when(fileStorageService.upload(anyString(), aryEq(PNG_BYTES), eq("image/png"))).thenReturn(NEW_AVATAR_URL);
         when(userRepository.save(user)).thenThrow(new IllegalStateException("db down"));
         MockMultipartFile file = new MockMultipartFile("file", "a.png", "image/png", PNG_BYTES);
