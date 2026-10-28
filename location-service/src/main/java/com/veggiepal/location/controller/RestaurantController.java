@@ -41,4 +41,19 @@ public class RestaurantController {
                 .result(restaurantService.findNearby(lat, lng, radiusKm, veganOnly))
                 .build();
     }
+
+    @Operation(summary = "Restaurants whose name contains q (2-100 characters), at most 20; lat/lng optional, adds distanceKm; no login needed")
+    @GetMapping("/search")
+    ApiResponse<List<RestaurantResponse>> search(
+            @RequestParam("q") String q,
+            @RequestParam(name = "lat", required = false) Double lat,
+            @RequestParam(name = "lng", required = false) Double lng,
+            @RequestParam(name = "veganOnly", defaultValue = "false") boolean veganOnly
+    ) {
+
+        return ApiResponse
+                .<List<RestaurantResponse>>builder()
+                .result(restaurantService.search(q, lat, lng, veganOnly))
+                .build();
+    }
 }

@@ -16,7 +16,9 @@ public enum ErrorCode {
     // Restaurant search
     INVALID_COORDINATES(5001, "Latitude must be within [-90, 90] and longitude within [-180, 180]", HttpStatus.BAD_REQUEST),
 
-    INVALID_SEARCH_RADIUS(5002, "Search radius must be greater than 0 and at most 10 km", HttpStatus.BAD_REQUEST);
+    INVALID_SEARCH_RADIUS(5002, "Search radius must be greater than 0 and at most 10 km", HttpStatus.BAD_REQUEST),
+
+    INVALID_SEARCH_KEYWORD(5003, "Search keyword must be 2 to 100 characters", HttpStatus.BAD_REQUEST);
 
     ErrorCode(
             int code,

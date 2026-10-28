@@ -1,10 +1,12 @@
 package com.veggiepal.location.service;
 
+import static org.mockito.Mockito.verify;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -107,5 +109,57 @@ class RestaurantServiceTest {
                 .isEqualTo(ErrorCode.INVALID_SEARCH_RADIUS);
 
         verifyNoInteractions(restaurantRepository);
+    }
+
+    @Test
+    void search_trimsTheKeywordAndPassesTheCoordinatesThrough() {
+        when(restaurantRepository.searchByName("hum", LAT, LNG, true)).thenReturn(List.of(shamballa(530.4)));
+
+        List<RestaurantResponse> result = restaurantService.search("  hum ", LAT, LNG, true);
+
+        assertThat(result).singleElement().satisfies(r -> assertThat(r.getDistanceKm()).isEqualTo(0.53));
+    }
+
+    @Test
+    void search_withoutCoordinates_hasNoDistance() {
+        Map<String, Object> values = new HashMap<>(Map.of(
+                "id", 21L, "name", "Hum Vegetarian Võ Văn Tần", "address", "32 Võ Văn Tần",
+                "latitude", 10.7772, "longitude", 106.6912, "veganOnly", true));
+        values.put("distanceMeters", null);
+        NearbyRestaurant hum = new SpelAwareProxyProjectionFactory().createProjection(NearbyRestaurant.class, values);
+        when(restaurantRepository.searchByName("hum", null, null, false)).thenReturn(List.of(hum));
+
+        List<RestaurantResponse> result = restaurantService.search("hum", null, null, false);
+
+        assertThat(result).singleElement().satisfies(r -> assertThat(r.getDistanceKm()).isNull());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", " ", "h", " h ", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"})
+    void search_rejectsKeywordsOutside2To100Characters(String q) {
+        assertThatThrownBy(() -> restaurantService.search(q, null, null, false))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_SEARCH_KEYWORD);
+
+        verifyNoInteractions(restaurantRepository);
+    }
+
+    @Test
+    void search_rejectsHalfACoordinate() {
+        assertThatThrownBy(() -> restaurantService.search("hum", LAT, null, false))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_COORDINATES);
+
+        verifyNoInteractions(restaurantRepository);
+    }
+
+    @Test
+    void search_rejectsCoordinatesOutOfRange() {
+        assertThatThrownBy(() -> restaurantService.search("hum", 91.0, LNG, false))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_COORDINATES);
     }
 }
