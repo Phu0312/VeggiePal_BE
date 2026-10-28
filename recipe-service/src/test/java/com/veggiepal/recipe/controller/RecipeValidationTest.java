@@ -2,6 +2,8 @@ package com.veggiepal.recipe.controller;
 
 import com.veggiepal.recipe.configuration.*;
 import com.veggiepal.recipe.dto.request.*;
+import com.veggiepal.recipe.service.RecipeFavoriteService;
+import com.veggiepal.recipe.service.RecipeImageService;
 import com.veggiepal.recipe.service.RecipeService;
 import java.util.Map;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,6 +24,8 @@ import static org.mockito.Mockito.*;
 class RecipeValidationTest {
     @Autowired MockMvc mvc;
     @MockitoBean RecipeService service;
+    @MockitoBean RecipeImageService recipeImageService;
+    @MockitoBean RecipeFavoriteService recipeFavoriteService;
 
     @ParameterizedTest
     @CsvSource({"title,200,4110", "description,2000,4111", "imageUrl,500,4112",

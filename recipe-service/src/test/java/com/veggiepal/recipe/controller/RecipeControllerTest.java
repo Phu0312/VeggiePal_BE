@@ -24,6 +24,8 @@ import com.veggiepal.recipe.dto.response.RecipeResponse;
 import com.veggiepal.recipe.enums.RecipeStatus;
 import com.veggiepal.recipe.exception.AppException;
 import com.veggiepal.recipe.exception.ErrorCode;
+import com.veggiepal.recipe.service.RecipeFavoriteService;
+import com.veggiepal.recipe.service.RecipeImageService;
 import com.veggiepal.recipe.service.RecipeService;
 
 @WebMvcTest(RecipeController.class)
@@ -37,6 +39,12 @@ class RecipeControllerTest {
 
     @MockitoBean
     RecipeService recipeService;
+
+    @MockitoBean
+    RecipeImageService recipeImageService;
+
+    @MockitoBean
+    RecipeFavoriteService recipeFavoriteService;
 
     static RequestPostProcessor member() {
         return jwt().jwt(token -> token.claim("userId", USER_ID).claim("role", "USER"));
@@ -107,7 +115,7 @@ class RecipeControllerTest {
     }
 
     @Test void listEmitsSharedPaginationAndTemporaryContentAlias() throws Exception {
-        when(recipeService.getPublishedRecipes(null,0,20)).thenReturn(
+        when(recipeService.getPublishedRecipes(null,null,0,20)).thenReturn(
             com.veggiepal.recipe.dto.response.PageResponse.<RecipeResponse>builder()
                 .content(java.util.List.of(RecipeResponse.builder().id(10L).build()))
                 .page(0).size(20).totalElements(1).totalPages(1).build());

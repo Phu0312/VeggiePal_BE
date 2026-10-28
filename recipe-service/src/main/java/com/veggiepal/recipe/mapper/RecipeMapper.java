@@ -21,6 +21,10 @@ public interface RecipeMapper {
             target = "steps",
             source = "steps"
     )
+    @Mapping(
+            target = "nutritionPerServing",
+            expression = "java(com.veggiepal.recipe.service.RecipeNutrition.perServing(recipe))"
+    )
     RecipeResponse toRecipeResponse(
             Recipe recipe
     );

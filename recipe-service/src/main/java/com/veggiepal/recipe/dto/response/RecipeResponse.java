@@ -37,6 +37,12 @@ public class RecipeResponse {
 
     List<RecipeStepResponse> steps;
 
+    /** task_be C16 */
+    NutritionPerServingResponse nutritionPerServing;
+
+    /** task_be C18 */
+    Integer favoriteCount;
+
     LocalDateTime createdAt;
 
     LocalDateTime updatedAt;

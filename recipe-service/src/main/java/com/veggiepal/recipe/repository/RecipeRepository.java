@@ -3,6 +3,7 @@ package com.veggiepal.recipe.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -53,4 +54,12 @@ public interface RecipeRepository
 
             Pageable pageable
     );
+
+    /**
+     * Atomic, like blog-service's addVoteScore: concurrent hearts must not lose counts.
+     * Flush first so the pending recipe_favorites insert/delete survives the clear; clear so later reads see the count.
+     */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update Recipe r set r.favoriteCount = r.favoriteCount + :delta where r.id = :id")
+    void addFavoriteCount(@Param("id") Long id, @Param("delta") int delta);
 }
