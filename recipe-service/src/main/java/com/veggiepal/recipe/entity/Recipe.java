@@ -69,6 +69,11 @@ public class Recipe {
     List<RecipeStep> steps =
             new ArrayList<>();
 
+    // task_be C18: denormalized from recipe_favorites, like blogs.vote_score. The DEFAULT lets
+    // ddl-auto add the column to a table that already has rows.
+    @Column(name = "favorite_count", nullable = false, columnDefinition = "int not null default 0")
+    Integer favoriteCount;
+
     @Column(name = "created_at", nullable = false)
     LocalDateTime createdAt;
 
@@ -89,6 +94,10 @@ public class Recipe {
 
         if (status == null) {
             status = RecipeStatus.DRAFT;
+        }
+
+        if (favoriteCount == null) {
+            favoriteCount = 0;
         }
     }
 

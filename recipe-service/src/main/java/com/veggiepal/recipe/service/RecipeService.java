@@ -175,10 +175,17 @@ public class RecipeService {
                 .toRecipeResponse(recipe);
     }
 
+    // Self-invocation skips the proxy, so this overload needs its own transaction for the lazy ingredients
+    @Transactional(readOnly = true)
+    public PageResponse<RecipeResponse> getPublishedRecipes(String keyword, int page, int size) {
+        return getPublishedRecipes(keyword, null, page, size);
+    }
+
     @Transactional(readOnly = true)
     public PageResponse<RecipeResponse>
     getPublishedRecipes(
             String keyword,
+            String sort,
             int page,
             int size
     ) {
@@ -196,10 +203,10 @@ public class RecipeService {
                 PageRequest.of(
                         safePage,
                         safeSize,
-                        Sort.by(
-                                Sort.Order.desc("createdAt"),
-                                Sort.Order.desc("id")
-                        )
+                        // task_be C18: "popular" = most loved; anything else keeps newest first
+                        "popular".equals(sort)
+                                ? Sort.by(Sort.Order.desc("favoriteCount"), Sort.Order.desc("id"))
+                                : Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id"))
                 );
 
         String safeKeyword =
@@ -434,6 +441,14 @@ public class RecipeService {
         recipeRepository.save(
                 recipe
         );
+    }
+
+    /** Owner (or admin) of a recipe that can still be changed; for RecipeImageService. */
+    public Recipe requireEditable(Long id, Long userId, boolean admin) {
+        Recipe recipe = findById(id);
+        checkOwner(recipe, userId, admin);
+        ensureMutable(recipe);
+        return recipe;
     }
 
     private Recipe findById(

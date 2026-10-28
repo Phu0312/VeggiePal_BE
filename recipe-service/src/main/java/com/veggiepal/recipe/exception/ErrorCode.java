@@ -61,6 +61,10 @@ public enum ErrorCode {
     RECIPE_UNIT_TOO_LONG(4113, "Ingredient unit must not exceed 30 characters", HttpStatus.BAD_REQUEST),
     RECIPE_NOTE_TOO_LONG(4114, "Ingredient note must not exceed 300 characters", HttpStatus.BAD_REQUEST),
     RECIPE_INSTRUCTION_TOO_LONG(4115, "Step instruction must not exceed 2000 characters", HttpStatus.BAD_REQUEST),
+    RECIPE_IMAGE_REQUIRED(4116, "Recipe image file is required", HttpStatus.BAD_REQUEST),
+    RECIPE_IMAGE_TOO_LARGE(4117, "Recipe image must not exceed 5MB", HttpStatus.BAD_REQUEST),
+    INVALID_RECIPE_IMAGE_TYPE(4118, "Recipe image must be a JPEG or PNG image", HttpStatus.BAD_REQUEST),
+    FILE_UPLOAD_FAILED(1017, "Could not upload file, please try again later", HttpStatus.SERVICE_UNAVAILABLE),
     INVALID_REQUEST(1018, "Invalid request data", HttpStatus.BAD_REQUEST);
 
     ErrorCode(
