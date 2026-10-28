@@ -47,6 +47,16 @@ public class QuotaService {
         return limit - quota.getRequestCount();
     }
 
+    /** Read-only twin of reserveFeature: the same row, never created here. */
+    @Transactional(readOnly = true)
+    public int used(String principalKey, String feature, QuotaPeriod period) {
+        LocalDate today = LocalDate.now();
+        LocalDate periodDate = period == QuotaPeriod.MONTHLY ? today.withDayOfMonth(1) : today;
+        return repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, periodDate)
+                .map(DailyQuota::getRequestCount)
+                .orElse(0);
+    }
+
     @Transactional
     public void refundFeature(String principalKey, String feature, QuotaPeriod period) {
         LocalDate today = LocalDate.now();

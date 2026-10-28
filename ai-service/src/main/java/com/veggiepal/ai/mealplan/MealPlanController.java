@@ -5,6 +5,7 @@ import static com.veggiepal.ai.mealplan.MealPlanDtos.*;
 import java.util.List;
 import com.veggiepal.ai.common.ApiResponse;
 import com.veggiepal.ai.common.PageResponse;
+import com.veggiepal.ai.quota.FeatureUsage;
 import com.veggiepal.ai.security.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,12 @@ public class MealPlanController {
     @GetMapping
     public ApiResponse<List<MealPlanResponse>> list(@AuthenticationPrincipal Jwt jwt) {
         return ApiResponse.success(service.list(CurrentUser.id(jwt)));
+    }
+
+    // task_be C14. A literal path, so it wins over /{id}
+    @GetMapping("/usage")
+    public ApiResponse<FeatureUsage> usage(@AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.success(service.usage(CurrentUser.id(jwt)));
     }
 
     @GetMapping("/nutrition-target")
@@ -103,6 +110,15 @@ public class MealPlanController {
             @PathVariable Long id,
             @PathVariable Integer version) {
         return ApiResponse.success(service.getVersion(CurrentUser.id(jwt), id, version));
+    }
+
+    // task_be C15: restore an archived version as a new one (no body)
+    @PostMapping("/{id}/versions/{version}/restore")
+    public ApiResponse<MealPlanResponse> restoreVersion(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id,
+            @PathVariable Integer version) {
+        return ApiResponse.success(service.restoreVersion(CurrentUser.id(jwt), id, version, jwt.getTokenValue()));
     }
 
     // ==========================================

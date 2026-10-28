@@ -555,6 +555,67 @@ class MealPlanUpgradeServiceTest {
         assertEquals("Bản khởi tạo", detail.changeSummary());
     }
 
+    // task_be C15: restoring is a step forward, never a rewrite of history
+    @Test
+    void restoreVersion_archivesTheCurrentPlanAndBringsTheOldOneBackAsANewVersion() {
+        MealPlan plan = new MealPlan(USER_ID, "Kế hoạch tuần", "Giảm cân", "{\"days\":[],\"current\":true}", 2);
+        when(repository.findByIdAndUserId(PLAN_ID, USER_ID)).thenReturn(Optional.of(plan));
+        MealPlanVersion v1 = new MealPlanVersion(plan, 1, "Kế hoạch tuần", "Giảm cân", samplePlanJson(), "Bản khởi tạo");
+        when(versionRepository.findByMealPlanIdAndVersion(PLAN_ID, 1)).thenReturn(Optional.of(v1));
+
+        ObjectNode allergyResult = mapper.createObjectNode();
+        allergyResult.putArray("result");
+        ObjectNode recipeResult = mapper.createObjectNode();
+        recipeResult.putObject("result").putArray("content").add(sampleRecipe(1, "Đậu hũ kho", true, false));
+        stubAllergiesAndRecipes(allergyResult, recipeResult);
+
+        MealPlanDtos.MealPlanResponse response = service.restoreVersion(USER_ID, PLAN_ID, 1, "jwt-token");
+
+        verify(versionRepository).save(argThat(v -> v.getVersion() == 2
+                && v.getPlanJson().contains("\"current\":true")
+                && v.getChangeSummary().equals("Trước khi khôi phục phiên bản 1")));
+        assertEquals(samplePlanJson(), plan.getPlanJson());
+        assertEquals(3, response.version());
+        verify(repository).save(plan);
+    }
+
+    @Test
+    void restoreVersion_unknownVersion_throwsVersionNotFound() {
+        MealPlan plan = new MealPlan(USER_ID, "Kế hoạch tuần", "Giảm cân", samplePlanJson(), 2);
+        when(repository.findByIdAndUserId(PLAN_ID, USER_ID)).thenReturn(Optional.of(plan));
+        when(versionRepository.findByMealPlanIdAndVersion(PLAN_ID, 9)).thenReturn(Optional.empty());
+
+        AppException ex = assertThrows(AppException.class, () -> service.restoreVersion(USER_ID, PLAN_ID, 9, "jwt-token"));
+
+        assertEquals(ErrorCode.VERSION_NOT_FOUND, ex.getErrorCode());
+        verify(versionRepository, never()).save(any());
+    }
+
+    // The user may have added an allergy since that version was saved
+    @Test
+    void restoreVersion_recipeNowUnsafe_changesNothing() {
+        MealPlan plan = new MealPlan(USER_ID, "Kế hoạch tuần", "Giảm cân", "{\"days\":[]}", 2);
+        when(repository.findByIdAndUserId(PLAN_ID, USER_ID)).thenReturn(Optional.of(plan));
+        MealPlanVersion v1 = new MealPlanVersion(plan, 1, "Kế hoạch tuần", "Giảm cân", samplePlanJson(), "Bản khởi tạo");
+        when(versionRepository.findByMealPlanIdAndVersion(PLAN_ID, 1)).thenReturn(Optional.of(v1));
+
+        ObjectNode allergyResult = mapper.createObjectNode();
+        allergyResult.putArray("result").addObject().put("code", "DAU_PHONG").put("name", "Đậu phộng");
+        ObjectNode recipeResult = mapper.createObjectNode();
+        ObjectNode peanut = sampleRecipe(1, "Món đậu phộng", true, true);
+        ((ObjectNode) peanut.withArray("ingredients").get(0))
+                .put("ingredientName", "Đậu phộng rang").put("normalizedName", "dau phong rang");
+        recipeResult.putObject("result").putArray("content").add(peanut);
+        stubAllergiesAndRecipes(allergyResult, recipeResult);
+
+        AppException ex = assertThrows(AppException.class, () -> service.restoreVersion(USER_ID, PLAN_ID, 1, "jwt-token"));
+
+        assertEquals(ErrorCode.RECIPE_CONTAINS_ALLERGEN, ex.getErrorCode());
+        assertEquals("{\"days\":[]}", plan.getPlanJson());
+        verify(versionRepository, never()).save(any());
+        verify(repository, never()).save(any());
+    }
+
     // ==========================================
     // HELPER STUBS
     // ==========================================

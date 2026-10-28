@@ -851,6 +851,14 @@ Lấy lịch sử các phiên bản đã lưu của thực đơn (`List<MealPlan
 
 Lấy chi tiết đầy đủ của một phiên bản cụ thể trong quá khứ.
 
+#### POST `/ai/meal-plans/{id}/versions/{version}/restore`
+
+Lưu bản hiện tại vào lịch sử, đưa phiên bản cũ trở lại thành version mới, và kiểm tra lại dị ứng/chay trước (6019/6018) (task_be C15).
+
+#### GET `/ai/meal-plans/usage`
+
+`{planCode, limit, used, remaining, periodStart, resetsOn}` của tháng hiện tại (task_be C14).
+
 #### Hợp đồng dữ liệu dinh dưỡng FE (Nutrition Contract)
 - `plan.days[].targetMet`: boolean (`true` khi calo trong ngày nằm trong `[minCalories, maxCalories]`, không có dung sai; đạm, carb và béo không quyết định `targetMet`).
 - `plan.days[].targetDeviations`: Object liệt kê mọi chỉ số nằm ngoài `[min, max]`, kể cả khi `targetMet` là `true`:

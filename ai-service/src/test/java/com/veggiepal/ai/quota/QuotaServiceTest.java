@@ -43,4 +43,19 @@ class QuotaServiceTest {
         assertThrows(AppException.class,
                 () -> service.reserveFeature("user:1", "MEAL_PLAN", QuotaPeriod.MONTHLY, 2));
     }
+
+    @Test
+    void usedReadsThisMonthsRowAndIsZeroWithoutOne() {
+        DailyQuotaRepository repository = mock(DailyQuotaRepository.class);
+        java.time.LocalDate firstOfMonth = java.time.LocalDate.now().withDayOfMonth(1);
+        DailyQuota row = new DailyQuota("user:1", "MEAL_PLAN", firstOfMonth);
+        row.reserve();
+        when(repository.findByPrincipalKeyAndFeatureAndUsageDate("user:1", "MEAL_PLAN", firstOfMonth))
+                .thenReturn(Optional.of(row));
+        QuotaService service = new QuotaService(repository, new QuotaProperties(3, 50, 12, 4000), new TokenProperties(50000));
+
+        assertEquals(1, service.used("user:1", "MEAL_PLAN", QuotaPeriod.MONTHLY));
+        assertEquals(0, service.used("user:2", "MEAL_PLAN", QuotaPeriod.MONTHLY));
+        verify(repository, never()).ensureExists(anyString(), anyString(), any());
+    }
 }

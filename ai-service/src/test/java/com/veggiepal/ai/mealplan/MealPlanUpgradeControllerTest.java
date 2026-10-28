@@ -7,8 +7,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.veggiepal.ai.common.PageResponse;
+import com.veggiepal.ai.quota.FeatureUsage;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -210,5 +212,28 @@ class MealPlanUpgradeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.version").value(1))
                 .andExpect(jsonPath("$.result.changeSummary").value("Khởi tạo"));
+    }
+
+    @Test
+    void usageEndpoint_returnsTheMonthlyCounter() throws Exception {
+        when(service.usage(42L)).thenReturn(new FeatureUsage("FREE", 2, 1, 1,
+                LocalDate.of(2026, 10, 1), LocalDate.of(2026, 11, 1)));
+
+        mockMvc.perform(get("/ai/meal-plans/usage"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.remaining").value(1))
+                .andExpect(jsonPath("$.result.planCode").value("FREE"));
+    }
+
+    @Test
+    void restoreEndpoint_passesTheCallersTokenThrough() throws Exception {
+        MealPlanDtos.MealPlanResponse res = new MealPlanDtos.MealPlanResponse(
+                10L, "Thực đơn tuần", "Tăng cơ", List.of(), LocalDateTime.now(), LocalDateTime.now(), 3, false, null
+        );
+        when(service.restoreVersion(42L, 10L, 1, "mock-jwt-token")).thenReturn(res);
+
+        mockMvc.perform(post("/ai/meal-plans/10/versions/1/restore"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.version").value(3));
     }
 }
