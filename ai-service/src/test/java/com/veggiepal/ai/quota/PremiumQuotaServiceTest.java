@@ -1,9 +1,11 @@
 package com.veggiepal.ai.quota;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import com.veggiepal.ai.subscription.*;
 import java.time.Instant;
+import java.time.LocalDate;
 import org.junit.jupiter.api.*;
 
 class PremiumQuotaServiceTest {
@@ -35,6 +37,36 @@ class PremiumQuotaServiceTest {
         when(subscriptions.getEffectiveSubscription(7L)).thenThrow(new RuntimeException("payment unavailable"));
         service.reserveMealPlan(7L);
         verify(quotas).reserveFeature("user:7", "MEAL_PLAN", QuotaPeriod.MONTHLY, 2);
+    }
+
+    @Test
+    void mealPlanUsageShowsThisMonthsLimitUsedAndRemaining() {
+        when(subscriptions.getEffectiveSubscription(7L)).thenReturn(SubscriptionEntitlement.free());
+        when(quotas.used("user:7", "MEAL_PLAN", QuotaPeriod.MONTHLY)).thenReturn(1);
+
+        FeatureUsage usage = service.mealPlanUsage(7L);
+
+        LocalDate first = LocalDate.now().withDayOfMonth(1);
+        assertEquals(new FeatureUsage("FREE", 2, 1, 1, first, first.plusMonths(1)), usage);
+    }
+
+    // A mid-month downgrade can leave more used than the new plan allows
+    @Test
+    void mealPlanUsageNeverReportsNegativeRemaining() {
+        when(subscriptions.getEffectiveSubscription(7L)).thenReturn(SubscriptionEntitlement.free());
+        when(quotas.used("user:7", "MEAL_PLAN", QuotaPeriod.MONTHLY)).thenReturn(5);
+
+        assertEquals(0, service.mealPlanUsage(7L).remaining());
+    }
+
+    @Test
+    void mealPlanUsageFallsBackToFreeWhenPaymentIsDown() {
+        when(subscriptions.getEffectiveSubscription(7L)).thenThrow(new RuntimeException("payment unavailable"));
+
+        FeatureUsage usage = service.mealPlanUsage(7L);
+
+        assertEquals("FREE", usage.planCode());
+        assertEquals(2, usage.limit());
     }
 
     private void assertLimits(SubscriptionEntitlement entitlement, int chat, int meals, int videos) {

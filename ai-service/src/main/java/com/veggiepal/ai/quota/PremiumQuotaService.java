@@ -28,6 +28,16 @@ public class PremiumQuotaService {
                 entitlement.mealPlansPerMonth());
     }
 
+    /** task_be C14. Uses effective() like reserveMealPlan, so what the FE shows matches what generate enforces. */
+    public FeatureUsage mealPlanUsage(Long userId) {
+        SubscriptionEntitlement entitlement = effective(userId);
+        int limit = entitlement.mealPlansPerMonth();
+        int used = quotas.used("user:" + userId, "MEAL_PLAN", QuotaPeriod.MONTHLY);
+        LocalDate periodStart = LocalDate.now().withDayOfMonth(1);
+        return new FeatureUsage(entitlement.planCode(), limit, used, Math.max(0, limit - used),
+                periodStart, periodStart.plusMonths(1));
+    }
+
     public int reserveVideo(Long userId) {
         SubscriptionEntitlement entitlement = effective(userId);
         return quotas.reserveFeature("user:" + userId, "VIDEO", QuotaPeriod.MONTHLY,

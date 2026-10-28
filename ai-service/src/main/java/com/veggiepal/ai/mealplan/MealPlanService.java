@@ -14,6 +14,7 @@ import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.groq.dto.GroqRequest;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.quota.FeatureUsage;
 import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -137,6 +138,10 @@ public class MealPlanService {
         MealPlan saved = repository.save(new MealPlan(
                 userId, request.name().trim(), request.healthGoal().trim(), request.goalType().name(), plan.toString()));
         return view(saved);
+    }
+
+    public FeatureUsage usage(Long userId) {
+        return premiumQuota.mealPlanUsage(userId);
     }
 
     public List<MealPlanResponse> list(Long userId) {
@@ -552,6 +557,44 @@ public class MealPlanService {
         MealPlanVersion ver = versionRepository.findByMealPlanIdAndVersion(mealPlanId, version)
                 .orElseThrow(() -> new AppException(ErrorCode.VERSION_NOT_FOUND));
         return viewVersion(ver);
+    }
+
+    /**
+     * task_be C15: brings an archived version back as a NEW version, so history keeps every step.
+     * No AI call, so no quota. Every recipe is checked again like manualEdit does: the user's
+     * allergies may have changed since that version was saved.
+     */
+    @Transactional
+    public MealPlanResponse restoreVersion(Long userId, Long mealPlanId, Integer version, String jwt) {
+        MealPlan entity = owned(userId, mealPlanId);
+        if (versionRepository == null) throw new AppException(ErrorCode.VERSION_NOT_FOUND);
+        MealPlanVersion restored = versionRepository.findByMealPlanIdAndVersion(mealPlanId, version)
+                .orElseThrow(() -> new AppException(ErrorCode.VERSION_NOT_FOUND));
+
+        JsonNode allergies = result(get(nutritionUrl + "/nutrition/me/allergies", jwt));
+        JsonNode allRecipes = recipeCandidates();
+        Set<Long> checked = new HashSet<>();
+        for (JsonNode day : read(restored.getPlanJson()).path("days")) {
+            for (JsonNode meal : day.path("meals")) {
+                long recipeId = meal.path("recipeId").asLong(-1);
+                if (checked.add(recipeId)) {
+                    fetchAndValidateRecipe(recipeId, allergies, allRecipes);
+                }
+            }
+        }
+
+        versionRepository.save(new MealPlanVersion(
+                entity,
+                entity.getVersion() != null ? entity.getVersion() : 1,
+                entity.getName(),
+                entity.getGoal(),
+                entity.getPlanJson(),
+                "Trước khi khôi phục phiên bản " + version
+        ));
+
+        entity.bumpVersion(restored.getPlanJson());
+        repository.save(entity);
+        return view(entity);
     }
 
     private MealPlanVersionResponse viewVersion(MealPlanVersion v) {
