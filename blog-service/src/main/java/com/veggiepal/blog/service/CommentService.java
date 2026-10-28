@@ -41,16 +41,15 @@ public class CommentService {
 
     CommentRepository commentRepository;
     BlogService blogService;
+    VideoService videoService;
     ContentModerationService contentModerationService;
     CommentMapper commentMapper;
 
     @Transactional
     public CommentResponse createComment(Long authorId, CommentRequest request) {
 
-        requireSupportedTarget(request.getTargetType());
-
         // Only published content can be commented on
-        blogService.requirePublishedBlog(request.getTargetId());
+        requirePublishedTarget(request.getTargetType(), request.getTargetId());
 
         Comment parent = resolveParent(request);
 
@@ -110,11 +109,9 @@ public class CommentService {
             TargetType targetType, Long targetId, int page, int size
     ) {
 
-        requireSupportedTarget(targetType);
-
         // A takedown or a re-moderation to non-published must close the thread to
         // readers too, exactly like createComment already refuses to add to it.
-        blogService.requirePublishedBlog(targetId);
+        requirePublishedTarget(targetType, targetId);
 
         Page<Comment> comments = commentRepository
                 .findByTargetTypeAndTargetIdAndParentIsNullAndStatusIn(
@@ -132,8 +129,7 @@ public class CommentService {
         // getReplies takes only a comment id, so its target is derived from the
         // parent comment and checked the same way getRootComments checks its own.
         Comment parent = findComment(commentId);
-        requireSupportedTarget(parent.getTargetType());
-        blogService.requirePublishedBlog(parent.getTargetId());
+        requirePublishedTarget(parent.getTargetType(), parent.getTargetId());
 
         Page<Comment> replies = commentRepository.findByParentIdAndStatusIn(
                 commentId, PUBLICLY_VISIBLE,
@@ -203,12 +199,13 @@ public class CommentService {
         comment.setStatus(approved ? CommentStatus.VISIBLE : CommentStatus.HIDDEN);
     }
 
-    private static void requireSupportedTarget(TargetType targetType) {
+    // task_be C13: comments live on blogs and on videos. UNSUPPORTED_TARGET_TYPE (3036) stays in
+    // ErrorCode, unused, so the codes after it keep their numbers.
+    private void requirePublishedTarget(TargetType targetType, Long targetId) {
 
-        // The column already accepts VIDEO so no ALTER TABLE is needed later,
-        // but there is no video API to point at yet.
-        if (targetType != TargetType.BLOG) {
-            throw new AppException(ErrorCode.UNSUPPORTED_TARGET_TYPE);
+        switch (targetType) {
+            case BLOG -> blogService.requirePublishedBlog(targetId);
+            case VIDEO -> videoService.requirePublishedVideo(targetId);
         }
     }
 

@@ -1,5 +1,7 @@
 package com.veggiepal.blog.controller;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.springframework.http.MediaType;
@@ -9,11 +11,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.veggiepal.blog.dto.request.VideoRequest;
+import com.veggiepal.blog.dto.request.VoteRequest;
 import com.veggiepal.blog.dto.response.ApiResponse;
 import com.veggiepal.blog.dto.response.PageResponse;
 import com.veggiepal.blog.dto.response.VideoResponse;
+import com.veggiepal.blog.dto.response.VoteResponse;
 import com.veggiepal.blog.enums.ContentStatus;
 import com.veggiepal.blog.service.VideoService;
+import com.veggiepal.blog.service.VoteService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,6 +36,7 @@ import lombok.experimental.FieldDefaults;
 public class VideoController {
 
     VideoService videoService;
+    VoteService voteService;
 
     // One multipart request, so the FE upload form drives a single progress bar (task sheet US4)
     @Operation(summary = "Post a video: exactly one of an .mp4 file or a YouTube link; publish=true runs moderation right away")
@@ -123,6 +129,47 @@ public class VideoController {
         return ApiResponse
                 .<VideoResponse>builder()
                 .result(videoService.getPublishedVideo(id))
+                .build();
+    }
+
+    // Same toggle as blogs (task sheet US5, task_be C13): the same value again takes the vote back
+    @Operation(summary = "Like (1) or dislike (-1) a video; the same value again takes the vote back")
+    @PostMapping("/{id}/vote")
+    ApiResponse<VoteResponse> vote(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @PathVariable("id") Long id,
+            @RequestBody @Valid VoteRequest request
+    ) {
+
+        return ApiResponse
+                .<VoteResponse>builder()
+                .result(voteService.voteVideo(CurrentUser.id(jwt), id, request.getValue()))
+                .build();
+    }
+
+    @Operation(summary = "Remove your vote on a video; doing it twice is harmless")
+    @DeleteMapping("/{id}/vote")
+    ApiResponse<VoteResponse> removeVote(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @PathVariable("id") Long id
+    ) {
+
+        return ApiResponse
+                .<VoteResponse>builder()
+                .result(voteService.removeVideoVote(CurrentUser.id(jwt), id))
+                .build();
+    }
+
+    @Operation(summary = "My vote on a list of videos (at most 100), to overlay on a public listing")
+    @GetMapping("/me/votes")
+    ApiResponse<List<VoteResponse>> getMyVotes(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "videoIds") List<Long> videoIds
+    ) {
+
+        return ApiResponse
+                .<List<VoteResponse>>builder()
+                .result(voteService.getMyVideoVotes(CurrentUser.id(jwt), videoIds))
                 .build();
     }
 }

@@ -1,5 +1,7 @@
 package com.veggiepal.location;
 
+import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.closeTo;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasItem;
@@ -110,6 +112,31 @@ class LocationServiceIntegrationTests {
         mockMvc.perform(nearby(CENTER_LAT, CENTER_LNG).param("radiusKm", "1").param("veganOnly", "true"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result[*].id", contains(2, 3, 6, 26, 4, 22, 21)));
+    }
+
+    // Seed: the only names containing "hum" are 11 (Hum Garden, Thảo Điền) and 21 (Hum Vegetarian, Quận 3)
+    @Test
+    void search_withoutAPoint_ordersByNameAndHasNoDistance() throws Exception {
+        mockMvc.perform(get("/restaurants/search").param("q", "HUM"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result[*].id", contains(11, 21)))
+                .andExpect(jsonPath("$.result[*].distanceKm", everyItem(nullValue())));
+    }
+
+    @Test
+    void search_withAPoint_putsTheNearestFirst() throws Exception {
+        mockMvc.perform(get("/restaurants/search").param("q", "hum")
+                        .param("lat", CENTER_LAT).param("lng", CENTER_LNG))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result[*].id", contains(21, 11)))
+                .andExpect(jsonPath("$.result[0].distanceKm", lessThanOrEqualTo(1.0)));
+    }
+
+    @Test
+    void search_ignoresAccents() throws Exception {
+        mockMvc.perform(get("/restaurants/search").param("q", "phuong mai"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result[*].id", hasItem(1)));
     }
 
     private static MockHttpServletRequestBuilder nearby(String lat, String lng) {

@@ -22,6 +22,10 @@ public class RestaurantService {
     // Task sheet US15: the search radius is capped at 10 km.
     private static final double MAX_RADIUS_KM = 10;
 
+    // Task sheet US7's search rule (type at least 2 characters), applied to restaurant names
+    private static final int MIN_KEYWORD = 2;
+    private static final int MAX_KEYWORD = 100;
+
     RestaurantRepository restaurantRepository;
 
     public List<RestaurantResponse> findNearby(double lat, double lng, double radiusKm, boolean veganOnly) {
@@ -42,6 +46,25 @@ public class RestaurantService {
                 .toList();
     }
 
+    public List<RestaurantResponse> search(String q, Double lat, Double lng, boolean veganOnly) {
+
+        String keyword = q == null ? "" : q.trim();
+        if (keyword.length() < MIN_KEYWORD || keyword.length() > MAX_KEYWORD) {
+            throw new AppException(ErrorCode.INVALID_SEARCH_KEYWORD);
+        }
+
+        // A point needs both halves; the range check matches findNearby's (and rejects NaN)
+        if ((lat == null) != (lng == null)
+                || (lat != null && !(lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180))) {
+            throw new AppException(ErrorCode.INVALID_COORDINATES);
+        }
+
+        return restaurantRepository.searchByName(keyword, lat, lng, veganOnly)
+                .stream()
+                .map(RestaurantService::toResponse)
+                .toList();
+    }
+
     private static RestaurantResponse toResponse(NearbyRestaurant restaurant) {
 
         return RestaurantResponse.builder()
@@ -54,7 +77,10 @@ public class RestaurantService {
                 .rating(restaurant.getRating())
                 .veganOnly(restaurant.getVeganOnly())
                 .imageUrl(restaurant.getImageUrl())
-                .distanceKm(Math.round(restaurant.getDistanceMeters() / 10) / 100.0)
+                // Null for a name search without a point
+                .distanceKm(restaurant.getDistanceMeters() == null
+                        ? null
+                        : Math.round(restaurant.getDistanceMeters() / 10) / 100.0)
                 .build();
     }
 }

@@ -102,4 +102,22 @@ class RestaurantControllerTest {
                 .andExpect(jsonPath("$.code").value(5002))
                 .andExpect(jsonPath("$.message").value("Search radius must be greater than 0 and at most 10 km"));
     }
+
+    @Test
+    void search_withoutQ_isInvalidRequest() throws Exception {
+        mockMvc.perform(get("/restaurants/search"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(1018));
+    }
+
+    @Test
+    void search_coordinatesAreOptional() throws Exception {
+        when(restaurantService.search("hum", null, null, false)).thenReturn(List.of());
+
+        mockMvc.perform(get("/restaurants/search").param("q", "hum"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result").isEmpty());
+
+        verify(restaurantService).search("hum", null, null, false);
+    }
 }

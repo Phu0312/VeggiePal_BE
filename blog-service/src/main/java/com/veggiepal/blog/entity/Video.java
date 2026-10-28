@@ -65,6 +65,11 @@ public class Video {
     @Column(name = "view_count", nullable = false)
     Integer viewCount;
 
+    // Denormalized like blogs.vote_score: kept in sync inside the vote transaction (task_be C13).
+    // The DEFAULT lets ddl-auto add the column to a table that already has rows.
+    @Column(name = "vote_score", nullable = false, columnDefinition = "int not null default 0")
+    Integer voteScore;
+
     @Column(name = "published_at")
     LocalDateTime publishedAt;
 
@@ -81,6 +86,10 @@ public class Video {
 
         if (viewCount == null) {
             viewCount = 0;
+        }
+
+        if (voteScore == null) {
+            voteScore = 0;
         }
     }
 

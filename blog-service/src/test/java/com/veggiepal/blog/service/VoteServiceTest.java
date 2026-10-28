@@ -3,6 +3,7 @@ package com.veggiepal.blog.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,11 +21,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.veggiepal.blog.entity.Blog;
 import com.veggiepal.blog.entity.ContentVote;
+import com.veggiepal.blog.entity.Video;
 import com.veggiepal.blog.enums.TargetType;
 import com.veggiepal.blog.exception.AppException;
 import com.veggiepal.blog.exception.ErrorCode;
 import com.veggiepal.blog.repository.BlogRepository;
 import com.veggiepal.blog.repository.ContentVoteRepository;
+import com.veggiepal.blog.repository.VideoRepository;
 
 @ExtendWith(MockitoExtension.class)
 class VoteServiceTest {
@@ -40,6 +43,12 @@ class VoteServiceTest {
 
     @Mock
     BlogService blogService;
+
+    @Mock
+    VideoRepository videoRepository;
+
+    @Mock
+    VideoService videoService;
 
     @InjectMocks
     VoteService voteService;
@@ -216,5 +225,73 @@ class VoteServiceTest {
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_REQUEST);
+    }
+
+    static Video publishedVideo() {
+        return Video.builder().id(20L).authorId(AUTHOR_ID).voteScore(2).build();
+    }
+
+    @Test
+    void voteVideo_firstTime_addsOneToTheVideo() {
+        when(videoService.requirePublishedVideo(20L)).thenReturn(publishedVideo());
+        when(contentVoteRepository.findByUserIdAndTargetTypeAndTargetId(VOTER_ID, TargetType.VIDEO, 20L))
+                .thenReturn(Optional.empty());
+        when(contentVoteRepository.save(any(ContentVote.class))).thenAnswer(call -> call.getArgument(0));
+
+        var response = voteService.voteVideo(VOTER_ID, 20L, 1);
+
+        verify(videoRepository).addVoteScore(20L, 1);
+        verify(blogRepository, never()).addVoteScore(any(), anyInt());
+        assertThat(response.getVideoId()).isEqualTo(20L);
+        assertThat(response.getBlogId()).isNull();
+        assertThat(response.getMyVote()).isEqualTo(1);
+        assertThat(response.getVoteScore()).isEqualTo(3);
+    }
+
+    // Task sheet US5's toggle applies to videos too
+    @Test
+    void voteVideo_sameValueTwice_removesTheVote() {
+        when(videoService.requirePublishedVideo(20L)).thenReturn(publishedVideo());
+        ContentVote existing = ContentVote.builder()
+                .id(2L).userId(VOTER_ID).targetType(TargetType.VIDEO).targetId(20L).value(-1).build();
+        when(contentVoteRepository.findByUserIdAndTargetTypeAndTargetId(VOTER_ID, TargetType.VIDEO, 20L))
+                .thenReturn(Optional.of(existing));
+
+        var response = voteService.voteVideo(VOTER_ID, 20L, -1);
+
+        verify(contentVoteRepository).delete(existing);
+        verify(videoRepository).addVoteScore(20L, 1);
+        assertThat(response.getMyVote()).isNull();
+    }
+
+    @Test
+    void voteVideo_onOwnVideo_throwsCannotVoteOwnContent() {
+        when(videoService.requirePublishedVideo(20L)).thenReturn(publishedVideo());
+
+        assertThatThrownBy(() -> voteService.voteVideo(AUTHOR_ID, 20L, 1))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.CANNOT_VOTE_OWN_CONTENT);
+    }
+
+    @Test
+    void getMyVideoVotes_emptyList_isInvalidRequest() {
+        assertThatThrownBy(() -> voteService.getMyVideoVotes(VOTER_ID, List.of()))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_REQUEST);
+    }
+
+    @Test
+    void getMyVideoVotes_returnsOneEntryPerRequestedVideo() {
+        when(contentVoteRepository.findByUserIdAndTargetTypeAndTargetIdIn(VOTER_ID, TargetType.VIDEO, List.of(20L, 21L)))
+                .thenReturn(List.of(ContentVote.builder().userId(VOTER_ID).targetType(TargetType.VIDEO)
+                        .targetId(21L).value(1).build()));
+
+        var votes = voteService.getMyVideoVotes(VOTER_ID, List.of(20L, 21L));
+
+        assertThat(votes).extracting("videoId", "myVote").containsExactly(
+                org.assertj.core.groups.Tuple.tuple(20L, null),
+                org.assertj.core.groups.Tuple.tuple(21L, 1));
     }
 }

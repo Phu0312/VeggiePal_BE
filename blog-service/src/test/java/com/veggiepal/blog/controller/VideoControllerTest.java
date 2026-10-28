@@ -38,6 +38,7 @@ import com.veggiepal.blog.dto.response.PageResponse;
 import com.veggiepal.blog.dto.response.VideoResponse;
 import com.veggiepal.blog.enums.ContentStatus;
 import com.veggiepal.blog.service.VideoService;
+import com.veggiepal.blog.service.VoteService;
 
 @WebMvcTest(VideoController.class)
 @Import({SecurityConfig.class, JwtConfig.class, SecurityExceptionHandler.class})
@@ -50,6 +51,9 @@ class VideoControllerTest {
 
     @MockitoBean
     VideoService videoService;
+
+    @MockitoBean
+    VoteService voteService;
 
     static RequestPostProcessor member() {
         return jwt().jwt(token -> token.claim("userId", USER_ID).claim("role", "USER"));

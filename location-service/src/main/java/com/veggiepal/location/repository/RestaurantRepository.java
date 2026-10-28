@@ -57,4 +57,31 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
             @Param("radiusMeters") double radiusMeters,
             @Param("veganOnly") boolean veganOnly
     );
+
+    // Name search (task_be C19). Starts-with matches rank first (as in task sheet US7), then the
+    // nearest when a point is given, else A-Z. The default ai_ci collation makes LIKE ignore case
+    // and accents ("pho" finds "Phở"). distanceMeters is NULL without a point.
+    // ponytail: full table scan with a leading-% LIKE, fine for the hand-seeded list; add a
+    // FULLTEXT index (ngram parser) if the table grows to thousands of rows.
+    @Query(nativeQuery = true, value = """
+            select r.id as id, r.name as name, r.address as address,
+                   r.latitude as latitude, r.longitude as longitude,
+                   r.phone_number as phoneNumber, r.rating as rating, r.is_vegan_only as veganOnly,
+                   r.image_url as imageUrl,
+                   case when :lat is null then null
+                        else ST_Distance_Sphere(point(r.longitude, r.latitude), point(:lng, :lat)) end
+                       as distanceMeters
+            from vegetarian_restaurants r
+            where r.name like concat('%', :q, '%')
+              and (:veganOnly = false or r.is_vegan_only = 1)
+            order by case when r.name like concat(:q, '%') then 0 else 1 end,
+                     distanceMeters is null, distanceMeters, r.name
+            limit 20
+            """)
+    List<NearbyRestaurant> searchByName(
+            @Param("q") String q,
+            @Param("lat") Double lat,
+            @Param("lng") Double lng,
+            @Param("veganOnly") boolean veganOnly
+    );
 }
