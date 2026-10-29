@@ -552,7 +552,7 @@ public class RecipeService {
 
         return PageResponse
                 .<RecipeResponse>builder()
-                .content(
+                .items(
                         recipePage
                                 .getContent()
                                 .stream()

@@ -114,14 +114,14 @@ class RecipeControllerTest {
                 .andExpect(status().isInternalServerError()).andExpect(jsonPath("$.code").value(9999));
     }
 
-    @Test void listEmitsSharedPaginationAndTemporaryContentAlias() throws Exception {
+    @Test void listEmitsSharedPaginationWithoutContentAlias() throws Exception {
         when(recipeService.getPublishedRecipes(null,null,0,20)).thenReturn(
             com.veggiepal.recipe.dto.response.PageResponse.<RecipeResponse>builder()
-                .content(java.util.List.of(RecipeResponse.builder().id(10L).build()))
+                .items(java.util.List.of(RecipeResponse.builder().id(10L).build()))
                 .page(0).size(20).totalElements(1).totalPages(1).build());
         mockMvc.perform(get("/recipes"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.result.items[0].id").value(10))
-                .andExpect(jsonPath("$.result.content[0].id").value(10))
+                .andExpect(jsonPath("$.result.content").doesNotExist())
                 .andExpect(jsonPath("$.result.size").value(20))
                 .andExpect(jsonPath("$.result.first").doesNotExist()).andExpect(jsonPath("$.result.last").doesNotExist());
     }

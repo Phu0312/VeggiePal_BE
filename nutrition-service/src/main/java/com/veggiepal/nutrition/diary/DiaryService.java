@@ -56,7 +56,7 @@ public class DiaryService {
         var waterEntries=water.findByUserIdAndDateOrderByIdAsc(userId,day).stream().map(WaterDiary::view).toList();
         var activityEntries=activities.findByUserIdAndDateOrderByIdAsc(userId,day).stream().map(ActivityDiary::view).toList();
         Nutrition total=mealEntries.stream().map(MealEntry::nutrition).reduce(Nutrition.zero(),Nutrition::plus);
-        return new DailySummary(day,DiaryConfig.TIMEZONE,mealEntries,total,waterEntries,
+        return new DailySummary(day,DiaryConfig.TIMEZONE,mealEntries,total,!mealEntries.isEmpty(),waterEntries,
                 waterEntries.stream().mapToLong(WaterEntry::milliliters).sum(),activityEntries,
                 activityEntries.stream().mapToLong(ActivityEntry::minutes).sum());
     }

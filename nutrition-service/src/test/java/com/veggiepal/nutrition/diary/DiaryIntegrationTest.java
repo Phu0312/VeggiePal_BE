@@ -43,17 +43,20 @@ class DiaryIntegrationTest {
         when(plans.fetch("token",10L,DAY,MealType.LUNCH)).thenReturn(snapshot());
         var request=new ConfirmMealRequest(DAY,BigDecimal.ONE);
         assertThat(service.summary(7L,DAY).nutrition().calories()).isZero();
+        assertThat(service.summary(7L,DAY).hasMeals()).isFalse();
         var first=service.confirm(7L,"token",10L,MealType.LUNCH,request);
         var retry=service.confirm(7L,"token",10L,MealType.LUNCH,new ConfirmMealRequest(DAY,new BigDecimal("3")));
         assertThat(retry.id()).isEqualTo(first.id());
         assertThat(retry.servings()).isEqualByComparingTo("1");
         assertThat(service.summary(7L,DAY).nutrition().calories()).isEqualByComparingTo("300");
+        assertThat(service.summary(7L,DAY).hasMeals()).isTrue();
         assertThat(service.summary(8L,DAY).meals()).isEmpty();
         verify(plans,times(1)).fetch("token",10L,DAY,MealType.LUNCH);
         service.cancel(8L,10L,MealType.LUNCH,DAY);
         assertThat(meals.count()).isEqualTo(1);
         service.cancel(7L,10L,MealType.LUNCH,DAY);service.cancel(7L,10L,MealType.LUNCH,DAY);
         assertThat(service.summary(7L,DAY).nutrition().calories()).isZero();
+        assertThat(service.summary(7L,DAY).hasMeals()).isFalse();
     }
     @Test void concurrentConfirmationsCreateOneDatabaseRow() throws Exception {
         when(plans.fetch("token",10L,DAY,MealType.LUNCH)).thenReturn(snapshot());

@@ -18,20 +18,24 @@ public class MonitoringController {
     private final MonitoringService service;
     private final QuotaProperties quotas;
     private final TokenProperties tokens;
-    @GetMapping("/summary") ApiResponse<Map<String,Object>> summary(@RequestParam(defaultValue="7") int days){
-        int safe=Math.max(1,Math.min(days,90));Object[] aggregate=repository.aggregateSince(LocalDateTime.now().minusDays(safe)).getFirst();
+    @GetMapping("/summary") ApiResponse<Map<String,Object>> summary(@RequestParam(defaultValue="7") int days,
+            @RequestParam(required=false) String excludeFeature){
+        int safe=Math.max(1,Math.min(days,90));
+        Object[] aggregate=repository.aggregateSince(LocalDateTime.now().minusDays(safe),
+                MonitoringService.normalize(excludeFeature)).getFirst();
         return ApiResponse.success(Map.of("periodDays",safe,"requests",aggregate[0],"promptTokens",aggregate[1],
                 "completionTokens",aggregate[2],"averageLatencyMs",aggregate[3],"failedRequests",aggregate[4]));
     }
     @GetMapping("/logs") ApiResponse<List<UsageLog>> logs(){return ApiResponse.success(repository.findTop100ByOrderByCreatedAtDesc());}
     @GetMapping("/logs/search") ApiResponse<MonitoringService.UsageLogPage> search(
-            @RequestParam(required=false) String feature,@RequestParam(required=false) String status,
+            @RequestParam(required=false) String feature,@RequestParam(required=false) String excludeFeature,
+            @RequestParam(required=false) String status,
             @RequestParam(required=false) Long userId,
             @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam(required=false) @DateTimeFormat(iso=DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(defaultValue="0") int page,
             @RequestParam(defaultValue="20") int size){
-        return ApiResponse.success(service.search(feature,status,userId,from,to,page,size));
+        return ApiResponse.success(service.search(feature,excludeFeature,status,userId,from,to,page,size));
     }
     @GetMapping("/models") ApiResponse<Map<String,String>> models(){return ApiResponse.success(Map.of(
             "chat",models.chat(),"moderation",models.moderation(),"recommendation",models.recommendation(),

@@ -163,7 +163,7 @@ class VideoProcessingServiceTest {
 
         assertEquals(1, page.getPage());
         assertEquals(11, page.getTotalElements());
-        assertEquals(1, page.getContent().size());
+        assertEquals(1, page.getItems().size());
         verify(repository).findAllByUserIdOrderByCreatedAtDesc(8L, PageRequest.of(1, 10));
     }
 

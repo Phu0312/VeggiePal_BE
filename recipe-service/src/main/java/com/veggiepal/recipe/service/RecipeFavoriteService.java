@@ -79,7 +79,7 @@ public class RecipeFavoriteService {
                 PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100)));
 
         return PageResponse.<RecipeResponse>builder()
-                .content(recipes.getContent().stream().map(recipeMapper::toRecipeResponse).toList())
+                .items(recipes.getContent().stream().map(recipeMapper::toRecipeResponse).toList())
                 .page(recipes.getNumber())
                 .size(recipes.getSize())
                 .totalElements(recipes.getTotalElements())

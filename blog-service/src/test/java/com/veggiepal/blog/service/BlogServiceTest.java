@@ -479,6 +479,34 @@ class BlogServiceTest {
     }
 
     @Test
+    void getOwnBlogs_showsTheOwnerTheModerationState() {
+        Blog waiting = awaitingAi();
+        Blog rejected = blog(ContentStatus.REJECTED);
+        rejected.setModerationReason("Nội dung không phù hợp");
+        when(blogRepository.findByAuthorId(eq(AUTHOR_ID), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(waiting, rejected)));
+
+        List<BlogSummaryResponse> items = blogService.getOwnBlogs(AUTHOR_ID, null, 0, 20).getItems();
+
+        assertThat(items.get(0).getAiReviewInProgress()).isTrue();
+        assertThat(items.get(1).getAiReviewInProgress()).isFalse();
+        assertThat(items.get(1).getModerationReason()).isEqualTo("Nội dung không phù hợp");
+    }
+
+    @Test
+    void getPublishedBlogs_leavesTheOwnerOnlyModerationFieldsOut() {
+        Blog published = blog(ContentStatus.PUBLISHED);
+        published.setModerationReason("leftover");
+        when(blogRepository.search(any(), any(), any(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(published)));
+
+        BlogSummaryResponse item = blogService.getPublishedBlogs(null, null, null, 0, 20).getItems().getFirst();
+
+        assertThat(item.getAiReviewInProgress()).isNull();
+        assertThat(item.getModerationReason()).isNull();
+    }
+
+    @Test
     void getPublishedBlogs_noMatch_returnsEmptyPageInsteadOfThrowing() {
         when(blogRepository.search(any(), any(), any(), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));

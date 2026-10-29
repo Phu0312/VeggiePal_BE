@@ -30,10 +30,10 @@ class RecipeFavoriteIntegrationTest {
         recipes.flush();
 
         var popular = recipeService.getPublishedRecipes(null, "popular", 0, 5);
-        assertThat(popular.getContent().get(0).getId()).isEqualTo(loved.getId());
-        assertThat(popular.getContent().get(0).getFavoriteCount()).isEqualTo(2);
+        assertThat(popular.getItems().get(0).getId()).isEqualTo(loved.getId());
+        assertThat(popular.getItems().get(0).getFavoriteCount()).isEqualTo(2);
 
-        assertThat(favorites.myFavorites(11L, 0, 20).getContent())
+        assertThat(favorites.myFavorites(11L, 0, 20).getItems())
                 .extracting("id").containsExactly(loved.getId());
         assertThat(favorites.myFavoriteIds(12L)).containsExactly(loved.getId());
 

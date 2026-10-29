@@ -32,6 +32,7 @@ public final class DiaryDtos {
             Long recipeId, String title, BigDecimal servings, Nutrition nutrition, Instant recordedAt) {}
     public record WaterEntry(Long id, LocalDate date, int milliliters) {}
     public record ActivityEntry(Long id, LocalDate date, String activityType, int minutes) {}
+    // hasMeals tells a day with nothing logged apart from logged meals that add up to 0 kcal.
     public record DailySummary(LocalDate date, String timezone, List<MealEntry> meals, Nutrition nutrition,
-            List<WaterEntry> water, long totalWaterMl, List<ActivityEntry> activities, long totalActivityMinutes) {}
+            boolean hasMeals, List<WaterEntry> water, long totalWaterMl, List<ActivityEntry> activities, long totalActivityMinutes) {}
 }
