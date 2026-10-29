@@ -171,7 +171,7 @@ public class VideoProcessingService {
         Page<VideoJob> result = repository.findAllByUserIdOrderByCreatedAtDesc(
                 userId, PageRequest.of(safePage, safeSize));
         return PageResponse.<VideoJobResponse>builder()
-                .content(result.getContent().stream().map(this::view).toList())
+                .items(result.getContent().stream().map(this::view).toList())
                 .page(result.getNumber()).size(result.getSize())
                 .totalElements(result.getTotalElements()).totalPages(result.getTotalPages()).build();
     }

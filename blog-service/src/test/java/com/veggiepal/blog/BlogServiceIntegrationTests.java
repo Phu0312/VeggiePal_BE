@@ -825,7 +825,8 @@ class BlogServiceIntegrationTests {
 
     @Test void followingFeedFiltersAuthorsAndStatusAndHasAccuratePagination() throws Exception {
         long category=createRootCategory("Feed "+unique());
-        long followedAuthor=70000001L;
+        // veggiepal_blog_it keeps its rows between runs: a fixed author would count every earlier run's post.
+        long followedAuthor=java.util.concurrent.ThreadLocalRandom.current().nextLong(70_000_000L,80_000_000L);
         createPublishedBlog(category,"Other "+unique(),body(unique()));
         long published=idOf(mockMvc.perform(authed(post("/blogs"),followedAuthor,"USER")
                 .contentType(MediaType.APPLICATION_JSON).content("""

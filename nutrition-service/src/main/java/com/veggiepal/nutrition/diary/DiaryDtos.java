@@ -27,11 +27,13 @@ public final class DiaryDtos {
                     carbohydrate.add(other.carbohydrate),fat.add(other.fat));
         }
     }
-    public record MealSnapshot(Long recipeId, String title, BigDecimal plannedServings, Nutrition nutrition) {}
+    public record MealSnapshot(Long recipeId, String title, BigDecimal plannedServings, Nutrition nutrition,
+            LocalDate planCreatedOn) {}
     public record MealEntry(Long id, LocalDate date, Source source, Long mealPlanId, MealType mealType,
             Long recipeId, String title, BigDecimal servings, Nutrition nutrition, Instant recordedAt) {}
     public record WaterEntry(Long id, LocalDate date, int milliliters) {}
     public record ActivityEntry(Long id, LocalDate date, String activityType, int minutes) {}
+    // hasMeals tells a day with nothing logged apart from logged meals that add up to 0 kcal.
     public record DailySummary(LocalDate date, String timezone, List<MealEntry> meals, Nutrition nutrition,
-            List<WaterEntry> water, long totalWaterMl, List<ActivityEntry> activities, long totalActivityMinutes) {}
+            boolean hasMeals, List<WaterEntry> water, long totalWaterMl, List<ActivityEntry> activities, long totalActivityMinutes) {}
 }

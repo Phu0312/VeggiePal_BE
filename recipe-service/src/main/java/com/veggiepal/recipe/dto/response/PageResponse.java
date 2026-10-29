@@ -12,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PageResponse<T> {
 
-    List<T> content;
+    List<T> items;
 
     int page;
 
@@ -21,7 +21,4 @@ public class PageResponse<T> {
     long totalElements;
 
     int totalPages;
-
-
-    public List<T> getItems() { return content; }
 }

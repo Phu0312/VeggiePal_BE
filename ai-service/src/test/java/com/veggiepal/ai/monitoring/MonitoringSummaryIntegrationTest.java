@@ -14,6 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class MonitoringSummaryIntegrationTest {
     @Autowired MonitoringController controller;
     @Autowired UsageLogRepository logs;
+    @Autowired MonitoringService service;
 
     @BeforeEach
     void clean() {
@@ -25,12 +26,26 @@ class MonitoringSummaryIntegrationTest {
         logs.save(new UsageLog(1L, "user:1", "CHAT", "m", "SUCCESS", 10, 5, 100, null));
         logs.save(new UsageLog(1L, "user:1", "CHAT", "m", "FAILED", 0, 0, 300, "boom"));
 
-        Map<String, Object> summary = controller.summary(7).result();
+        Map<String, Object> summary = controller.summary(7, null).result();
 
         assertEquals(2L, ((Number) summary.get("requests")).longValue());
         assertEquals(10L, ((Number) summary.get("promptTokens")).longValue());
         assertEquals(5L, ((Number) summary.get("completionTokens")).longValue());
         assertEquals(200.0, ((Number) summary.get("averageLatencyMs")).doubleValue());
         assertEquals(1L, ((Number) summary.get("failedRequests")).longValue());
+    }
+
+    @Test
+    void excludeFeatureLeavesModerationOutOfTheSummaryAndTheSearch() {
+        logs.save(new UsageLog(1L, "user:1", "CHAT", "m", "SUCCESS", 10, 5, 100, null));
+        logs.save(new UsageLog(1L, "service:moderation", "MODERATION", "m", "SUCCESS", 40, 2, 900, null));
+
+        Map<String, Object> summary = controller.summary(7, " moderation ").result();
+        MonitoringService.UsageLogPage page = service.search(null, "moderation", null, null, null, null, 0, 20);
+
+        assertEquals(1L, ((Number) summary.get("requests")).longValue());
+        assertEquals(10L, ((Number) summary.get("promptTokens")).longValue());
+        assertEquals(1L, page.totalElements());
+        assertEquals("CHAT", page.items().getFirst().getFeature());
     }
 }

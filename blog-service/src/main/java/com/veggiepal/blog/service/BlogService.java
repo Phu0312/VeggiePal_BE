@@ -3,6 +3,7 @@ package com.veggiepal.blog.service;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Function;
 import java.util.UUID;
 
 import org.springframework.context.ApplicationEventPublisher;
@@ -222,7 +223,7 @@ public class BlogService {
                 ? blogRepository.findByAuthorId(authorId, pageRequest)
                 : blogRepository.findByAuthorIdAndStatus(authorId, status, pageRequest);
 
-        return toPageResponse(blogs);
+        return toPageResponse(blogs, blogMapper::toOwnBlogSummaryResponse);
     }
 
     /** Used by CommentService and VoteService: only published content can be interacted with. */
@@ -433,8 +434,13 @@ public class BlogService {
 
     PageResponse<BlogSummaryResponse> toPageResponse(Page<Blog> blogs) {
 
+        return toPageResponse(blogs, blogMapper::toBlogSummaryResponse);
+    }
+
+    PageResponse<BlogSummaryResponse> toPageResponse(Page<Blog> blogs, Function<Blog, BlogSummaryResponse> view) {
+
         return PageResponse.<BlogSummaryResponse>builder()
-                .items(blogs.getContent().stream().map(blogMapper::toBlogSummaryResponse).toList())
+                .items(blogs.getContent().stream().map(view).toList())
                 .page(blogs.getNumber())
                 .size(blogs.getSize())
                 .totalElements(blogs.getTotalElements())

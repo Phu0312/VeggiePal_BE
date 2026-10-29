@@ -3,7 +3,7 @@
 ## Approved contracts
 
 - Blog content: at most 50,000 Unicode code points, including all submitted markup and whitespace. This is not a byte limit. A supplementary character counts once; combining marks count separately. No normalization is performed. Both create and update return HTTP 400 / code 3016 before persistence or moderation when exceeded. The existing minimum of 20 UTF-16 code units remains unchanged.
-- Pagination: `items`, zero-based `page`, default `size=20`, maximum 100. Sizes are clamped to 1..100 and negative pages to zero. Shape: `{items, page, size, totalElements, totalPages}`. Recipe and AI PageResponse also emit the identical `content` array as a temporary compatibility alias. `first` and `last` are removed. Alias removal needs a later coordinated frontend release; there is no automatic removal date.
+- Pagination: `items`, zero-based `page`, default `size=20`, maximum 100. Sizes are clamped to 1..100 and negative pages to zero. Shape: `{items, page, size, totalElements, totalPages}`. `first` and `last` are removed. The temporary `content` alias on recipe-service and ai-service pages was removed on 2026-10-29 (task A07) after the frontend moved to `items`; ai-service now reads only `items` from recipe-service pages.
 - Diary calendar days use `Asia/Ho_Chi_Minh`. Explicit dates are ISO `YYYY-MM-DD`; omitted dates mean today in that zone. Clients should send an explicit date for retries spanning midnight. Stored confirmation instants use UTC.
 - Community uses a separate following feed. Follow lists, counts and the following feed hide non-ACTIVE accounts, preserve relationships, and restore visibility on reactivation. Blocked actors cannot use follow APIs. Existing general public blog APIs keep their current behavior.
 
@@ -12,7 +12,10 @@
 - AI profile codes remain 6020/6021. Video queue full is 6025 (HTTP 503), unsupported source is 6026 (HTTP 422). All AI enum codes are checked for uniqueness.
 - Registration rejects null, empty, whitespace-only and passwords shorter than 6 characters with HTTP 400 / PASSWORD_REQUIRED (1010) or INVALID_PASSWORD (1003). Passwords remain encoded before persistence and are excluded from RegisterRequest.toString().
 - Recipe create/update validate title <=200, description <=2000, imageUrl <=500, ingredient unit <=30, ingredient note <=300 and step instruction <=2000. Codes 4110..4115 respectively, HTTP 400. Existing database failures remain HTTP 500.
-- AI reads recipe candidates through up to two 100-item pages and accepts `items` with a legacy `content` fallback.
+- AI reads recipe candidates through up to two 100-item pages from `items`.
+- PENDING means "email not verified" (task B03): no tokens (login/Google/refresh return 1023), so no posting, and hidden from `/users/batch`, follow lists and feeds like BLOCKED/INACTIVE. Accounts registered before 2026-10-28 that are still PENDING (registration created them PENDING until 2026-10-17 while still letting them sign in and post) are activated by identity `data.sql` on every start, so their posts show the author again; their `emailVerified` stays false and they may still verify.
+- `GET /api/blogs/me` items also carry `moderationReason` and `aiReviewInProgress` (task B04), same meaning as on `GET /api/blogs/{id}`. Public lists omit both fields.
+- `GET /api/ai/admin/monitoring/summary` and `/logs/search` accept `excludeFeature` (e.g. `MODERATION`, case-insensitive) to leave one feature out of the numbers (task B06).
 
 ## Meal, water and activity diary API
 
@@ -36,7 +39,50 @@ A meal entry includes date, source=MEAL_PLAN, mealPlanId, mealType, recipeId, ti
 
 Unique key `(userId, planId, date, mealType)` guarantees one confirmation per slot, including concurrent requests. First confirmation wins; repeats return the saved entry, even if different servings are submitted. To change servings or refresh a snapshot, cancel then confirm again. Cancel is idempotent and can only affect the caller's entries. Editing/deleting a plan later does not rewrite saved diary entries. The source enum also reserves MANUAL with nullable mealPlanId for future manual-entry support; no manual food API is implemented in this change.
 
-GET returns `{date, timezone, meals, nutrition, water, totalWaterMl, activities, totalActivityMinutes}` inside the standard result envelope. Only saved confirmations contribute to nutrition. Activity does not add back calories. Water is a positive integer in ml (max 100,000 per entry); activity type is nonblank <=100 characters and minutes 1..1440. Water/activity updates or deletes of another user's entry return 404/2013.
+GET returns `{date, timezone, meals, nutrition, hasMeals, water, totalWaterMl, activities, totalActivityMinutes}` inside the standard result envelope. Only saved confirmations contribute to nutrition. `nutrition` is always an object (zeros when nothing is logged); `hasMeals=false` means no meal was confirmed that day, so the FE can show "chưa ghi" instead of a logged 0 kcal day (task B01). Activity does not add back calories. Water is a positive integer in ml (max 100,000 per entry); activity type is nonblank <=100 characters and minutes 1..1440. Water/activity updates or deletes of another user's entry return 404/2013.
+
+Dates after today (Asia/Ho_Chi_Minh) return 400/2016 for meal confirmation and water/activity create or update; cancel, delete and GET accept any date. A plan's meals can only be confirmed for dates in the ISO week (Monday–Sunday, Asia/Ho_Chi_Minh) of the plan's `createdOn` (new read-only field on every ai-service meal plan response); other dates return 400/2017. Confirmations saved earlier are untouched. ai-service must be deployed first: a plan response without `createdOn` returns 503/2015 (task B02).
+
+## Video recipe extraction from a published blog video (task I01)
+
+Both endpoints extract a recipe from a video already published in blog-service, so the FE never re-uploads the file. Only `UPLOAD` videos (Cloudinary .mp4) are supported; YouTube videos are refused. One extraction is kept per blog video and shared by every viewer.
+
+### `POST /api/ai/videos/process-existing`
+
+- Auth: Bearer JWT (any signed-in user).
+- Body: `{ "videoId": 42 }` (blog-service video id, required).
+- Response: **202** with a `VideoJobResponse`: `{id, sourceVideoId, status, filename, transcript, extraction, error, createdAt, updatedAt}`. `status` is `PROCESSING` for a new or running extraction, or `COMPLETED` with `extraction` when a result already exists. `transcript` is always null here.
+- Quota: a new extraction reserves one slot of the caller's monthly `VIDEO` quota (refunded if it cannot start). Returning an existing `PROCESSING`/`COMPLETED` result costs nothing. A `FAILED` result is discarded and the next call starts over.
+- Then poll `GET /api/ai/videos/by-video/{videoId}` (or `GET /api/ai/videos/{id}` with the returned job id, requester only).
+
+| HTTP | Code | When |
+|---|---|---|
+| 400 | 6000 | `videoId` missing or not positive |
+| 401 | 6001 | no or invalid JWT |
+| 404 | 6002 | video does not exist or is not `PUBLISHED` |
+| 422 | 6026 | video is not an `UPLOAD` (e.g. YouTube) |
+| 422 | 6008 | the video file could not be downloaded or is not valid media |
+| 413 | 6009 | the video file is larger than the download limit |
+| 429 | 6003 | monthly video quota used up |
+| 503 | 6025 | processing queue full (quota refunded) |
+| 503 | 6006 | blog-service unreachable or internal token not configured |
+
+### `GET /api/ai/videos/by-video/{videoId}`
+
+- Auth: **public** (`videoId` must be digits). A token, if sent, is ignored.
+- Response: **200** `{ sourceVideoId, extraction, completedAt }`, where `extraction` is the extracted recipe JSON and `completedAt` is UTC.
+
+| HTTP | Code | When |
+|---|---|---|
+| 404 | 6002 | video missing or not `PUBLISHED`, or nobody has requested an extraction yet |
+| 422 | 6026 | video is not an `UPLOAD` |
+| 409 | 6022 | extraction still running: keep polling |
+| 422 | 6023 | extraction failed: offer `process-existing` again |
+| 503 | 6006 | blog-service unreachable |
+
+## Admin moderation history (task B05)
+
+`GET /api/ai/admin/moderation/history` (ADMIN). Lists every case that is not waiting for an admin: AI-decided cases (`reviewedBy` null) and admin-decided ones (`reviewedBy` set). Optional filters: `contentType` (BLOG, VIDEO, COMMENT), `decision` (APPROVED, REJECTED, DISMISSED, REVIEW_REQUIRED), `reviewer` (AI, ADMIN), `from`/`to` (ISO date-time, compared with `reviewedAt`, else `createdAt`), plus `page`/`size` (shared pagination contract). Newest decision first, then id. Items have the same shape as `GET /api/ai/admin/moderation`. Unknown enum values return 400/6000. An AI case moderated again before an admin decides is updated in place, so only its latest AI verdict is listed. The pending queue is still `GET /api/ai/admin/moderation`.
 
 ## Follow and following feed API
 

@@ -81,7 +81,6 @@ public class RecommendationService {
             JsonNode root=http.get().uri(url).retrieve().body(JsonNode.class);
             JsonNode page=root==null?null:root.path("result");
             JsonNode items=page==null?null:page.path(field);
-            if (page!=null && (items==null || items.isMissingNode()) && field.equals("items")) items=page.path("content");
             if(items!=null&&items.isArray()) items.forEach(n -> { if(n.path("id").canConvertToLong()) output.add(new Candidate(type,n.path("id").asLong(),n)); });
             return true;
         } catch (Exception e) { log.warn("Recommendation candidates unavailable from {}: {}",url,e.getMessage()); return false; }

@@ -265,7 +265,7 @@ public class MealPlanService {
         int safePage = Math.min(Math.max(page, 0), Integer.MAX_VALUE / safeSize);
         if (favoriteRepository == null) {
             return PageResponse.<MealPlanResponse>builder()
-                    .content(List.of()).page(safePage).size(safeSize).totalElements(0).totalPages(0).build();
+                    .items(List.of()).page(safePage).size(safeSize).totalElements(0).totalPages(0).build();
         }
         Page<MealPlanFavorite> favPage = favoriteRepository.findByUserIdOrderByCreatedAtDesc(
                 userId, PageRequest.of(safePage, safeSize));
@@ -274,7 +274,7 @@ public class MealPlanService {
                 .toList();
 
         return PageResponse.<MealPlanResponse>builder()
-                .content(items)
+                .items(items)
                 .page(favPage.getNumber())
                 .size(favPage.getSize())
                 .totalElements(favPage.getTotalElements())
@@ -737,7 +737,7 @@ public class MealPlanService {
     }
 
     private ArrayNode pageItems(JsonNode page) {
-        JsonNode items = page.has("items") ? page.path("items") : page.path("content");
+        JsonNode items = page.path("items");
         if (items instanceof ArrayNode array) return array;
         throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
     }

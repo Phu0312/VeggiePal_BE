@@ -216,11 +216,11 @@ class MealPlanUpgradeServiceTest {
         PageResponse<MealPlanDtos.MealPlanResponse> result = service.listFavorites(USER_ID, 0, 10);
 
         assertNotNull(result);
-        assertEquals(2, result.getContent().size());
+        assertEquals(2, result.getItems().size());
         assertEquals(0, result.getPage());
         assertEquals(2, result.getTotalElements());
         assertEquals(1, result.getTotalPages());
-        assertTrue(result.getContent().get(0).isFavorite());
+        assertTrue(result.getItems().get(0).isFavorite());
     }
 
     @Test
@@ -250,7 +250,7 @@ class MealPlanUpgradeServiceTest {
         ObjectNode allergyResult = mapper.createObjectNode();
         allergyResult.putArray("result");
         ObjectNode recipeResult = mapper.createObjectNode();
-        recipeResult.putObject("result").putArray("content").add(sampleRecipe(1, "Đậu hũ kho", true, false));
+        recipeResult.putObject("result").putArray("items").add(sampleRecipe(1, "Đậu hũ kho", true, false));
         stubDownstreams(healthResult, allergyResult, recipeResult);
 
         MealPlanDtos.UpdateFromHealthResponse res = service.updateFromHealth(USER_ID, PLAN_ID, "jwt-token",
@@ -275,7 +275,7 @@ class MealPlanUpgradeServiceTest {
         allergyResult.putArray("result");
 
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         content.add(sampleRecipe(1, "Đậu hũ kho", true, false));
 
         stubDownstreams(healthResult, allergyResult, recipeResult);
@@ -306,7 +306,7 @@ class MealPlanUpgradeServiceTest {
         allergyResult.putArray("result");
 
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         content.add(sampleRecipe(1, "Đậu hũ kho", true, false));
 
         stubDownstreams(healthResult, allergyResult, recipeResult);
@@ -355,7 +355,7 @@ class MealPlanUpgradeServiceTest {
         allergyResult.putArray("result");
 
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         content.add(sampleRecipe(1, "Đậu hũ kho", true, false));
         content.add(sampleRecipe(2, "Canh nấm chay", true, false));
 
@@ -387,7 +387,7 @@ class MealPlanUpgradeServiceTest {
         allergyResult.putArray("result");
 
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         content.add(sampleRecipe(1, "Đậu hũ kho", true, false));
         content.add(sampleRecipe(5, "Chè hạt sen", true, false));
 
@@ -414,7 +414,7 @@ class MealPlanUpgradeServiceTest {
         allergyResult.putArray("result");
 
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         content.add(sampleRecipe(1, "Đậu hũ kho", true, false));
 
         stubAllergiesAndRecipes(allergyResult, recipeResult);
@@ -440,7 +440,7 @@ class MealPlanUpgradeServiceTest {
         allergyResult.putArray("result");
 
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         content.add(sampleRecipe(1, "Đậu hũ kho", true, false));
 
         stubAllergiesAndRecipes(allergyResult, recipeResult);
@@ -466,7 +466,7 @@ class MealPlanUpgradeServiceTest {
         allergyResult.putArray("result");
 
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         content.add(sampleRecipe(99, "Món có trứng sữa", false, false));
 
         stubAllergiesAndRecipes(allergyResult, recipeResult);
@@ -490,7 +490,7 @@ class MealPlanUpgradeServiceTest {
         allergyResult.putArray("result").addObject().put("code", "DAU_PHONG").put("name", "Đậu phộng");
 
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         ObjectNode r = sampleRecipe(88, "Món đậu phộng", true, true);
         ((ObjectNode) r.withArray("ingredients").get(0)).put("ingredientName", "Đậu phộng rang").put("normalizedName", "dau phong rang");
         content.add(r);
@@ -516,7 +516,7 @@ class MealPlanUpgradeServiceTest {
         allergyResult.putArray("result");
 
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         content.add(sampleRecipe(1, "Đậu hũ kho", true, false));
 
         stubAllergiesAndRecipes(allergyResult, recipeResult);
@@ -566,7 +566,7 @@ class MealPlanUpgradeServiceTest {
         ObjectNode allergyResult = mapper.createObjectNode();
         allergyResult.putArray("result");
         ObjectNode recipeResult = mapper.createObjectNode();
-        recipeResult.putObject("result").putArray("content").add(sampleRecipe(1, "Đậu hũ kho", true, false));
+        recipeResult.putObject("result").putArray("items").add(sampleRecipe(1, "Đậu hũ kho", true, false));
         stubAllergiesAndRecipes(allergyResult, recipeResult);
 
         MealPlanDtos.MealPlanResponse response = service.restoreVersion(USER_ID, PLAN_ID, 1, "jwt-token");
@@ -605,7 +605,7 @@ class MealPlanUpgradeServiceTest {
         ObjectNode peanut = sampleRecipe(1, "Món đậu phộng", true, true);
         ((ObjectNode) peanut.withArray("ingredients").get(0))
                 .put("ingredientName", "Đậu phộng rang").put("normalizedName", "dau phong rang");
-        recipeResult.putObject("result").putArray("content").add(peanut);
+        recipeResult.putObject("result").putArray("items").add(peanut);
         stubAllergiesAndRecipes(allergyResult, recipeResult);
 
         AppException ex = assertThrows(AppException.class, () -> service.restoreVersion(USER_ID, PLAN_ID, 1, "jwt-token"));

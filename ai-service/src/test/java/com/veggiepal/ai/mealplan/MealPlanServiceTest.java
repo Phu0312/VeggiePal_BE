@@ -83,7 +83,7 @@ class MealPlanServiceTest {
     void throwsHealthRecordRequiredWhenNutritionReturns404() {
         // Mock recipes response: 200
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         ObjectNode recipe = content.addObject();
         recipe.put("id", 1).put("title", "Đậu hũ kho").put("servings", 1);
         recipe.putArray("ingredients").addObject()
@@ -141,7 +141,7 @@ class MealPlanServiceTest {
     @Test
     void throwsDownstreamUnavailableWhenNutritionTimesOutOrFails() {
         ObjectNode recipeResult = mapper.createObjectNode();
-        recipeResult.putObject("result").putArray("content");
+        recipeResult.putObject("result").putArray("items");
 
         ObjectNode allergiesResult = mapper.createObjectNode();
         allergiesResult.putArray("result");
@@ -203,7 +203,7 @@ class MealPlanServiceTest {
     void generateCompletes21MealPlanSuccessfullyWithDeterministicFallbackOnAiError() {
         // Recipe mock
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         ObjectNode r1 = content.addObject().put("id", 1).put("title", "Đậu hũ kho").put("servings", 1);
         r1.putArray("ingredients").addObject()
                 .put("ingredientName", "Đậu hũ").put("normalizedName", "dau hu")
@@ -297,7 +297,7 @@ class MealPlanServiceTest {
 
         // Recipe mock with recipe 1 and recipe 2
         ObjectNode recipeResult = mapper.createObjectNode();
-        ArrayNode content = recipeResult.putObject("result").putArray("content");
+        ArrayNode content = recipeResult.putObject("result").putArray("items");
         ObjectNode r1 = content.addObject().put("id", 1).put("title", "Đậu hũ kho").put("servings", 1);
         r1.putArray("ingredients").addObject()
                 .put("ingredientName", "Đậu hũ").put("normalizedName", "dau hu")
@@ -391,7 +391,7 @@ class MealPlanServiceTest {
 
     private void stubGenerateDownstreams() {
         ObjectNode recipes = mapper.createObjectNode();
-        addRecipe(recipes.putObject("result").putArray("content"), 1, 600);
+        addRecipe(recipes.putObject("result").putArray("items"), 1, 600);
         stubGet("http://recipe-service/recipes?page=0&size=100", recipes, false);
         ObjectNode allergies = mapper.createObjectNode();
         allergies.putArray("result");
@@ -500,7 +500,7 @@ class MealPlanServiceTest {
     @Test
     void generatePromptCarriesTheMealBudgets() {
         ObjectNode recipes = mapper.createObjectNode();
-        addRecipe(recipes.putObject("result").putArray("content"), 1, 600);
+        addRecipe(recipes.putObject("result").putArray("items"), 1, 600);
         stubGet("http://recipe-service/recipes?page=0&size=100", recipes, false);
         ObjectNode allergies = mapper.createObjectNode();
         allergies.putArray("result");
@@ -538,7 +538,7 @@ class MealPlanServiceTest {
                 .thenReturn(java.util.Optional.of(new MealPlan(1L, "Thực đơn", "Tăng cân", stored.toString())));
 
         ObjectNode recipes = mapper.createObjectNode();
-        ArrayNode content = recipes.putObject("result").putArray("content");
+        ArrayNode content = recipes.putObject("result").putArray("items");
         addRecipe(content, 1, 120);
         addRecipe(content, 3, 500);
         addRecipe(content, 4, 700);
@@ -589,7 +589,7 @@ class MealPlanServiceTest {
                 .thenReturn(java.util.Optional.of(new MealPlan(1L, "Thực đơn", "Tăng cân", stored.toString())));
 
         ObjectNode recipes = mapper.createObjectNode();
-        ArrayNode content = recipes.putObject("result").putArray("content");
+        ArrayNode content = recipes.putObject("result").putArray("items");
         addRecipe(content, 1, 700);
         addRecipe(content, 2, 650);
         stubGet("http://recipe-service/recipes?page=0&size=100", recipes, false);
@@ -626,7 +626,7 @@ class MealPlanServiceTest {
                 .thenReturn(java.util.Optional.of(new MealPlan(1L, "Thực đơn", "Tăng cân", stored.toString())));
 
         ObjectNode recipes = mapper.createObjectNode();
-        ArrayNode content = recipes.putObject("result").putArray("content");
+        ArrayNode content = recipes.putObject("result").putArray("items");
         addRecipe(content, 1, 700);
         addRecipe(content, 2, 650);
         stubGet("http://recipe-service/recipes?page=0&size=100", recipes, false);

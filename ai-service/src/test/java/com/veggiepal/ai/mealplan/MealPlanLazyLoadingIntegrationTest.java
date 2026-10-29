@@ -36,7 +36,7 @@ class MealPlanLazyLoadingIntegrationTest {
         var versionList = service.listVersions(USER_ID, plan.getId());
         var versionDetail = service.getVersion(USER_ID, plan.getId(), 1);
 
-        assertThat(favoritePage.getContent()).singleElement().extracting(MealPlanDtos.MealPlanResponse::id)
+        assertThat(favoritePage.getItems()).singleElement().extracting(MealPlanDtos.MealPlanResponse::id)
                 .isEqualTo(plan.getId());
         assertThat(favoriteDetail.id()).isEqualTo(plan.getId());
         assertThat(versionList).singleElement().extracting(MealPlanDtos.MealPlanVersionResponse::mealPlanId)

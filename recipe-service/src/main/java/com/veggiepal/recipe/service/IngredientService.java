@@ -123,7 +123,7 @@ public class IngredientService {
 
         return PageResponse
                 .<IngredientResponse>builder()
-                .content(
+                .items(
                         ingredientPage
                                 .getContent()
                                 .stream()
