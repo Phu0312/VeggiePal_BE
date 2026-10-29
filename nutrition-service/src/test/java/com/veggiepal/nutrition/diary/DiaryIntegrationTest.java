@@ -1,6 +1,7 @@
 package com.veggiepal.nutrition.diary;
 
 import com.veggiepal.nutrition.configuration.*;
+import com.veggiepal.nutrition.exception.ErrorCode;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.*;
@@ -37,8 +38,32 @@ class DiaryIntegrationTest {
         when(clock.instant()).thenReturn(Instant.parse("2026-10-27T18:00:00Z"));
         when(clock.getZone()).thenReturn(ZoneId.of(DiaryConfig.TIMEZONE));
     }
-    private MealSnapshot snapshot() { return new MealSnapshot(5L,"Tofu",new BigDecimal("2"),
-            new Nutrition(new BigDecimal("600"),new BigDecimal("40"),new BigDecimal("80"),new BigDecimal("20"))); }
+    private MealSnapshot snapshot() { return snapshot(DAY); }
+    private MealSnapshot snapshot(LocalDate createdOn) { return new MealSnapshot(5L,"Tofu",new BigDecimal("2"),
+            new Nutrition(new BigDecimal("600"),new BigDecimal("40"),new BigDecimal("80"),new BigDecimal("20")),createdOn); }
+    @Test void futureDatesAreRejectedForMealsWaterAndActivity() {
+        LocalDate tomorrow=LocalDate.of(2026,10,29);
+        assertThatThrownBy(() -> service.confirm(7L,"token",10L,MealType.LUNCH,new ConfirmMealRequest(tomorrow,null)))
+                .extracting("errorCode").isEqualTo(ErrorCode.DIARY_DATE_IN_FUTURE);
+        assertThatThrownBy(() -> service.saveWater(7L,null,new WaterRequest(tomorrow,250)))
+                .extracting("errorCode").isEqualTo(ErrorCode.DIARY_DATE_IN_FUTURE);
+        assertThatThrownBy(() -> service.saveActivity(7L,null,new ActivityRequest(tomorrow,"Walk",30)))
+                .extracting("errorCode").isEqualTo(ErrorCode.DIARY_DATE_IN_FUTURE);
+        verify(plans,never()).fetch(any(),any(),any(),any());
+        assertThat(service.saveWater(7L,null,new WaterRequest(LocalDate.of(2026,10,28),250)).milliliters()).isEqualTo(250);
+        service.cancel(7L,10L,MealType.LUNCH,tomorrow);
+        assertThat(service.summary(7L,tomorrow).meals()).isEmpty();
+    }
+    @Test void mealsAreOnlyConfirmedInThePlansCreationWeek() {
+        // Plan created Sunday 2026-10-25 belongs to the week 2026-10-19..25; Monday 2026-10-26 is outside it.
+        when(plans.fetch("token",10L,DAY,MealType.LUNCH)).thenReturn(snapshot(LocalDate.of(2026,10,25)));
+        assertThatThrownBy(() -> service.confirm(7L,"token",10L,MealType.LUNCH,new ConfirmMealRequest(DAY,null)))
+                .extracting("errorCode").isEqualTo(ErrorCode.MEAL_PLAN_OUTSIDE_WEEK);
+        assertThat(meals.count()).isZero();
+        // Created Wednesday 2026-10-28: Monday 2026-10-26 is in the same ISO week.
+        when(plans.fetch("token",10L,DAY,MealType.LUNCH)).thenReturn(snapshot(LocalDate.of(2026,10,28)));
+        assertThat(service.confirm(7L,"token",10L,MealType.LUNCH,new ConfirmMealRequest(DAY,null)).date()).isEqualTo(DAY);
+    }
     @Test void confirmationIsIdempotentSnapshotAndSummaryCountsOnlyConfirmedMeals() {
         when(plans.fetch("token",10L,DAY,MealType.LUNCH)).thenReturn(snapshot());
         var request=new ConfirmMealRequest(DAY,BigDecimal.ONE);

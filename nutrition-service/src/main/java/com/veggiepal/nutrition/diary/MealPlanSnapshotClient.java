@@ -3,6 +3,7 @@ package com.veggiepal.nutrition.diary;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.Duration;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -28,6 +29,7 @@ public class MealPlanSnapshotClient {
         try {
             Map<?,?> plan=result(http.get().uri(aiUrl+"/ai/meal-plans/{id}",planId)
                     .headers(h -> h.setBearerAuth(token)).retrieve().body(Map.class));
+            LocalDate createdOn=LocalDate.parse(String.valueOf(plan.get("createdOn")));
             Map<?,?> body=map(plan.get("plan"));
             if (!(body.get("days") instanceof List<?> days)) throw unavailable();
             for (Object rawDay:days) {
@@ -44,7 +46,7 @@ public class MealPlanSnapshotClient {
                     Nutrition nutrition=new Nutrition(number(n.get("calories")),number(n.get("protein")),
                             number(n.get("carbohydrate")),number(n.get("fat")));
                     String title=meal.get("recipeTitle") instanceof String s && !s.isBlank()?s:recipeTitle(recipeId,token);
-                    return new MealSnapshot(recipeId,title,servings,nutrition);
+                    return new MealSnapshot(recipeId,title,servings,nutrition,createdOn);
                 }
             }
             throw new AppException(ErrorCode.MEAL_PLAN_MEAL_NOT_FOUND);
@@ -53,7 +55,7 @@ public class MealPlanSnapshotClient {
             if(e.getStatusCode().value()==403 || e.getStatusCode().value()==404)
                 throw new AppException(ErrorCode.MEAL_PLAN_MEAL_NOT_FOUND);
             throw unavailable();
-        } catch (RestClientException | IllegalArgumentException | ArithmeticException e) { throw unavailable(); }
+        } catch (RestClientException | IllegalArgumentException | ArithmeticException | DateTimeParseException e) { throw unavailable(); }
     }
     private String recipeTitle(Long recipeId,String token) {
         try {

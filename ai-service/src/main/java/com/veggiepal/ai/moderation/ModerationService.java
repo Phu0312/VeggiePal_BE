@@ -2,16 +2,24 @@ package com.veggiepal.ai.moderation;
 
 import static com.veggiepal.ai.moderation.ModerationDtos.*;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.veggiepal.ai.common.AppException;
 import com.veggiepal.ai.common.ErrorCode;
+import com.veggiepal.ai.common.PageResponse;
 import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.groq.dto.GroqRequest;
 import com.veggiepal.ai.monitoring.UsageService;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -111,6 +119,35 @@ public class ModerationService {
         if (!item.isPending()) throw new AppException(ErrorCode.MODERATION_CASE_STALE);
         item.review(adminId, Decision.DISMISSED.name(), reason != null && !reason.isBlank() ? reason : "Dismissed by admin");
         return view(item);
+    }
+    // Task B05: every case no longer waiting for an admin, newest decision first.
+    public PageResponse<ModerationResponse> history(ContentType contentType, Decision decision, Reviewer reviewer,
+            LocalDateTime from, LocalDateTime to, int page, int size) {
+        int safeSize = Math.clamp(size, 1, 100);
+        int safePage = Math.min(Math.max(page, 0), Integer.MAX_VALUE / safeSize);
+        Specification<ModerationCase> spec = (root, query, cb) -> {
+            Expression<LocalDateTime> decidedAt = cb.coalesce(root.<LocalDateTime>get("reviewedAt"),
+                    root.<LocalDateTime>get("createdAt"));
+            // Paging runs a separate count query; ordering it would fail.
+            if (query.getResultType() != Long.class && query.getResultType() != long.class) {
+                query.orderBy(cb.desc(decidedAt), cb.desc(root.get("id")));
+            }
+            List<Predicate> filters = new ArrayList<>(List.of(cb.or(
+                    cb.notEqual(root.get("decision"), Decision.REVIEW_REQUIRED.name()),
+                    cb.isNotNull(root.get("reviewedAt")))));
+            if (contentType != null) filters.add(cb.equal(root.get("contentType"), contentType.name()));
+            if (decision != null) filters.add(cb.equal(root.get("decision"), decision.name()));
+            if (reviewer == Reviewer.AI) filters.add(cb.isNull(root.get("reviewedBy")));
+            if (reviewer == Reviewer.ADMIN) filters.add(cb.isNotNull(root.get("reviewedBy")));
+            if (from != null) filters.add(cb.greaterThanOrEqualTo(decidedAt, from));
+            if (to != null) filters.add(cb.lessThanOrEqualTo(decidedAt, to));
+            return cb.and(filters.toArray(Predicate[]::new));
+        };
+        Page<ModerationCase> result = repository.findAll(spec, PageRequest.of(safePage, safeSize));
+        return PageResponse.<ModerationResponse>builder()
+                .items(result.getContent().stream().map(this::view).toList())
+                .page(result.getNumber()).size(result.getSize())
+                .totalElements(result.getTotalElements()).totalPages(result.getTotalPages()).build();
     }
     private ModerationResponse view(ModerationCase item) {
         List<String> categories=item.getCategories()==null||item.getCategories().isBlank()?List.of():List.of(item.getCategories().split(","));

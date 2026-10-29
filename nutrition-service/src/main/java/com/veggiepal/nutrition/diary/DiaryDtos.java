@@ -27,7 +27,8 @@ public final class DiaryDtos {
                     carbohydrate.add(other.carbohydrate),fat.add(other.fat));
         }
     }
-    public record MealSnapshot(Long recipeId, String title, BigDecimal plannedServings, Nutrition nutrition) {}
+    public record MealSnapshot(Long recipeId, String title, BigDecimal plannedServings, Nutrition nutrition,
+            LocalDate planCreatedOn) {}
     public record MealEntry(Long id, LocalDate date, Source source, Long mealPlanId, MealType mealType,
             Long recipeId, String title, BigDecimal servings, Nutrition nutrition, Instant recordedAt) {}
     public record WaterEntry(Long id, LocalDate date, int milliliters) {}

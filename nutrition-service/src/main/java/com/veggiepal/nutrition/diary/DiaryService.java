@@ -21,12 +21,22 @@ public class DiaryService {
             MealDiaryWriter writer, MealPlanSnapshotClient plans, @Qualifier("diaryClock") Clock clock) {
         this.meals=meals;this.water=water;this.activities=activities;this.writer=writer;this.plans=plans;this.clock=clock;
     }
-    LocalDate date(LocalDate requested) { return requested==null?LocalDate.now(clock):requested; }
+    // Writes may not be dated after today in Vietnam (task B02); reads and cancels take any date.
+    LocalDate date(LocalDate requested) {
+        LocalDate today=LocalDate.now(clock);
+        if(requested==null) return today;
+        if(requested.isAfter(today)) throw new AppException(ErrorCode.DIARY_DATE_IN_FUTURE);
+        return requested;
+    }
+    private LocalDate anyDate(LocalDate requested) { return requested==null?LocalDate.now(clock):requested; }
+    private static LocalDate monday(LocalDate day) { return day.with(DayOfWeek.MONDAY); }
     public MealEntry confirm(Long userId,String token,Long planId,MealType mealType,ConfirmMealRequest request) {
         LocalDate day=date(request.date());
         var existing=meals.findByUserIdAndMealPlanIdAndDateAndMealType(userId,planId,day,mealType);
         if(existing.isPresent()) return existing.get().view();
         MealSnapshot snapshot=plans.fetch(token,planId,day,mealType);
+        if(!monday(day).equals(monday(snapshot.planCreatedOn())))
+            throw new AppException(ErrorCode.MEAL_PLAN_OUTSIDE_WEEK);
         BigDecimal servings=request.servings()==null?snapshot.plannedServings():request.servings();
         if(servings.signum()<=0 || servings.compareTo(new BigDecimal("100"))>0)
             throw new AppException(ErrorCode.INVALID_DIARY_SERVINGS);
@@ -48,10 +58,10 @@ public class DiaryService {
         return n.multiply(servings).divide(planned,4,RoundingMode.HALF_UP);
     }
     @Transactional public void cancel(Long userId,Long planId,MealType mealType,LocalDate requested) {
-        meals.deleteByUserIdAndMealPlanIdAndDateAndMealType(userId,planId,date(requested),mealType);
+        meals.deleteByUserIdAndMealPlanIdAndDateAndMealType(userId,planId,anyDate(requested),mealType);
     }
     @Transactional(readOnly=true) public DailySummary summary(Long userId,LocalDate requested) {
-        LocalDate day=date(requested);
+        LocalDate day=anyDate(requested);
         var mealEntries=meals.findByUserIdAndDateOrderByIdAsc(userId,day).stream().map(MealDiary::view).toList();
         var waterEntries=water.findByUserIdAndDateOrderByIdAsc(userId,day).stream().map(WaterDiary::view).toList();
         var activityEntries=activities.findByUserIdAndDateOrderByIdAsc(userId,day).stream().map(ActivityDiary::view).toList();

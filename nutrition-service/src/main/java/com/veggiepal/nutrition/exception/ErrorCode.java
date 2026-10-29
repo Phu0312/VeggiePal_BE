@@ -37,6 +37,8 @@ public enum ErrorCode {
     DIARY_ENTRY_NOT_FOUND(2013, "Diary entry not found", HttpStatus.NOT_FOUND),
     MEAL_PLAN_MEAL_NOT_FOUND(2014, "Meal plan or meal not found for the current user and date", HttpStatus.NOT_FOUND),
     DIARY_SOURCE_UNAVAILABLE(2015, "Meal plan snapshot is temporarily unavailable", HttpStatus.SERVICE_UNAVAILABLE),
+    DIARY_DATE_IN_FUTURE(2016, "Diary date cannot be after today (Asia/Ho_Chi_Minh)", HttpStatus.BAD_REQUEST),
+    MEAL_PLAN_OUTSIDE_WEEK(2017, "Meals of this plan can only be confirmed in the week the plan was created", HttpStatus.BAD_REQUEST),
 
     INVALID_REQUEST(1018, "Invalid request data", HttpStatus.BAD_REQUEST);
 
