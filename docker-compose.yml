@@ -15,11 +15,18 @@ x-database-environment: &database-environment
   DB_USERNAME: ${DB_USERNAME:-root}
   DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
   JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set in .env}
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "4"
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "1"
 
 services:
   mysql:
     image: mysql:8.4
     restart: unless-stopped
+    mem_limit: 640m
+    command:
+      - --innodb-buffer-pool-size=128M
+      - --max-connections=60
+      - --performance-schema=OFF
     ports:
       - "127.0.0.1:3307:3306"
     environment:
@@ -53,11 +60,13 @@ services:
 
   identity-service:
     <<: *service-defaults
+    mem_limit: 576m
     build:
       context: ./identity-service
     environment:
       <<: *database-environment
       IDENTITY_SERVICE_PORT: "8081"
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx256m -XX:ActiveProcessorCount=2
     depends_on:
       mysql:
         condition: service_healthy
@@ -70,11 +79,13 @@ services:
 
   nutrition-service:
     <<: *service-defaults
+    mem_limit: 512m
     build:
       context: ./nutrition-service
     environment:
       <<: *database-environment
       NUTRITION_SERVICE_PORT: "8082"
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx224m -XX:ActiveProcessorCount=2
       AI_SERVICE_URL: http://ai-service:8086
       RECIPE_SERVICE_URL: http://recipe-service:8084
     depends_on:
@@ -89,11 +100,13 @@ services:
 
   blog-service:
     <<: *service-defaults
+    mem_limit: 576m
     build:
       context: ./blog-service
     environment:
       <<: *database-environment
       BLOG_SERVICE_PORT: "8083"
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx256m -XX:ActiveProcessorCount=2
       IDENTITY_SERVICE_URL: http://identity-service:8081
       AI_SERVICE_URL: http://ai-service:8086
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN must be set in .env}
@@ -111,11 +124,13 @@ services:
 
   recipe-service:
     <<: *service-defaults
+    mem_limit: 576m
     build:
       context: ./recipe-service
     environment:
       <<: *database-environment
       RECIPE_SERVICE_PORT: "8084"
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx256m -XX:ActiveProcessorCount=2
     depends_on:
       mysql:
         condition: service_healthy
@@ -128,11 +143,13 @@ services:
 
   location-service:
     <<: *service-defaults
+    mem_limit: 448m
     build:
       context: ./location-service
     environment:
       <<: *database-environment
       LOCATION_SERVICE_PORT: "8085"
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx192m -XX:ActiveProcessorCount=2
     depends_on:
       mysql:
         condition: service_healthy
@@ -145,11 +162,15 @@ services:
 
   ai-service:
     <<: *service-defaults
+    mem_limit: 768m
     build:
       context: ./ai-service
     environment:
       <<: *database-environment
       AI_SERVICE_PORT: "8086"
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx320m -XX:ActiveProcessorCount=2
+      AI_VIDEO_WORKERS: "1"
+      AI_VIDEO_QUEUE_CAPACITY: "2"
       IDENTITY_SERVICE_URL: http://identity-service:8081
       BLOG_SERVICE_URL: http://blog-service:8083
       RECIPE_SERVICE_URL: http://recipe-service:8084
@@ -178,11 +199,13 @@ services:
 
   payment-service:
     <<: *service-defaults
+    mem_limit: 448m
     build:
       context: ./payment-service
     environment:
       <<: *database-environment
       PAYMENT_SERVICE_PORT: "8087"
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx192m -XX:ActiveProcessorCount=2
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:?INTERNAL_SERVICE_TOKEN must be set in .env}
     depends_on:
       mysql:
@@ -196,12 +219,14 @@ services:
 
   api-gateway:
     <<: *service-defaults
+    mem_limit: 384m
     build:
       context: ./api-gateway
     ports:
       - "${GATEWAY_HOST_PORT:-8080}:8080"
     environment:
       GATEWAY_PORT: "8080"
+      JAVA_TOOL_OPTIONS: -Xms64m -Xmx160m -XX:ActiveProcessorCount=2
       IDENTITY_SERVICE_URL: http://identity-service:8081
       NUTRITION_SERVICE_URL: http://nutrition-service:8082
       BLOG_SERVICE_URL: http://blog-service:8083
