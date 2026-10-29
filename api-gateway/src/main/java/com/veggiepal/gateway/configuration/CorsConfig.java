@@ -18,10 +18,6 @@ public class CorsConfig {
 
     private final List<String> allowedOrigins;
 
-    public CorsConfig() {
-        this(DEFAULT_ALLOWED_ORIGINS);
-    }
-
     public CorsConfig(
             @Value("${cors.allowed-origin-patterns:" + DEFAULT_ALLOWED_ORIGINS + "}") String allowedOriginsConfig
     ) {

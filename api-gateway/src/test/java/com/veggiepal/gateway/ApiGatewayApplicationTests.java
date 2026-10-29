@@ -28,7 +28,7 @@ class ApiGatewayApplicationTests {
 		request.addHeader(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization,content-type");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		new CorsConfig().corsFilter().doFilter(request, response, (ignoredRequest, ignoredResponse) -> {});
+		new CorsConfig(CorsConfig.DEFAULT_ALLOWED_ORIGINS).corsFilter().doFilter(request, response, (ignoredRequest, ignoredResponse) -> {});
 
 		assertThat(response.getStatus()).isEqualTo(200);
 		assertThat(response.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isEqualTo("http://localhost:5173");
@@ -43,7 +43,7 @@ class ApiGatewayApplicationTests {
 		request.addHeader(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization,content-type");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 
-		new CorsConfig().corsFilter().doFilter(request, response, (ignoredRequest, ignoredResponse) -> {});
+		new CorsConfig(CorsConfig.DEFAULT_ALLOWED_ORIGINS).corsFilter().doFilter(request, response, (ignoredRequest, ignoredResponse) -> {});
 
 		assertThat(response.getHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN)).isNull();
 	}
