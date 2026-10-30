@@ -2,6 +2,7 @@ package com.veggiepal.ai.chat;
 
 import com.veggiepal.ai.common.AppException;
 import com.veggiepal.ai.common.ErrorCode;
+import com.veggiepal.ai.quota.QuotaCalendar;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.nio.charset.StandardCharsets;
@@ -32,7 +33,7 @@ public class GuestSessionService {
 
     @Transactional
     public GuestSession create(String clientIp) {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = QuotaCalendar.localNow();
         String ipHash = hash(clientIp);
         if (repository.countByIpHashAndCreatedAtGreaterThanEqual(ipHash, now.toLocalDate().atStartOfDay())
                 >= maxSessionsPerIpPerDay) {
@@ -43,7 +44,7 @@ public class GuestSessionService {
 
     @Transactional(readOnly = true)
     public GuestSession requireValid(String sessionId, String clientIp) {
-        GuestSession session = repository.findByIdAndExpiresAtAfter(sessionId, LocalDateTime.now())
+        GuestSession session = repository.findByIdAndExpiresAtAfter(sessionId, QuotaCalendar.localNow())
                 .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
         if (!MessageDigest.isEqual(session.getIpHash().getBytes(StandardCharsets.US_ASCII),
                 hash(clientIp).getBytes(StandardCharsets.US_ASCII))) {

@@ -4,14 +4,40 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import java.util.Optional;
+import java.time.Instant;
+import java.time.LocalDate;
 import com.veggiepal.ai.common.AppException;
 import org.junit.jupiter.api.Test;
 
 class QuotaServiceTest {
     @Test
+    void vietnamCalendarTurnsOverBeforeUtcAndDefinesMonthlyPeriod() {
+        assertEquals(LocalDate.of(2026, 11, 1),
+                QuotaCalendar.dateAt(Instant.parse("2026-10-31T17:00:00Z")));
+        assertEquals(LocalDate.of(2026, 10, 31),
+                QuotaCalendar.dateAt(Instant.parse("2026-10-31T16:59:59Z")));
+    }
+
+    @Test
+    void featureReservationUsesVietnamPeriodDate() {
+        DailyQuotaRepository repository = mock(DailyQuotaRepository.class);
+        LocalDate first = LocalDate.of(2026, 11, 1);
+        when(repository.totalTokens(anyString(), any())).thenReturn(0L);
+        when(repository.findByPrincipalKeyAndFeatureAndUsageDate("user:1", "VIDEO", first))
+                .thenReturn(Optional.of(new DailyQuota("user:1", "VIDEO", first)));
+        QuotaService service = new QuotaService(repository,
+                new QuotaProperties(3, 50, 12, 4000), new TokenProperties(50000));
+        try (var calendar = mockStatic(QuotaCalendar.class)) {
+            calendar.when(QuotaCalendar::today).thenReturn(first);
+            service.reserveFeature("user:1", "VIDEO", QuotaPeriod.MONTHLY, 3);
+        }
+        verify(repository).ensureExists("user:1", "VIDEO", first);
+        verify(repository).totalTokens("user:1", first);
+    }
+    @Test
     void guestQuotaRejectsFourthRequest() {
         DailyQuotaRepository repository=mock(DailyQuotaRepository.class);
-        DailyQuota row=new DailyQuota("guest:abc","CHAT",java.time.LocalDate.now());
+        DailyQuota row=new DailyQuota("guest:abc","CHAT",QuotaCalendar.today());
         when(repository.totalTokens(anyString(),any())).thenReturn(0L);
         when(repository.findByPrincipalKeyAndFeatureAndUsageDate(anyString(),anyString(),any())).thenReturn(Optional.of(row));
         QuotaService service=new QuotaService(repository,new QuotaProperties(3,50,12,4000),new TokenProperties(50000));
@@ -33,7 +59,7 @@ class QuotaServiceTest {
     @Test
     void monthlyFeatureQuotaRejectsAfterConfiguredLimit() {
         DailyQuotaRepository repository = mock(DailyQuotaRepository.class);
-        DailyQuota row = new DailyQuota("user:1", "MEAL_PLAN", java.time.LocalDate.now().withDayOfMonth(1));
+        DailyQuota row = new DailyQuota("user:1", "MEAL_PLAN", QuotaCalendar.today().withDayOfMonth(1));
         when(repository.totalTokens(anyString(), any())).thenReturn(0L);
         when(repository.findByPrincipalKeyAndFeatureAndUsageDate(anyString(), anyString(), any())).thenReturn(Optional.of(row));
         QuotaService service = new QuotaService(repository, new QuotaProperties(3, 50, 12, 4000), new TokenProperties(50000));
@@ -47,7 +73,7 @@ class QuotaServiceTest {
     @Test
     void usedReadsThisMonthsRowAndIsZeroWithoutOne() {
         DailyQuotaRepository repository = mock(DailyQuotaRepository.class);
-        java.time.LocalDate firstOfMonth = java.time.LocalDate.now().withDayOfMonth(1);
+        java.time.LocalDate firstOfMonth = QuotaCalendar.today().withDayOfMonth(1);
         DailyQuota row = new DailyQuota("user:1", "MEAL_PLAN", firstOfMonth);
         row.reserve();
         when(repository.findByPrincipalKeyAndFeatureAndUsageDate("user:1", "MEAL_PLAN", firstOfMonth))

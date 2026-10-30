@@ -289,11 +289,10 @@ public class RecipeService {
                 )
         );
 
-        recipe.setImageUrl(
-                trimToNull(
-                        request.getImageUrl()
-                )
-        );
+        String requestedImageUrl = trimToNull(request.getImageUrl());
+        if (requestedImageUrl != null && !requestedImageUrl.equals(recipe.getImageUrl())) {
+            throw new AppException(ErrorCode.RECIPE_IMAGE_UPDATE_REQUIRES_UPLOAD);
+        }
 
         recipe.setServings(
                 request.getServings()
@@ -445,7 +444,8 @@ public class RecipeService {
 
     /** Owner (or admin) of a recipe that can still be changed; for RecipeImageService. */
     public Recipe requireEditable(Long id, Long userId, boolean admin) {
-        Recipe recipe = findById(id);
+        Recipe recipe = recipeRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new AppException(ErrorCode.RECIPE_NOT_EXISTED));
         checkOwner(recipe, userId, admin);
         ensureMutable(recipe);
         return recipe;

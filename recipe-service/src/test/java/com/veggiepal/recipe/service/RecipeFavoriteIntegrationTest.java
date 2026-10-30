@@ -40,4 +40,20 @@ class RecipeFavoriteIntegrationTest {
         favorites.remove(11L, loved.getId());
         assertThat(favorites.myFavoriteIds(11L)).isEmpty();
     }
+
+    @Test
+    void favoriteIds_includeOnlyPublishedRecipes() {
+        Recipe visible = recipes.saveAndFlush(Recipe.builder().userId(987654L).title("Visible IT")
+                .servings(1).status(RecipeStatus.PUBLISHED).build());
+        Recipe hidden = recipes.saveAndFlush(Recipe.builder().userId(987654L).title("Hidden IT")
+                .servings(1).status(RecipeStatus.PUBLISHED).build());
+        favorites.add(33L, visible.getId());
+        favorites.add(33L, hidden.getId());
+        hidden.setStatus(RecipeStatus.HIDDEN);
+        recipes.saveAndFlush(hidden);
+
+        assertThat(favorites.myFavoriteIds(33L)).containsExactly(visible.getId());
+        assertThat(favorites.myFavorites(33L, 0, 20).getItems())
+                .extracting("id").containsExactly(visible.getId());
+    }
 }

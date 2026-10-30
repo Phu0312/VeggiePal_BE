@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.veggiepal.ai.common.AppException;
@@ -558,9 +559,10 @@ class MealPlanUpgradeServiceTest {
     // task_be C15: restoring is a step forward, never a rewrite of history
     @Test
     void restoreVersion_archivesTheCurrentPlanAndBringsTheOldOneBackAsANewVersion() {
-        MealPlan plan = new MealPlan(USER_ID, "Kế hoạch tuần", "Giảm cân", "{\"days\":[],\"current\":true}", 2);
+        MealPlan plan = new MealPlan(USER_ID, "Current name", "Gain weight", "GAIN", "{\"days\":[],\"current\":true}");
+        plan.bumpVersion(plan.getPlanJson());
         when(repository.findByIdAndUserId(PLAN_ID, USER_ID)).thenReturn(Optional.of(plan));
-        MealPlanVersion v1 = new MealPlanVersion(plan, 1, "Kế hoạch tuần", "Giảm cân", samplePlanJson(), "Bản khởi tạo");
+        MealPlanVersion v1 = new MealPlanVersion(plan, 1, "Old name", "Lose weight", "LOSE", samplePlanJson(), "Bản khởi tạo");
         when(versionRepository.findByMealPlanIdAndVersion(PLAN_ID, 1)).thenReturn(Optional.of(v1));
 
         ObjectNode allergyResult = mapper.createObjectNode();
@@ -573,9 +575,15 @@ class MealPlanUpgradeServiceTest {
 
         verify(versionRepository).save(argThat(v -> v.getVersion() == 2
                 && v.getPlanJson().contains("\"current\":true")
+                && v.getName().equals("Current name")
+                && v.getGoal().equals("Gain weight")
+                && v.getGoalType().equals("GAIN")
                 && v.getChangeSummary().equals("Trước khi khôi phục phiên bản 1")));
         assertEquals(samplePlanJson(), plan.getPlanJson());
         assertEquals(3, response.version());
+        assertEquals("Old name", response.name());
+        assertEquals("Lose weight", response.goal());
+        assertEquals("LOSE", response.goalType());
         verify(repository).save(plan);
     }
 
@@ -614,6 +622,59 @@ class MealPlanUpgradeServiceTest {
         assertEquals("{\"days\":[]}", plan.getPlanJson());
         verify(versionRepository, never()).save(any());
         verify(repository, never()).save(any());
+    }
+
+    @Test
+    void restoreVersion_hiddenRecipe_reportsUnavailableRecipe() {
+        stubRestoreRecipeLookupFailure(HttpClientErrorException.create(HttpStatus.NOT_FOUND,
+                "Not Found", HttpHeaders.EMPTY, new byte[0], StandardCharsets.UTF_8));
+        AppException error = assertThrows(AppException.class,
+                () -> service.restoreVersion(USER_ID, PLAN_ID, 1, "jwt-token"));
+        assertEquals(ErrorCode.RECIPE_UNAVAILABLE, error.getErrorCode(), error::getMessage);
+        verify(versionRepository, never()).save(any());
+    }
+
+    @Test
+    void restoreVersion_recipeServiceDown_preservesDownstreamError() {
+        stubRestoreRecipeLookupFailure(HttpClientErrorException.create(HttpStatus.SERVICE_UNAVAILABLE,
+                "Unavailable", HttpHeaders.EMPTY, new byte[0], StandardCharsets.UTF_8));
+        assertEquals(ErrorCode.DOWNSTREAM_UNAVAILABLE, assertThrows(AppException.class,
+                () -> service.restoreVersion(USER_ID, PLAN_ID, 1, "jwt-token")).getErrorCode());
+    }
+
+    @Test
+    void restoreVersion_recipeWithoutNutrition_reportsNutritionError() {
+        MealPlan plan = new MealPlan(USER_ID, "Plan", "Goal", samplePlanJson(), 2);
+        when(repository.findByIdAndUserId(PLAN_ID, USER_ID)).thenReturn(Optional.of(plan));
+        when(versionRepository.findByMealPlanIdAndVersion(PLAN_ID, 1)).thenReturn(Optional.of(
+                new MealPlanVersion(plan, 1, "Plan", "Goal", samplePlanJson(), "Original")));
+        ObjectNode allergies = mapper.createObjectNode();
+        allergies.putArray("result");
+        ObjectNode recipes = mapper.createObjectNode();
+        ObjectNode recipe = sampleRecipe(1, "Tofu", true, false);
+        ((ObjectNode) recipe.withArray("ingredients").get(0)).remove("caloriesPer100g");
+        recipes.putObject("result").putArray("items").add(recipe);
+        stubAllergiesAndRecipes(allergies, recipes);
+        AppException error = assertThrows(AppException.class,
+                () -> service.restoreVersion(USER_ID, PLAN_ID, 1, "jwt-token"));
+        assertEquals(ErrorCode.RECIPE_NUTRITION_UNAVAILABLE, error.getErrorCode(), () -> String.valueOf(error.getCause()));
+    }
+
+    private void stubRestoreRecipeLookupFailure(RuntimeException failure) {
+        MealPlan plan = new MealPlan(USER_ID, "Plan", "Goal", samplePlanJson(), 2);
+        when(repository.findByIdAndUserId(PLAN_ID, USER_ID)).thenReturn(Optional.of(plan));
+        when(versionRepository.findByMealPlanIdAndVersion(PLAN_ID, 1)).thenReturn(Optional.of(
+                new MealPlanVersion(plan, 1, "Plan", "Goal", samplePlanJson(), "Original")));
+        ObjectNode allergies = mapper.createObjectNode();
+        allergies.putArray("result");
+        ObjectNode recipes = mapper.createObjectNode();
+        recipes.putObject("result").putArray("items");
+        stubAllergiesAndRecipes(allergies, recipes);
+        RestClient.RequestHeadersUriSpec detail = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.ResponseSpec detailResponse = mock(RestClient.ResponseSpec.class);
+        when(http.get().uri("http://recipe-service/recipes/1")).thenReturn(detail);
+        when(detail.retrieve()).thenReturn(detailResponse);
+        when(detailResponse.body(JsonNode.class)).thenThrow(failure);
     }
 
     // ==========================================

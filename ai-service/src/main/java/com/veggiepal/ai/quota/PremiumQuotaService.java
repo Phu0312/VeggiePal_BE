@@ -32,16 +32,18 @@ public class PremiumQuotaService {
     public FeatureUsage mealPlanUsage(Long userId) {
         SubscriptionEntitlement entitlement = effective(userId);
         int limit = entitlement.mealPlansPerMonth();
-        int used = quotas.used("user:" + userId, "MEAL_PLAN", QuotaPeriod.MONTHLY);
-        LocalDate periodStart = LocalDate.now().withDayOfMonth(1);
+        LocalDate periodStart = QuotaCalendar.today().withDayOfMonth(1);
+        int used = quotas.usedOnDate("user:" + userId, "MEAL_PLAN", QuotaPeriod.MONTHLY, periodStart);
         return new FeatureUsage(entitlement.planCode(), limit, used, Math.max(0, limit - used),
                 periodStart, periodStart.plusMonths(1));
     }
 
-    public int reserveVideo(Long userId) {
+    public LocalDate reserveVideo(Long userId) {
         SubscriptionEntitlement entitlement = effective(userId);
-        return quotas.reserveFeature("user:" + userId, "VIDEO", QuotaPeriod.MONTHLY,
-                entitlement.videosPerMonth());
+        LocalDate periodStart = QuotaCalendar.today().withDayOfMonth(1);
+        quotas.reserveFeatureOnDate("user:" + userId, "VIDEO", QuotaPeriod.MONTHLY,
+                entitlement.videosPerMonth(), periodStart);
+        return periodStart;
     }
 
     public void refundVideo(Long userId) {
