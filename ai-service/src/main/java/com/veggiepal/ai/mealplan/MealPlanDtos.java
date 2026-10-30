@@ -78,7 +78,8 @@ public final class MealPlanDtos {
             String goal,
             Object plan,
             String changeSummary,
-            LocalDateTime createdAt) {}
+            LocalDateTime createdAt,
+            String goalType) {}
 
     public record UpdateFromHealthRequest(
             Boolean confirm,

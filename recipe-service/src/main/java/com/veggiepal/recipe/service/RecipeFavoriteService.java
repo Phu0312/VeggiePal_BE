@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.veggiepal.recipe.dto.response.PageResponse;
 import com.veggiepal.recipe.dto.response.RecipeFavoriteResponse;
@@ -25,8 +26,7 @@ import lombok.experimental.FieldDefaults;
 
 /**
  * task_be C18 + D21. Add and remove are idempotent so an optimistic heart can resend.
- * ponytail: two simultaneous first adds by the same user hit uk_recipe_favorites_user_recipe and the
- * loser answers 500 (data stays right); catch DataIntegrityViolationException if that shows up.
+ * Concurrent first adds share the unique key; the loser reads the winner after its insert transaction rolls back.
  */
 @Service
 @RequiredArgsConstructor
@@ -36,23 +36,29 @@ public class RecipeFavoriteService {
     RecipeRepository recipeRepository;
     RecipeFavoriteRepository favoriteRepository;
     RecipeMapper recipeMapper;
+    RecipeFavoriteWriter writer;
 
-    @Transactional
     public RecipeFavoriteResponse add(Long userId, Long recipeId) {
-
-        Recipe recipe = recipeRepository.findById(recipeId)
-                .filter(found -> found.getStatus() == RecipeStatus.PUBLISHED)
-                .orElseThrow(() -> new AppException(ErrorCode.RECIPE_NOT_EXISTED));
-
-        if (favoriteRepository.existsByUserIdAndRecipeId(userId, recipeId)) {
+        try {
+            return writer.add(userId, recipeId);
+        } catch (DataIntegrityViolationException duplicate) {
+            if (!duplicateFavoriteKey(duplicate)
+                    || !favoriteRepository.existsByUserIdAndRecipeId(userId, recipeId)) {
+                throw duplicate;
+            }
+            Recipe recipe = recipeRepository.findById(recipeId)
+                    .orElseThrow(() -> new AppException(ErrorCode.RECIPE_NOT_EXISTED));
             return response(recipeId, true, recipe.getFavoriteCount());
         }
+    }
 
-        favoriteRepository.save(RecipeFavorite.builder().userId(userId).recipe(recipe).build());
-        recipeRepository.addFavoriteCount(recipeId, 1);
-
-        // The JPQL update bypasses the persistence context, so add the delta here too
-        return response(recipeId, true, recipe.getFavoriteCount() + 1);
+    private static boolean duplicateFavoriteKey(Throwable failure) {
+        for (Throwable cause = failure; cause != null; cause = cause.getCause()) {
+            if (cause.getMessage() != null
+                    && cause.getMessage().toLowerCase(java.util.Locale.ROOT)
+                            .contains("uk_recipe_favorites_user_recipe")) return true;
+        }
+        return false;
     }
 
     // Works on a recipe hidden since, so a user can always empty their collection
@@ -89,10 +95,10 @@ public class RecipeFavoriteService {
 
     @Transactional(readOnly = true)
     public List<Long> myFavoriteIds(Long userId) {
-        return favoriteRepository.findRecipeIdsByUserId(userId);
+        return favoriteRepository.findRecipeIdsByUserId(userId, RecipeStatus.PUBLISHED);
     }
 
-    private static RecipeFavoriteResponse response(Long recipeId, boolean favorited, Integer count) {
+    static RecipeFavoriteResponse response(Long recipeId, boolean favorited, Integer count) {
         return RecipeFavoriteResponse.builder()
                 .recipeId(recipeId)
                 .favorited(favorited)

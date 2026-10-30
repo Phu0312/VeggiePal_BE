@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,8 @@ class RecipeFavoriteServiceTest {
     void setUp() {
         recipes = mock(RecipeRepository.class);
         favorites = mock(RecipeFavoriteRepository.class);
-        service = new RecipeFavoriteService(recipes, favorites, mock(RecipeMapper.class));
+        service = new RecipeFavoriteService(recipes, favorites, mock(RecipeMapper.class),
+                new RecipeFavoriteWriter(recipes, favorites));
     }
 
     static Recipe published() {
@@ -47,7 +49,7 @@ class RecipeFavoriteServiceTest {
 
         var response = service.add(7L, 5L);
 
-        verify(favorites).save(any(RecipeFavorite.class));
+        verify(favorites).saveAndFlush(any(RecipeFavorite.class));
         verify(recipes).addFavoriteCount(5L, 1);
         assertThat(response.getFavorited()).isTrue();
         assertThat(response.getFavoriteCount()).isEqualTo(4);
@@ -61,7 +63,7 @@ class RecipeFavoriteServiceTest {
 
         var response = service.add(7L, 5L);
 
-        verify(favorites, never()).save(any());
+        verify(favorites, never()).saveAndFlush(any());
         verify(recipes, never()).addFavoriteCount(any(), anyInt());
         assertThat(response.getFavoriteCount()).isEqualTo(3);
     }
@@ -75,6 +77,20 @@ class RecipeFavoriteServiceTest {
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
                 .isEqualTo(ErrorCode.RECIPE_NOT_EXISTED);
+    }
+
+    @Test
+    void add_duplicateInsertRace_returnsSuccessWithoutIncrementingAgain() {
+        when(recipes.findById(5L)).thenReturn(Optional.of(published()));
+        when(favorites.existsByUserIdAndRecipeId(7L, 5L)).thenReturn(false, true);
+        when(favorites.saveAndFlush(any(RecipeFavorite.class))).thenThrow(
+                new DataIntegrityViolationException("uk_recipe_favorites_user_recipe"));
+
+        var response = service.add(7L, 5L);
+
+        assertThat(response.getFavorited()).isTrue();
+        assertThat(response.getFavoriteCount()).isEqualTo(3);
+        verify(recipes, never()).addFavoriteCount(any(), anyInt());
     }
 
     @Test

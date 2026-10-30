@@ -199,7 +199,7 @@ class MealPlanUpgradeControllerTest {
     @Test
     void versionsEndpoints_returnVersionsListAndDetail() throws Exception {
         MealPlanDtos.MealPlanVersionResponse v1 = new MealPlanDtos.MealPlanVersionResponse(
-                1L, 10L, 1, "Thực đơn", "Tăng cân", "plan", "Khởi tạo", LocalDateTime.now()
+                1L, 10L, 1, "Thực đơn", "Tăng cân", "plan", "Khởi tạo", LocalDateTime.now(), "GAIN"
         );
         when(service.listVersions(42L, 10L)).thenReturn(List.of(v1));
         when(service.getVersion(42L, 10L, 1)).thenReturn(v1);

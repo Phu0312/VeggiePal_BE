@@ -14,6 +14,8 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionSynchronization;
 
 import com.veggiepal.recipe.entity.Recipe;
 import com.veggiepal.recipe.exception.AppException;
@@ -53,11 +55,54 @@ class RecipeImageServiceTest {
         when(storage.upload(startsWith("recipes/5/"), any(), eq("image/png")))
                 .thenReturn("https://res.cloudinary.com/demo/image/upload/recipes/5/new.png");
 
-        service.uploadImage(7L, false, 5L, new MockMultipartFile("file", "a.png", "image/png", png()));
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            service.uploadImage(7L, false, 5L, new MockMultipartFile("file", "a.png", "image/png", png()));
 
-        assertThat(recipe.getImageUrl()).isEqualTo("https://res.cloudinary.com/demo/image/upload/recipes/5/new.png");
-        verify(recipes).save(recipe);
-        verify(storage).delete("https://res.cloudinary.com/demo/image/upload/recipes/5/old.png");
+            assertThat(recipe.getImageUrl()).isEqualTo("https://res.cloudinary.com/demo/image/upload/recipes/5/new.png");
+            verify(recipes).saveAndFlush(recipe);
+            verify(storage, never()).delete("https://res.cloudinary.com/demo/image/upload/recipes/5/old.png");
+            TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
+            verify(storage).delete("https://res.cloudinary.com/demo/image/upload/recipes/5/old.png");
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void upload_rollbackDeletesNewImageAndKeepsPreviousImage() {
+        Recipe recipe = Recipe.builder().id(5L).userId(7L)
+                .imageUrl("https://res.cloudinary.com/demo/image/upload/recipes/5/old.png").build();
+        when(recipeService.requireEditable(5L, 7L, false)).thenReturn(recipe);
+        when(storage.upload(startsWith("recipes/5/"), any(), eq("image/png")))
+                .thenReturn("https://res.cloudinary.com/demo/image/upload/recipes/5/new.png");
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            service.uploadImage(7L, false, 5L, new MockMultipartFile("file", "a.png", "image/png", png()));
+            TransactionSynchronizationManager.getSynchronizations().forEach(
+                    sync -> sync.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
+            verify(storage).delete("https://res.cloudinary.com/demo/image/upload/recipes/5/new.png");
+            verify(storage, never()).delete("https://res.cloudinary.com/demo/image/upload/recipes/5/old.png");
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void upload_doesNotDeleteImageOutsideThisRecipeFolder() {
+        Recipe recipe = Recipe.builder().id(5L).userId(7L)
+                .imageUrl("https://res.cloudinary.com/demo/image/upload/recipes/6/shared.png").build();
+        when(recipeService.requireEditable(5L, 7L, false)).thenReturn(recipe);
+        when(storage.upload(startsWith("recipes/5/"), any(), eq("image/png")))
+                .thenReturn("https://res.cloudinary.com/demo/image/upload/recipes/5/new.png");
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            service.uploadImage(7L, false, 5L, new MockMultipartFile("file", "a.png", "image/png", png()));
+            TransactionSynchronizationManager.getSynchronizations().forEach(TransactionSynchronization::afterCommit);
+            verify(storage, never()).delete("https://res.cloudinary.com/demo/image/upload/recipes/6/shared.png");
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test

@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.veggiepal.recipe.dto.response.RecipeResponse;
@@ -62,20 +64,28 @@ public class RecipeImageService {
 
         String previousImageUrl = recipe.getImageUrl();
 
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            throw new IllegalStateException("Recipe image upload requires an active transaction");
+        }
+
         String key = "recipes/" + recipeId + "/" + UUID.randomUUID() + "." + imageType.getExtension();
         String imageUrl = fileStorageService.upload(key, content, imageType.getContentType());
 
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                deleteOwnedImage(previousImageUrl, recipeId);
+            }
+
+            @Override
+            public void afterCompletion(int status) {
+                if (status != STATUS_COMMITTED) deleteOwnedImage(imageUrl, recipeId);
+            }
+        });
+
         recipe.setImageUrl(imageUrl);
 
-        try {
-            recipeRepository.save(recipe);
-        } catch (RuntimeException exception) {
-            deleteQuietly(imageUrl);
-            throw exception;
-        }
-
-        // Ignores non-Cloudinary URLs, so a seeded or pasted imageUrl is left alone
-        deleteQuietly(previousImageUrl);
+        recipeRepository.saveAndFlush(recipe);
         return recipeMapper.toRecipeResponse(recipe);
     }
 
@@ -87,10 +97,14 @@ public class RecipeImageService {
         }
     }
 
-    private void deleteQuietly(String url) {
-        if (url == null) {
+    private void deleteOwnedImage(String url, Long recipeId) {
+        if (url == null || !url.startsWith("https://res.cloudinary.com/")) {
             return;
         }
+        int upload = url.indexOf("/image/upload/");
+        if (upload < 0) return;
+        String path = url.substring(upload + "/image/upload/".length()).replaceFirst("^v\\d+/", "");
+        if (!path.startsWith("recipes/" + recipeId + "/")) return;
         try {
             fileStorageService.delete(url);
         } catch (RuntimeException exception) {

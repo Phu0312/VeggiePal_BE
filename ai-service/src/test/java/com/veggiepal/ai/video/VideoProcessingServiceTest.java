@@ -48,6 +48,7 @@ class VideoProcessingServiceTest {
     void setUp() {
         repository = mock(VideoJobRepository.class);
         quota = mock(PremiumQuotaService.class);
+        when(quota.reserveVideo(7L)).thenReturn(LocalDate.of(2026, 11, 1));
         storage = mock(VideoStorage.class);
         media = mock(VideoMediaTools.class);
         states = mock(VideoJobStateService.class);
@@ -129,7 +130,7 @@ class VideoProcessingServiceTest {
 
         assertThrows(RuntimeException.class, () -> service.process(7L, video()));
 
-        verify(quota).refundVideo(7L);
+        verify(quota).refundVideo(7L, LocalDate.of(2026, 11, 1));
         verify(storage).delete(stored);
     }
 
@@ -303,7 +304,7 @@ class VideoProcessingServiceTest {
 
         assertEquals(8L, response.sourceVideoId());
         verify(quota).reserveVideo(7L);
-        verify(quota).refundVideo(7L);
+        verify(quota).refundVideo(7L, LocalDate.of(2026, 11, 1));
         verify(storage).delete(stored);
         verify(executor, never()).execute(any());
     }
@@ -317,7 +318,7 @@ class VideoProcessingServiceTest {
 
         assertEquals(ErrorCode.VIDEO_PROCESSING_FAILED,
                 assertThrows(AppException.class, () -> service.processExisting(7L, 8L)).getErrorCode());
-        verify(quota, times(1)).refundVideo(7L);
+        verify(quota, times(1)).refundVideo(7L, LocalDate.of(2026, 11, 1));
         verify(storage).delete(stored);
     }
 

@@ -64,6 +64,7 @@ public enum ErrorCode {
     RECIPE_IMAGE_REQUIRED(4116, "Recipe image file is required", HttpStatus.BAD_REQUEST),
     RECIPE_IMAGE_TOO_LARGE(4117, "Recipe image must not exceed 5MB", HttpStatus.BAD_REQUEST),
     INVALID_RECIPE_IMAGE_TYPE(4118, "Recipe image must be a JPEG or PNG image", HttpStatus.BAD_REQUEST),
+    RECIPE_IMAGE_UPDATE_REQUIRES_UPLOAD(4119, "Change recipe images through the image upload endpoint", HttpStatus.BAD_REQUEST),
     FILE_UPLOAD_FAILED(1017, "Could not upload file, please try again later", HttpStatus.SERVICE_UNAVAILABLE),
     INVALID_REQUEST(1018, "Invalid request data", HttpStatus.BAD_REQUEST);
 
