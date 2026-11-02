@@ -25,6 +25,11 @@ public class VideoJobStateService {
     public void touch(Long id) { repository.findForUpdate(id).ifPresent(VideoJob::touch); }
 
     @Transactional
+    public void assignPromptVersion(Long id, int version) {
+        repository.findForUpdate(id).ifPresent(job -> job.assignPromptVersion(version));
+    }
+
+    @Transactional
     public boolean complete(Long id, String transcript, String extractionJson) {
         return repository.findForUpdate(id).map(job -> job.complete(transcript, extractionJson)).orElse(false);
     }

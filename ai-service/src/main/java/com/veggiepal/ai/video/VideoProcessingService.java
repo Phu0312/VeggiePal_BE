@@ -190,7 +190,7 @@ public class VideoProcessingService {
             return new VideoJobResponse(job.getId(), job.getSourceVideoId(), job.getStatus(), job.getOriginalFilename(),
                     job.getTranscript(), job.getExtractionJson() == null ? null
                     : mapper.readValue(job.getExtractionJson(), Object.class), job.getErrorMessage(),
-                    utc(job.getCreatedAt()), utc(job.getUpdatedAt()));
+                    utc(job.getCreatedAt()), utc(job.getUpdatedAt()), job.getPromptVersion());
         } catch (Exception exception) {
             throw new AppException(ErrorCode.INVALID_AI_RESPONSE, exception);
         }
@@ -200,7 +200,7 @@ public class VideoProcessingService {
         try {
             return new VideoJobResponse(job.getId(), job.getSourceVideoId(), job.getStatus(),
                     job.getOriginalFilename(), null, parseExtraction(job), job.getErrorMessage(),
-                    utc(job.getCreatedAt()), utc(job.getUpdatedAt()));
+                    utc(job.getCreatedAt()), utc(job.getUpdatedAt()), job.getPromptVersion());
         } catch (AppException exception) {
             throw exception;
         }

@@ -14,6 +14,11 @@ import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.groq.dto.GroqRequest;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.prompt.PromptKey;
+import com.veggiepal.ai.prompt.PromptRuntime;
+import com.veggiepal.ai.prompt.PromptTemplate;
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +37,8 @@ public class ModerationService {
     private final ObjectMapper mapper;
     private final UsageService usage;
     private final ModerationOwnerClient ownerClient;
+    @Autowired(required = false)
+    private PromptRuntime promptRuntime;
 
     static final String SERVICE_PRINCIPAL = "service:moderation";
 
@@ -46,16 +53,16 @@ public class ModerationService {
     }
 
     private ModerationResponse classify(Long userId, String principal, ModerationRequest request) {
-        String prompt = """
-                Phân loại nội dung cộng đồng sau. Vi phạm gồm: hate, harassment, sexual, violence, self_harm,
-                illegal, spam, misinformation_dangerous. Trả duy nhất JSON:
-                {"decision":"APPROVED|REJECTED|REVIEW_REQUIRED","categories":["..."],"reason":"...","confidence":0.0}
-                REJECTED chỉ khi vi phạm rõ và confidence >= 0.85; không chắc chắn phải REVIEW_REQUIRED.
-                Nội dung: %s
-                """.formatted(request.text());
+        String prompt = promptRuntime == null
+                ? PromptTemplate.render(PromptKey.MODERATION_USER, PromptKey.MODERATION_USER.defaultContent(),
+                        Map.of("content", request.text()))
+                : promptRuntime.render(PromptKey.MODERATION_USER, Map.of("content", request.text()));
         long start=System.nanoTime();
         try {
-            var result=groq.complete(models.moderation(), List.of(new GroqRequest.Message("system","Bạn là bộ kiểm duyệt an toàn VeggiePal."), new GroqRequest.Message("user",prompt)),0,350);
+            var result=groq.complete(models.moderation(), List.of(new GroqRequest.Message("system",
+                    promptRuntime == null ? PromptKey.MODERATION_SYSTEM.defaultContent()
+                            : promptRuntime.activeContent(PromptKey.MODERATION_SYSTEM)),
+                    new GroqRequest.Message("user",prompt)),0,350);
             usage.success(userId,principal,"MODERATION",models.moderation(),result,elapsed(start));
             JsonNode json=mapper.readTree(cleanJson(result.content()));
             Decision decision=Decision.valueOf(json.path("decision").asText("REVIEW_REQUIRED"));

@@ -13,6 +13,10 @@ import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.groq.dto.GroqRequest;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.prompt.PromptKey;
+import com.veggiepal.ai.prompt.PromptRuntime;
+import com.veggiepal.ai.prompt.PromptTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +35,8 @@ public class RecommendationService {
     private final ModelProperties models;
     private final ObjectMapper mapper;
     private final UsageService usage;
+    @Autowired(required = false)
+    private PromptRuntime promptRuntime;
 
     public RecommendationService(@Qualifier("serviceRestClient") RestClient http,
             @Value("${services.blog.base-url}") String blogUrl, @Value("${services.recipe.base-url}") String recipeUrl,
@@ -48,7 +54,11 @@ public class RecommendationService {
         String compact;
         try { compact=mapper.writeValueAsString(candidates.stream().map(c -> Map.of("type",c.type,"id",c.id,"title",c.node.path("title").asText())).toList()); }
         catch (Exception e) { throw new AppException(ErrorCode.INVALID_REQUEST,e); }
-        String prompt="Chọn tối đa "+safeLimit+" nội dung phù hợp sở thích '"+(interest==null?"ăn chay":interest)+"'. Chỉ dùng candidate đã cho. Trả JSON array [{\"type\":\"BLOG|RECIPE\",\"id\":1,\"reason\":\"...\"}]. Candidates: "+compact;
+        Map<String, ?> variables = Map.of("limit", safeLimit,
+                "interest", interest == null ? "ăn chay" : interest, "candidates", compact);
+        String prompt = promptRuntime == null
+                ? PromptTemplate.render(PromptKey.RECOMMENDATION, PromptKey.RECOMMENDATION.defaultContent(), variables)
+                : promptRuntime.render(PromptKey.RECOMMENDATION, variables);
         long start=System.nanoTime();
         try {
             // gpt-oss spends part of max_completion_tokens on reasoning; 500 cut the JSON short.

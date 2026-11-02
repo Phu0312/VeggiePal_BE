@@ -7,6 +7,11 @@ import jakarta.validation.constraints.NotNull;
 public final class VideoDtos {
     private VideoDtos(){}
     public record ExistingVideoRequest(@NotNull Long videoId) { }
-    public record VideoJobResponse(Long id,Long sourceVideoId,String status,String filename,String transcript,Object extraction,String error,Instant createdAt,Instant updatedAt) { }
+    public record VideoJobResponse(Long id,Long sourceVideoId,String status,String filename,String transcript,Object extraction,String error,Instant createdAt,Instant updatedAt,Integer promptVersion) {
+        public VideoJobResponse(Long id,Long sourceVideoId,String status,String filename,String transcript,Object extraction,
+                                String error,Instant createdAt,Instant updatedAt) {
+            this(id,sourceVideoId,status,filename,transcript,extraction,error,createdAt,updatedAt,null);
+        }
+    }
     public record SharedVideoRecipeResponse(Long sourceVideoId,Object extraction,Instant completedAt) { }
 }

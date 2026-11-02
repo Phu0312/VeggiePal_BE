@@ -10,10 +10,13 @@ import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.groq.dto.GroqRequest;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.prompt.PromptKey;
+import com.veggiepal.ai.prompt.PromptRuntime;
 import com.veggiepal.ai.quota.QuotaProperties;
 import com.veggiepal.ai.quota.QuotaService;
 import com.veggiepal.ai.quota.PremiumQuotaService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,12 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ChatService {
-    private static final String SYSTEM_PROMPT = """
-            Bạn là trợ lý dinh dưỡng chay của VeggiePal. Trả lời bằng ngôn ngữ người dùng, thực tế và ngắn gọn.
-            Không chẩn đoán hoặc thay thế bác sĩ. Với triệu chứng nghiêm trọng, thai kỳ, trẻ nhỏ, bệnh nền hoặc nguy cơ thiếu chất,
-            hãy khuyên người dùng gặp bác sĩ/chuyên gia dinh dưỡng. Không khẳng định chắc chắn dữ liệu dinh dưỡng khi thiếu khẩu phần.
-            Chỉ tư vấn ăn chay, dinh dưỡng, nguyên liệu và nấu ăn; từ chối yêu cầu ngoài phạm vi.
-            """;
+    private static final String SYSTEM_PROMPT = PromptKey.CHAT_SYSTEM.defaultContent();
     private final ChatConversationRepository conversations;
     private final ChatMessageRepository messages;
     private final QuotaService quota;
@@ -37,12 +35,18 @@ public class ChatService {
     private final UsageService usage;
     private final GuestSessionService guestSessions;
     private final ChatPersistenceService persistence;
+    @Autowired(required = false)
+    private PromptRuntime promptRuntime;
+
+    private String systemPrompt() {
+        return promptRuntime == null ? SYSTEM_PROMPT : promptRuntime.activeContent(PromptKey.CHAT_SYSTEM);
+    }
 
     public ChatReply guest(String guestSession, String text, String clientIp) {
         GuestSession session = guestSessions.requireValid(guestSession, clientIp);
         String principal = "guest-ip:" + session.getIpHash();
         int remaining = quota.reserveChat(principal, true);
-        var prompts = List.of(new GroqRequest.Message("system", SYSTEM_PROMPT), new GroqRequest.Message("user", text.trim()));
+        var prompts = List.of(new GroqRequest.Message("system", systemPrompt()), new GroqRequest.Message("user", text.trim()));
         var result = call(null, principal, prompts);
         return new ChatReply(null, result.content(), remaining, result.promptTokens(), result.completionTokens());
     }
@@ -57,7 +61,7 @@ public class ChatService {
                 PageRequest.of(0, quotaProperties.maxHistoryMessages()));
         Collections.reverse(history);
         List<GroqRequest.Message> prompts = new ArrayList<>();
-        prompts.add(new GroqRequest.Message("system", SYSTEM_PROMPT));
+        prompts.add(new GroqRequest.Message("system", systemPrompt()));
         history.forEach(m -> prompts.add(new GroqRequest.Message(m.getRole(), m.getContent())));
         prompts.add(new GroqRequest.Message("user", request.message().trim()));
         var result = call(userId, principal, prompts);
