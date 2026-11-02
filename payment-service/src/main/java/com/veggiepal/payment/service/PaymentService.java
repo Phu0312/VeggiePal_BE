@@ -1,6 +1,7 @@
 package com.veggiepal.payment.service;
 
 import com.veggiepal.payment.dto.response.PaymentOrderResponse;
+import com.veggiepal.payment.dto.response.CheckoutPreviewResponse;
 import com.veggiepal.payment.entity.*;
 import com.veggiepal.payment.exception.*;
 import com.veggiepal.payment.payos.*;
@@ -41,6 +42,7 @@ public class PaymentService {
         if (plan.getCode() == PlanCode.FREE || plan.getPrice() <= 0) {
             throw new AppException(ErrorCode.PLAN_NOT_PURCHASABLE);
         }
+        subscriptionService.preview(userId, plan, clock.instant());
         Optional<PaymentOrder> reusable = orders
                 .findAllByUserIdAndPlanIdAndStatusOrderByCreatedAtDesc(userId, plan.getId(), PaymentStatus.PENDING)
                 .stream().filter(this::isReusable).findFirst();
@@ -63,6 +65,16 @@ public class PaymentService {
         } catch (PayOsOperationException exception) {
             throw new AppException(ErrorCode.PAYOS_UNAVAILABLE);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public CheckoutPreviewResponse checkoutPreview(Long userId, PlanCode planCode) {
+        SubscriptionPlan plan = plans.findByCodeAndActiveTrue(planCode)
+                .orElseThrow(() -> new AppException(ErrorCode.PLAN_NOT_FOUND));
+        if (plan.getCode() == PlanCode.FREE || plan.getPrice() <= 0) {
+            throw new AppException(ErrorCode.PLAN_NOT_PURCHASABLE);
+        }
+        return subscriptionService.preview(userId, plan, clock.instant());
     }
 
     @Transactional

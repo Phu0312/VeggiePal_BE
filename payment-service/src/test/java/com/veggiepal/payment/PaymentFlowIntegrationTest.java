@@ -59,6 +59,40 @@ class PaymentFlowIntegrationTest {
     }
 
     @Test
+    void checkoutPreviewShowsUpgradeAndCheckoutBlocksActiveDowngrade() throws Exception {
+        SubscriptionPlan plus = plans.findByCode(PlanCode.PLUS).orElseThrow();
+        SubscriptionPlan pro = plans.findByCode(PlanCode.PRO).orElseThrow();
+        Instant now = Instant.now();
+        subscriptions.save(UserSubscription.builder().userId(501L).plan(plus)
+                .startedAt(now.minusSeconds(10)).updatedAt(now)
+                .expiresAt(now.plus(20, java.time.temporal.ChronoUnit.DAYS).plusSeconds(3600)).build());
+
+        mvc.perform(get("/payments/checkout-preview").param("plan", "PRO"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/payments/checkout-preview")
+                        .with(jwt().jwt(token -> token.claim("userId", 501L).claim("role", "USER"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(1018));
+        mvc.perform(get("/payments/checkout-preview").param("plan", "PRO")
+                        .with(jwt().jwt(token -> token.claim("userId", 501L).claim("role", "USER"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.currentPlan").value("PLUS"))
+                .andExpect(jsonPath("$.result.targetPlan").value("PRO"))
+                .andExpect(jsonPath("$.result.remainingDays").value(20))
+                .andExpect(jsonPath("$.result.bonusDays").value(9));
+
+        subscriptions.save(UserSubscription.builder().userId(502L).plan(pro)
+                .startedAt(now.minusSeconds(10)).updatedAt(now)
+                .expiresAt(now.plus(5, java.time.temporal.ChronoUnit.DAYS)).build());
+        mvc.perform(post("/payments/checkout")
+                        .with(jwt().jwt(token -> token.claim("userId", 502L).claim("role", "USER")))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"planCode\":\"PLUS\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value(6010));
+        verifyNoInteractions(payOs);
+    }
+
+    @Test
     void checkoutDerivesUserFromJwtAndUsesCatalogPrice() throws Exception {
         when(payOs.createPaymentLink(anyLong(), eq(29_000L), eq("VeggiePal PLUS"), any(), any()))
                 .thenReturn(new PaymentLinkResult("new-link", "https://pay.test/new-link", "0002010102123854VIETQR",
