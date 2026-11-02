@@ -72,9 +72,9 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
                         else ST_Distance_Sphere(point(r.longitude, r.latitude), point(:lng, :lat)) end
                        as distanceMeters
             from vegetarian_restaurants r
-            where r.name like concat('%', :q, '%')
+            where r.name like concat('%', :q, '%') escape '!'
               and (:veganOnly = false or r.is_vegan_only = 1)
-            order by case when r.name like concat(:q, '%') then 0 else 1 end,
+            order by case when r.name like concat(:q, '%') escape '!' then 0 else 1 end,
                      distanceMeters is null, distanceMeters, r.name
             limit 20
             """)

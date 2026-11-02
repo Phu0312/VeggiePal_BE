@@ -37,6 +37,7 @@ public interface UserMapper {
 
     RegisterResponse toUserResponse(User user);
 
+    @Mapping(target = "badges", ignore = true)
     UserProfileResponse toUserProfileResponse(User user);
 
     PublicUserResponse toPublicUserResponse(User user);

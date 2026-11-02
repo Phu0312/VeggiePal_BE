@@ -17,5 +17,12 @@ public interface BlogMapper {
 
     @Mapping(target = "categoryId", source = "category.id")
     @Mapping(target = "categoryName", source = "category.name")
+    @Mapping(target = "moderationReason", ignore = true)
+    @Mapping(target = "aiReviewInProgress", ignore = true)
     BlogSummaryResponse toBlogSummaryResponse(Blog blog);
+
+    @Mapping(target = "categoryId", source = "category.id")
+    @Mapping(target = "categoryName", source = "category.name")
+    @Mapping(target = "aiReviewInProgress", expression = "java(blog.getModerationRequestedAt() != null)")
+    BlogSummaryResponse toOwnBlogSummaryResponse(Blog blog);
 }

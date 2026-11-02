@@ -30,6 +30,8 @@ public enum ErrorCode {
     VIDEO_EXTRACTION_IN_PROGRESS(6022, "Video recipe extraction is in progress", HttpStatus.CONFLICT),
     VIDEO_EXTRACTION_FAILED(6023, "Video recipe extraction failed", HttpStatus.UNPROCESSABLE_ENTITY),
     INSUFFICIENT_INFORMATION(6024, "Video does not contain sufficient recipe information", HttpStatus.UNPROCESSABLE_ENTITY),
+    RECIPE_UNAVAILABLE(6027, "Công thức không còn khả dụng.", HttpStatus.NOT_FOUND),
+    RECIPE_NUTRITION_UNAVAILABLE(6028, "Không thể tính dinh dưỡng cho công thức.", HttpStatus.UNPROCESSABLE_ENTITY),
     UNCATEGORIZED(6999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
 
     public final int code;

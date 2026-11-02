@@ -20,7 +20,6 @@ import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,6 +47,7 @@ class VideoProcessingServiceTest {
     void setUp() {
         repository = mock(VideoJobRepository.class);
         quota = mock(PremiumQuotaService.class);
+        when(quota.reserveVideo(7L)).thenReturn(LocalDate.of(2026, 11, 1));
         storage = mock(VideoStorage.class);
         media = mock(VideoMediaTools.class);
         states = mock(VideoJobStateService.class);
@@ -129,7 +129,7 @@ class VideoProcessingServiceTest {
 
         assertThrows(RuntimeException.class, () -> service.process(7L, video()));
 
-        verify(quota).refundVideo(7L);
+        verify(quota).refundVideo(7L, LocalDate.of(2026, 11, 1));
         verify(storage).delete(stored);
     }
 
@@ -163,7 +163,7 @@ class VideoProcessingServiceTest {
 
         assertEquals(1, page.getPage());
         assertEquals(11, page.getTotalElements());
-        assertEquals(1, page.getContent().size());
+        assertEquals(1, page.getItems().size());
         verify(repository).findAllByUserIdOrderByCreatedAtDesc(8L, PageRequest.of(1, 10));
     }
 
@@ -280,14 +280,14 @@ class VideoProcessingServiceTest {
     }
 
     @Test
-    void responseTimestampsAreExplicitUtcInstants() {
+    void responseTimestampsAreInstantsOfTheJvmZoneWallClock() {
         VideoJob job = new VideoJob(8L, "history.mp4");
         when(repository.findByIdAndUserId(10L, 8L)).thenReturn(Optional.of(job));
 
         var response = service.get(8L, 10L);
 
-        assertEquals(job.getCreatedAt().toInstant(ZoneOffset.UTC), response.createdAt());
-        assertEquals(job.getUpdatedAt().toInstant(ZoneOffset.UTC), response.updatedAt());
+        assertEquals(job.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant(), response.createdAt());
+        assertEquals(job.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant(), response.updatedAt());
     }
 
     @Test
@@ -303,7 +303,7 @@ class VideoProcessingServiceTest {
 
         assertEquals(8L, response.sourceVideoId());
         verify(quota).reserveVideo(7L);
-        verify(quota).refundVideo(7L);
+        verify(quota).refundVideo(7L, LocalDate.of(2026, 11, 1));
         verify(storage).delete(stored);
         verify(executor, never()).execute(any());
     }
@@ -317,7 +317,7 @@ class VideoProcessingServiceTest {
 
         assertEquals(ErrorCode.VIDEO_PROCESSING_FAILED,
                 assertThrows(AppException.class, () -> service.processExisting(7L, 8L)).getErrorCode());
-        verify(quota, times(1)).refundVideo(7L);
+        verify(quota, times(1)).refundVideo(7L, LocalDate.of(2026, 11, 1));
         verify(storage).delete(stored);
     }
 

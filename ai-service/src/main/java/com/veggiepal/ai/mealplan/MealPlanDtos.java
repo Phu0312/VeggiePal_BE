@@ -1,6 +1,9 @@
 package com.veggiepal.ai.mealplan;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -54,6 +57,14 @@ public final class MealPlanDtos {
             this(id, name, goal, plan, createdAt, updatedAt, 1, false, null);
         }
 
+        // The diary (nutrition-service) only accepts a plan's meals in the week it was created (task B02).
+        // createdAt is written in this JVM's zone, so convert from there.
+        @JsonProperty("createdOn")
+        public LocalDate createdOn() {
+            return createdAt == null ? null : createdAt.atZone(ZoneId.systemDefault())
+                    .withZoneSameInstant(ZoneId.of("Asia/Ho_Chi_Minh")).toLocalDate();
+        }
+
         public MealPlanResponse(Long id, String name, String goal, Object plan, LocalDateTime createdAt, LocalDateTime updatedAt, Integer version) {
             this(id, name, goal, plan, createdAt, updatedAt, version, false, null);
         }
@@ -67,7 +78,8 @@ public final class MealPlanDtos {
             String goal,
             Object plan,
             String changeSummary,
-            LocalDateTime createdAt) {}
+            LocalDateTime createdAt,
+            String goalType) {}
 
     public record UpdateFromHealthRequest(
             Boolean confirm,

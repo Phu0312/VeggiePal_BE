@@ -3,6 +3,10 @@ package com.veggiepal.ai.moderation;
 import static com.veggiepal.ai.moderation.ModerationDtos.*;
 import java.util.List;
 import com.veggiepal.ai.common.ApiResponse;
+import com.veggiepal.ai.common.PageResponse;
+import java.time.Instant;
+import com.veggiepal.ai.monitoring.MonitoringController;
+import org.springframework.format.annotation.DateTimeFormat;
 import com.veggiepal.ai.security.CurrentUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,15 @@ public class ModerationController {
         return ApiResponse.success(service.moderate(CurrentUser.id(jwt),request));
     }
     @GetMapping("/ai/admin/moderation") ApiResponse<List<ModerationResponse>> pending() { return ApiResponse.success(service.pending()); }
+    @GetMapping("/ai/admin/moderation/history") ApiResponse<PageResponse<ModerationResponse>> history(
+            @RequestParam(required = false) ContentType contentType, @RequestParam(required = false) Decision decision,
+            @RequestParam(required = false) Reviewer reviewer,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant to,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.success(service.history(contentType, decision, reviewer,
+                MonitoringController.jvmLocal(from), MonitoringController.jvmLocal(to), page, size));
+    }
     @PutMapping("/ai/admin/moderation/{id}") ApiResponse<ModerationResponse> review(@AuthenticationPrincipal Jwt jwt,
             @PathVariable Long id,@RequestBody @Valid ReviewRequest request) {
         return ApiResponse.success(service.review(CurrentUser.id(jwt),id,request,jwt.getTokenValue()));

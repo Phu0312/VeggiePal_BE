@@ -17,16 +17,21 @@ public class QuotaService {
 
     @Transactional(readOnly = true)
     public void checkTokenBudget(String principalKey) {
-        if (repository.totalTokens(principalKey, LocalDate.now()) >= tokenProperties.dailyLimit()) {
+        checkTokenBudgetOnDate(principalKey, QuotaCalendar.today());
+    }
+
+    private void checkTokenBudgetOnDate(String principalKey, LocalDate date) {
+        if (repository.totalTokens(principalKey, date) >= tokenProperties.dailyLimit()) {
             throw new AppException(ErrorCode.QUOTA_EXCEEDED);
         }
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int reserveChat(String principalKey, boolean guest) {
-        checkTokenBudget(principalKey);
-        repository.ensureExists(principalKey, "CHAT", LocalDate.now());
-        DailyQuota quota = repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, "CHAT", LocalDate.now())
+        LocalDate today = QuotaCalendar.today();
+        checkTokenBudgetOnDate(principalKey, today);
+        repository.ensureExists(principalKey, "CHAT", today);
+        DailyQuota quota = repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, "CHAT", today)
                 .orElseThrow();
         int limit = guest ? properties.guestDailyLimit() : properties.memberDailyLimit();
         if (quota.getRequestCount() >= limit) throw new AppException(ErrorCode.QUOTA_EXCEEDED);
@@ -36,8 +41,12 @@ public class QuotaService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public int reserveFeature(String principalKey, String feature, QuotaPeriod period, int limit) {
-        checkTokenBudget(principalKey);
-        LocalDate today = LocalDate.now();
+        return reserveFeatureOnDate(principalKey, feature, period, limit, QuotaCalendar.today());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public int reserveFeatureOnDate(String principalKey, String feature, QuotaPeriod period, int limit, LocalDate today) {
+        checkTokenBudgetOnDate(principalKey, today);
         LocalDate periodDate = period == QuotaPeriod.MONTHLY ? today.withDayOfMonth(1) : today;
         repository.ensureExists(principalKey, feature, periodDate);
         DailyQuota quota = repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, periodDate)
@@ -50,7 +59,11 @@ public class QuotaService {
     /** Read-only twin of reserveFeature: the same row, never created here. */
     @Transactional(readOnly = true)
     public int used(String principalKey, String feature, QuotaPeriod period) {
-        LocalDate today = LocalDate.now();
+        return usedOnDate(principalKey, feature, period, QuotaCalendar.today());
+    }
+
+    @Transactional(readOnly = true)
+    public int usedOnDate(String principalKey, String feature, QuotaPeriod period, LocalDate today) {
         LocalDate periodDate = period == QuotaPeriod.MONTHLY ? today.withDayOfMonth(1) : today;
         return repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, periodDate)
                 .map(DailyQuota::getRequestCount)
@@ -59,7 +72,7 @@ public class QuotaService {
 
     @Transactional
     public void refundFeature(String principalKey, String feature, QuotaPeriod period) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = QuotaCalendar.today();
         LocalDate periodDate = period == QuotaPeriod.MONTHLY ? today.withDayOfMonth(1) : today;
         repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, periodDate)
                 .ifPresent(DailyQuota::refund);
@@ -73,8 +86,9 @@ public class QuotaService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void addTokens(String principalKey, String feature, int input, int output) {
-        repository.ensureExists(principalKey, feature, LocalDate.now());
-        DailyQuota quota = repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, LocalDate.now())
+        LocalDate today = QuotaCalendar.today();
+        repository.ensureExists(principalKey, feature, today);
+        DailyQuota quota = repository.findByPrincipalKeyAndFeatureAndUsageDate(principalKey, feature, today)
                 .orElseThrow();
         quota.addTokens(input, output);
     }

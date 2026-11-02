@@ -265,7 +265,7 @@ public class MealPlanService {
         int safePage = Math.min(Math.max(page, 0), Integer.MAX_VALUE / safeSize);
         if (favoriteRepository == null) {
             return PageResponse.<MealPlanResponse>builder()
-                    .content(List.of()).page(safePage).size(safeSize).totalElements(0).totalPages(0).build();
+                    .items(List.of()).page(safePage).size(safeSize).totalElements(0).totalPages(0).build();
         }
         Page<MealPlanFavorite> favPage = favoriteRepository.findByUserIdOrderByCreatedAtDesc(
                 userId, PageRequest.of(safePage, safeSize));
@@ -274,7 +274,7 @@ public class MealPlanService {
                 .toList();
 
         return PageResponse.<MealPlanResponse>builder()
-                .content(items)
+                .items(items)
                 .page(favPage.getNumber())
                 .size(favPage.getSize())
                 .totalElements(favPage.getTotalElements())
@@ -592,7 +592,9 @@ public class MealPlanService {
                 "Trước khi khôi phục phiên bản " + version
         ));
 
-        entity.bumpVersion(restored.getPlanJson());
+        entity.restore(restored.getName(), restored.getGoal(),
+                restored.getGoalType() != null ? restored.getGoalType() : entity.getGoalType(),
+                restored.getPlanJson());
         repository.save(entity);
         return view(entity);
     }
@@ -606,7 +608,8 @@ public class MealPlanService {
                 v.getGoal(),
                 mapper.convertValue(read(v.getPlanJson()), Object.class),
                 v.getChangeSummary(),
-                v.getCreatedAt()
+                v.getCreatedAt(),
+                v.getGoalType()
         );
     }
 
@@ -624,11 +627,10 @@ public class MealPlanService {
             }
         }
         if (recipe == null) {
-            try {
-                recipe = result(get(recipeUrl + "/recipes/" + recipeId, null));
-            } catch (Exception ex) {
-                throw new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Không tìm thấy công thức với ID: " + recipeId);
-            }
+            recipe = result(get(recipeUrl + "/recipes/" + recipeId, null));
+        }
+        if (recipe.hasNonNull("status") && !"PUBLISHED".equals(recipe.path("status").asText())) {
+            throw new AppException(ErrorCode.RECIPE_UNAVAILABLE);
         }
         if (!validator.isVegan(recipe)) {
             throw new AppException(ErrorCode.RECIPE_NOT_VEGAN);
@@ -637,7 +639,7 @@ public class MealPlanService {
             throw new AppException(ErrorCode.RECIPE_CONTAINS_ALLERGEN);
         }
         if (!validator.canCalculateMacro(recipe)) {
-            throw new AppException(ErrorCode.INVALID_REQUEST, "Công thức không thể tính toán giá trị dinh dưỡng");
+            throw new AppException(ErrorCode.RECIPE_NUTRITION_UNAVAILABLE);
         }
         return recipe;
     }
@@ -719,6 +721,9 @@ public class MealPlanService {
             if (exception.getStatusCode().value() == 404 && url.contains("/health-records/latest")) {
                 throw new AppException(ErrorCode.HEALTH_RECORD_REQUIRED, exception);
             }
+            if (exception.getStatusCode().value() == 404 && url.matches(".*/recipes/\\d+$")) {
+                throw new AppException(ErrorCode.RECIPE_UNAVAILABLE, exception);
+            }
             throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE, exception);
         } catch (Exception exception) {
             throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE, exception);
@@ -737,7 +742,7 @@ public class MealPlanService {
     }
 
     private ArrayNode pageItems(JsonNode page) {
-        JsonNode items = page.has("items") ? page.path("items") : page.path("content");
+        JsonNode items = page.path("items");
         if (items instanceof ArrayNode array) return array;
         throw new AppException(ErrorCode.DOWNSTREAM_UNAVAILABLE);
     }

@@ -10,7 +10,6 @@ import com.veggiepal.ai.video.VideoDtos.SharedVideoRecipeResponse;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
@@ -59,6 +58,7 @@ public class VideoProcessingService {
 
         Path video = null;
         boolean quotaReserved = false;
+        LocalDate quotaPeriodDate = null;
         VideoJob job = null;
         try {
             video = downloader.download(source.videoUrl());
@@ -75,13 +75,13 @@ public class VideoProcessingService {
                 return sourceView(cached);
             }
 
-            premiumQuota.reserveVideo(userId);
+            quotaPeriodDate = premiumQuota.reserveVideo(userId);
             quotaReserved = true;
             try {
                 job = repository.saveAndFlush(new VideoJob(userId, "blog-video-" + videoId + ".mp4",
-                        video.toString(), true, LocalDate.now().withDayOfMonth(1), videoId));
+                        video.toString(), true, quotaPeriodDate, videoId));
             } catch (DataIntegrityViolationException duplicate) {
-                premiumQuota.refundVideo(userId);
+                premiumQuota.refundVideo(userId, quotaPeriodDate);
                 quotaReserved = false;
                 storage.delete(video);
                 return sourceView(repository.findBySourceVideoId(videoId)
@@ -100,11 +100,11 @@ public class VideoProcessingService {
             }
             return accepted;
         } catch (AppException exception) {
-            if (job == null && quotaReserved) premiumQuota.refundVideo(userId);
+            if (job == null && quotaReserved) premiumQuota.refundVideo(userId, quotaPeriodDate);
             if (job == null) storage.delete(video);
             throw exception;
         } catch (RuntimeException exception) {
-            if (job == null && quotaReserved) premiumQuota.refundVideo(userId);
+            if (job == null && quotaReserved) premiumQuota.refundVideo(userId, quotaPeriodDate);
             if (job == null) storage.delete(video);
             throw new AppException(ErrorCode.VIDEO_PROCESSING_FAILED, exception);
         }
@@ -130,14 +130,15 @@ public class VideoProcessingService {
         validateUpload(file);
         Path video = null;
         boolean quotaReserved = false;
+        LocalDate quotaPeriodDate = null;
         VideoJob job = null;
         try {
             video = storage.store(file);
             media.probe(video); // Real media validation always happens before quota reservation.
-            premiumQuota.reserveVideo(userId);
+            quotaPeriodDate = premiumQuota.reserveVideo(userId);
             quotaReserved = true;
             job = repository.save(new VideoJob(userId, safeName(file.getOriginalFilename()),
-                    video.toString(), true, LocalDate.now().withDayOfMonth(1)));
+                    video.toString(), true, quotaPeriodDate));
             VideoJobResponse accepted = view(job);
             Long jobId = job.getId();
             Path storedVideo = video;
@@ -150,11 +151,11 @@ public class VideoProcessingService {
             }
             return accepted;
         } catch (AppException exception) {
-            if (job == null && quotaReserved) premiumQuota.refundVideo(userId);
+            if (job == null && quotaReserved) premiumQuota.refundVideo(userId, quotaPeriodDate);
             if (job == null) storage.delete(video);
             throw exception;
         } catch (RuntimeException exception) {
-            if (job == null && quotaReserved) premiumQuota.refundVideo(userId);
+            if (job == null && quotaReserved) premiumQuota.refundVideo(userId, quotaPeriodDate);
             if (job == null) storage.delete(video);
             throw exception;
         }
@@ -171,7 +172,7 @@ public class VideoProcessingService {
         Page<VideoJob> result = repository.findAllByUserIdOrderByCreatedAtDesc(
                 userId, PageRequest.of(safePage, safeSize));
         return PageResponse.<VideoJobResponse>builder()
-                .content(result.getContent().stream().map(this::view).toList())
+                .items(result.getContent().stream().map(this::view).toList())
                 .page(result.getNumber()).size(result.getSize())
                 .totalElements(result.getTotalElements()).totalPages(result.getTotalPages()).build();
     }
@@ -226,7 +227,7 @@ public class VideoProcessingService {
     }
 
     private java.time.Instant utc(LocalDateTime value) {
-        return value == null ? null : value.toInstant(ZoneOffset.UTC);
+        return value == null ? null : value.atZone(java.time.ZoneId.systemDefault()).toInstant();
     }
 
     private BlogVideoClient.BlogVideoMetadata requirePublishedUpload(Long videoId) {

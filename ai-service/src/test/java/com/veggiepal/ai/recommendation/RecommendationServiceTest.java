@@ -66,7 +66,7 @@ class RecommendationServiceTest {
     @Test
     void recommendReturnsEmptyListWhenNoCandidatesFound() throws Exception {
         JsonNode emptyBlog = mapper.readTree("{\"result\":{\"items\":[]}}");
-        JsonNode emptyRecipe = mapper.readTree("{\"result\":{\"content\":[]}}");
+        JsonNode emptyRecipe = mapper.readTree("{\"result\":{\"items\":[]}}");
 
         when(uriSpec.uri(contains("http://blog-service"))).thenReturn(uriSpec);
         when(uriSpec.uri(contains("http://recipe-service"))).thenReturn(uriSpec);
@@ -82,7 +82,7 @@ class RecommendationServiceTest {
     @Test
     void recommendSuccessfullyRanksAndReturnsCandidates() throws Exception {
         JsonNode blogData = mapper.readTree("{\"result\":{\"items\":[{\"id\":10,\"title\":\"Vegan Salad Guide\"}]}}");
-        JsonNode recipeData = mapper.readTree("{\"result\":{\"content\":[{\"id\":20,\"title\":\"Avocado Salad\"}]}}");
+        JsonNode recipeData = mapper.readTree("{\"result\":{\"items\":[{\"id\":20,\"title\":\"Avocado Salad\"}]}}");
 
         when(responseSpec.body(JsonNode.class)).thenReturn(blogData, recipeData);
 
@@ -105,7 +105,7 @@ class RecommendationServiceTest {
     @Test
     void recommendReturnsContentThatSpringMvcWritesAsJson() throws Exception {
         JsonNode blogData = mapper.readTree("{\"result\":{\"items\":[{\"id\":10,\"title\":\"Vegan Salad Guide\"}]}}");
-        JsonNode recipeData = mapper.readTree("{\"result\":{\"content\":[]}}");
+        JsonNode recipeData = mapper.readTree("{\"result\":{\"items\":[]}}");
         when(responseSpec.body(JsonNode.class)).thenReturn(blogData, recipeData);
         when(groq.complete(anyString(), anyList(), anyDouble(), anyInt()))
                 .thenReturn(new GroqClient.GroqResult("[{\"type\":\"BLOG\",\"id\":10,\"reason\":\"tips\"}]", 100, 50));
@@ -120,7 +120,7 @@ class RecommendationServiceTest {
     @Test
     void recommendThrowsInvalidAiResponseWhenGroqReturnsNonArray() throws Exception {
         JsonNode blogData = mapper.readTree("{\"result\":{\"items\":[{\"id\":10,\"title\":\"Vegan Salad Guide\"}]}}");
-        JsonNode recipeData = mapper.readTree("{\"result\":{\"content\":[]}}");
+        JsonNode recipeData = mapper.readTree("{\"result\":{\"items\":[]}}");
 
         when(responseSpec.body(JsonNode.class)).thenReturn(blogData, recipeData);
 
@@ -134,7 +134,7 @@ class RecommendationServiceTest {
 
     @Test
     void recommendStillUsesRecipesWhenBlogServiceIsDown() throws Exception {
-        JsonNode recipeData = mapper.readTree("{\"result\":{\"content\":[{\"id\":20,\"title\":\"Avocado Salad\"}]}}");
+        JsonNode recipeData = mapper.readTree("{\"result\":{\"items\":[{\"id\":20,\"title\":\"Avocado Salad\"}]}}");
         when(responseSpec.body(JsonNode.class)).thenThrow(new RuntimeException("Connection refused")).thenReturn(recipeData);
         when(groq.complete(anyString(), anyList(), anyDouble(), anyInt()))
                 .thenReturn(new GroqClient.GroqResult("[{\"type\":\"RECIPE\",\"id\":20,\"reason\":\"fresh\"}]", 100, 50));
@@ -148,7 +148,7 @@ class RecommendationServiceTest {
     @Test
     void recommendFallsBackToLatestItemsWhenKeywordMatchesNothing() throws Exception {
         JsonNode emptyBlog = mapper.readTree("{\"result\":{\"items\":[]}}");
-        JsonNode emptyRecipe = mapper.readTree("{\"result\":{\"content\":[]}}");
+        JsonNode emptyRecipe = mapper.readTree("{\"result\":{\"items\":[]}}");
         JsonNode latestBlogs = mapper.readTree("{\"result\":{\"items\":[{\"id\":10,\"title\":\"Rau củ ít calo\"}]}}");
         when(responseSpec.body(JsonNode.class)).thenReturn(emptyBlog, emptyRecipe, latestBlogs, emptyRecipe);
         when(groq.complete(anyString(), anyList(), anyDouble(), anyInt()))
@@ -164,7 +164,7 @@ class RecommendationServiceTest {
     @Test
     void recommendReadsJsonArrayWrappedInProse() throws Exception {
         JsonNode blogData = mapper.readTree("{\"result\":{\"items\":[{\"id\":10,\"title\":\"Vegan Salad Guide\"}]}}");
-        JsonNode recipeData = mapper.readTree("{\"result\":{\"content\":[]}}");
+        JsonNode recipeData = mapper.readTree("{\"result\":{\"items\":[]}}");
         when(responseSpec.body(JsonNode.class)).thenReturn(blogData, recipeData);
         String groqOutput = "Dưới đây là gợi ý cho bạn:\n```json\n[{\"type\":\"BLOG\",\"id\":10,\"reason\":\"tips\"}]\n```";
         when(groq.complete(anyString(), anyList(), anyDouble(), anyInt()))

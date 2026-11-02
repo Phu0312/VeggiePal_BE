@@ -7,11 +7,13 @@ import java.util.List;
 import com.veggiepal.recipe.enums.RecipeStatus;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.DynamicUpdate;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @Entity
+@DynamicUpdate
 @Table(name = "recipes")
 @Getter
 @Setter

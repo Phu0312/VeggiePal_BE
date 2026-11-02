@@ -42,11 +42,11 @@ class PremiumQuotaServiceTest {
     @Test
     void mealPlanUsageShowsThisMonthsLimitUsedAndRemaining() {
         when(subscriptions.getEffectiveSubscription(7L)).thenReturn(SubscriptionEntitlement.free());
-        when(quotas.used("user:7", "MEAL_PLAN", QuotaPeriod.MONTHLY)).thenReturn(1);
+        when(quotas.usedOnDate(eq("user:7"), eq("MEAL_PLAN"), eq(QuotaPeriod.MONTHLY), any())).thenReturn(1);
 
         FeatureUsage usage = service.mealPlanUsage(7L);
 
-        LocalDate first = LocalDate.now().withDayOfMonth(1);
+        LocalDate first = QuotaCalendar.today().withDayOfMonth(1);
         assertEquals(new FeatureUsage("FREE", 2, 1, 1, first, first.plusMonths(1)), usage);
     }
 
@@ -54,7 +54,7 @@ class PremiumQuotaServiceTest {
     @Test
     void mealPlanUsageNeverReportsNegativeRemaining() {
         when(subscriptions.getEffectiveSubscription(7L)).thenReturn(SubscriptionEntitlement.free());
-        when(quotas.used("user:7", "MEAL_PLAN", QuotaPeriod.MONTHLY)).thenReturn(5);
+        when(quotas.usedOnDate(eq("user:7"), eq("MEAL_PLAN"), eq(QuotaPeriod.MONTHLY), any())).thenReturn(5);
 
         assertEquals(0, service.mealPlanUsage(7L).remaining());
     }
@@ -76,6 +76,7 @@ class PremiumQuotaServiceTest {
         service.reserveVideo(7L);
         verify(quotas).reserveFeature("user:7", "CHAT", QuotaPeriod.DAILY, chat);
         verify(quotas).reserveFeature("user:7", "MEAL_PLAN", QuotaPeriod.MONTHLY, meals);
-        verify(quotas).reserveFeature("user:7", "VIDEO", QuotaPeriod.MONTHLY, videos);
+        verify(quotas).reserveFeatureOnDate("user:7", "VIDEO", QuotaPeriod.MONTHLY,
+                videos, QuotaCalendar.today().withDayOfMonth(1));
     }
 }

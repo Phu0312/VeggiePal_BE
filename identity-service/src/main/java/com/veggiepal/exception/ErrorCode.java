@@ -70,7 +70,14 @@ public enum ErrorCode {
 
     MAIL_UNAVAILABLE(1031, "Could not send the email, please try again later", HttpStatus.SERVICE_UNAVAILABLE),
 
-    GOOGLE_TOKEN_INVALID(1019, "Google sign-in failed", HttpStatus.UNAUTHORIZED);
+    GOOGLE_TOKEN_INVALID(1019, "Google sign-in failed", HttpStatus.UNAUTHORIZED),
+    CHALLENGE_ALREADY_ACTIVE(1032, "A seven-day challenge is already in progress", HttpStatus.CONFLICT),
+    CHALLENGE_NOT_JOINED(1033, "No seven-day challenge found", HttpStatus.NOT_FOUND),
+    CHALLENGE_NOT_ACTIVE(1034, "The seven-day challenge is not active", HttpStatus.CONFLICT),
+    CHALLENGE_ALREADY_CHECKED(1035, "Already checked in today", HttpStatus.CONFLICT),
+    BADGE_NOT_FOUND(1036, "Badge not found", HttpStatus.NOT_FOUND),
+    BADGE_ALREADY_REVOKED(1037, "Badge has already been revoked", HttpStatus.CONFLICT),
+    BADGE_REVOCATION_REASON_REQUIRED(1038, "Revocation reason must be 1 to 500 characters", HttpStatus.BAD_REQUEST);
 
     ErrorCode(
             int code,

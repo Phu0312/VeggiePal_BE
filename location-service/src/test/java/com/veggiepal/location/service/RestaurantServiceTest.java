@@ -121,6 +121,12 @@ class RestaurantServiceTest {
     }
 
     @Test
+    void search_escapesLikeWildcardsAndEscapeCharacter() {
+        restaurantService.search("  50%_!  ", null, null, false);
+        verify(restaurantRepository).searchByName("50!%!_!!", null, null, false);
+    }
+
+    @Test
     void search_withoutCoordinates_hasNoDistance() {
         Map<String, Object> values = new HashMap<>(Map.of(
                 "id", 21L, "name", "Hum Vegetarian Võ Văn Tần", "address", "32 Võ Văn Tần",

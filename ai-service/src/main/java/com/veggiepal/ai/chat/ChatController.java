@@ -22,7 +22,8 @@ public class ChatController {
     @PostMapping("/guest-sessions")
     ApiResponse<GuestSessionResponse> createGuestSession(HttpServletRequest request) {
         GuestSession session = guestSessions.create(clientIpResolver.resolve(request));
-        return ApiResponse.success(new GuestSessionResponse(session.getId(), session.getExpiresAt()));
+        return ApiResponse.success(new GuestSessionResponse(session.getId(),
+                com.veggiepal.ai.quota.QuotaCalendar.toInstant(session.getExpiresAt())));
     }
 
     @PostMapping("/guest")

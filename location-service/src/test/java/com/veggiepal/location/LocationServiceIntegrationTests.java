@@ -41,7 +41,7 @@ import com.veggiepal.location.repository.RestaurantRepository;
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:mysql://localhost:3307/veggiepal_location_it?createDatabaseIfNotExist=true",
+        "spring.datasource.url=jdbc:mysql://localhost:${DB_PORT:3307}/veggiepal_location_it?createDatabaseIfNotExist=true",
         "spring.jpa.show-sql=false"
 })
 class LocationServiceIntegrationTests {
@@ -55,6 +55,30 @@ class LocationServiceIntegrationTests {
 
     @Autowired
     RestaurantRepository restaurantRepository;
+
+    @Test
+    void search_treatsPercentUnderscoreAndEscapeAsLiteralCharacters() throws Exception {
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+        Restaurant literal = restaurantRepository.save(Restaurant.builder()
+                .name("IT 50%_! Cafe " + suffix).address("Test")
+                .latitude(10.77).longitude(106.70).veganOnly(true).build());
+        Restaurant underscore = restaurantRepository.save(Restaurant.builder()
+                .name("IT 50_Cafe " + suffix).address("Test")
+                .latitude(10.77).longitude(106.70).veganOnly(true).build());
+        Restaurant decoy = restaurantRepository.save(Restaurant.builder()
+                .name("IT 50abc Cafe " + suffix).address("Test")
+                .latitude(10.77).longitude(106.70).veganOnly(true).build());
+        try {
+            mockMvc.perform(get("/restaurants/search").param("q", "50%_!"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result[*].id", contains(literal.getId().intValue())));
+            mockMvc.perform(get("/restaurants/search").param("q", "50_"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result[*].id", contains(underscore.getId().intValue())));
+        } finally {
+            restaurantRepository.deleteAll(java.util.List.of(literal, underscore, decoy));
+        }
+    }
 
     @Test
     void nearby_returnsRestaurantsWithinRadiusNearestFirst() throws Exception {

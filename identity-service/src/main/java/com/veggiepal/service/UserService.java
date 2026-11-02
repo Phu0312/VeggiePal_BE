@@ -8,6 +8,7 @@ import com.veggiepal.dto.response.ResetTokenResponse;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -169,7 +170,9 @@ public class UserService {
         return toLoginResponse(user);
     }
 
-    @Transactional
+    // READ_COMMITTED: under MySQL's default REPEATABLE_READ, two new emails in the same index gap both
+    // hold the gap lock from their empty lockByEmail and deadlock on insert. Existing rows stay row-locked.
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public LoginResponse loginWithGoogle(String idToken) {
 
         Jwt google = googleTokenVerifier.verify(idToken);

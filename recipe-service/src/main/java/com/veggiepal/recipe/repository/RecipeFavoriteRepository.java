@@ -37,6 +37,10 @@ public interface RecipeFavoriteRepository extends JpaRepository<RecipeFavorite, 
             Pageable pageable
     );
 
-    @Query("select f.recipe.id from RecipeFavorite f where f.userId = :userId")
-    List<Long> findRecipeIdsByUserId(@Param("userId") Long userId);
+    @Query("""
+            select f.recipe.id from RecipeFavorite f
+            where f.userId = :userId and f.recipe.status = :status
+            order by f.createdAt desc, f.id desc
+            """)
+    List<Long> findRecipeIdsByUserId(@Param("userId") Long userId, @Param("status") RecipeStatus status);
 }

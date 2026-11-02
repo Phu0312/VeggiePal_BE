@@ -85,7 +85,7 @@ class MealPlanUpgradeControllerTest {
                 10L, "Thực đơn tuần", "Tăng cơ", List.of(), LocalDateTime.now(), LocalDateTime.now(), 1, true, null
         );
         PageResponse<MealPlanDtos.MealPlanResponse> pageRes = PageResponse.<MealPlanDtos.MealPlanResponse>builder()
-                .content(List.of(item))
+                .items(List.of(item))
                 .page(0)
                 .size(10)
                 .totalElements(1)
@@ -96,8 +96,8 @@ class MealPlanUpgradeControllerTest {
 
         mockMvc.perform(get("/ai/meal-plans/favorites?page=0&size=10"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.content[0].id").value(10))
-                .andExpect(jsonPath("$.result.content[0].isFavorite").value(true))
+                .andExpect(jsonPath("$.result.items[0].id").value(10))
+                .andExpect(jsonPath("$.result.items[0].isFavorite").value(true))
                 .andExpect(jsonPath("$.result.totalElements").value(1))
                 .andExpect(jsonPath("$.result.items[0].id").value(10))
                 .andExpect(jsonPath("$.result.first").doesNotExist())
@@ -199,7 +199,7 @@ class MealPlanUpgradeControllerTest {
     @Test
     void versionsEndpoints_returnVersionsListAndDetail() throws Exception {
         MealPlanDtos.MealPlanVersionResponse v1 = new MealPlanDtos.MealPlanVersionResponse(
-                1L, 10L, 1, "Thực đơn", "Tăng cân", "plan", "Khởi tạo", LocalDateTime.now()
+                1L, 10L, 1, "Thực đơn", "Tăng cân", "plan", "Khởi tạo", LocalDateTime.now(), "GAIN"
         );
         when(service.listVersions(42L, 10L)).thenReturn(List.of(v1));
         when(service.getVersion(42L, 10L, 1)).thenReturn(v1);

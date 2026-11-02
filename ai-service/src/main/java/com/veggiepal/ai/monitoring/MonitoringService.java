@@ -13,7 +13,7 @@ public class MonitoringService {
 
     public MonitoringService(UsageLogRepository repository) { this.repository = repository; }
 
-    public UsageLogPage search(String feature, String status, Long userId, LocalDateTime from,
+    public UsageLogPage search(String feature, String excludeFeature, String status, Long userId, LocalDateTime from,
             LocalDateTime to, int page, int size) {
         int safePage = Math.max(0, page);
         int safeSize = Math.max(1, Math.min(size, 100));
@@ -21,6 +21,11 @@ public class MonitoringService {
         if (feature != null && !feature.isBlank()) {
             specification = specification.and((root, query, builder) ->
                     builder.equal(root.get("feature"), feature.trim().toUpperCase()));
+        }
+        String excluded = normalize(excludeFeature);
+        if (excluded != null) {
+            specification = specification.and((root, query, builder) ->
+                    builder.notEqual(root.get("feature"), excluded));
         }
         if (status != null && !status.isBlank()) {
             specification = specification.and((root, query, builder) ->
@@ -36,6 +41,10 @@ public class MonitoringService {
                 PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt")));
         return new UsageLogPage(result.getContent(), result.getNumber(), result.getSize(),
                 result.getTotalElements(), result.getTotalPages());
+    }
+
+    static String normalize(String feature) {
+        return feature == null || feature.isBlank() ? null : feature.trim().toUpperCase();
     }
 
     public record UsageLogPage(java.util.List<UsageLog> items, int page, int size,

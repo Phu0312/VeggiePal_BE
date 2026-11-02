@@ -36,7 +36,7 @@ class MonitoringServiceTest {
         Page<UsageLog> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 100), 0);
         when(repository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(emptyPage);
 
-        MonitoringService.UsageLogPage result = service.search(null, null, null, null, null, -5, 500);
+        MonitoringService.UsageLogPage result = service.search(null, null, null, null, null, null, -5, 500);
 
         ArgumentCaptor<Pageable> captor = ArgumentCaptor.forClass(Pageable.class);
         verify(repository).findAll(any(Specification.class), captor.capture());
@@ -56,7 +56,7 @@ class MonitoringServiceTest {
         when(repository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
         LocalDateTime now = LocalDateTime.now();
-        MonitoringService.UsageLogPage result = service.search("CHAT", "SUCCESS", 10L, now.minusDays(1), now, 0, 10);
+        MonitoringService.UsageLogPage result = service.search("CHAT", null, "SUCCESS", 10L, now.minusDays(1), now, 0, 10);
 
         assertEquals(1, result.items().size());
         assertEquals(1, result.totalElements());

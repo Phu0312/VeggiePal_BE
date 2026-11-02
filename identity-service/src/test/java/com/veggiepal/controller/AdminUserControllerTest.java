@@ -3,9 +3,11 @@ package com.veggiepal.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -23,6 +25,9 @@ import com.veggiepal.configuration.SecurityConfig;
 import com.veggiepal.configuration.SecurityExceptionHandler;
 import com.veggiepal.dto.response.PageResponse;
 import com.veggiepal.service.AdminUserService;
+import com.veggiepal.service.ChallengeBadgeService;
+import com.veggiepal.dto.response.BadgeResponse;
+import java.time.LocalDateTime;
 
 @WebMvcTest(AdminUserController.class)
 @Import({SecurityConfig.class, JwtConfig.class, SecurityExceptionHandler.class})
@@ -33,6 +38,34 @@ class AdminUserControllerTest {
 
     @MockitoBean
     AdminUserService adminUserService;
+
+    @MockitoBean
+    ChallengeBadgeService challengeBadgeService;
+
+    @Test
+    void adminCanGrantVerificationBadge() throws Exception {
+        when(challengeBadgeService.grantVerification(1L, 7L)).thenReturn(
+                new BadgeResponse(2L, "VERIFIED", LocalDateTime.of(2026, 11, 2, 10, 0), null, null));
+        mockMvc.perform(post("/admin/users/7/badges/verification")
+                        .with(jwt().jwt(t -> t.claim("userId", 1L))
+                                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.type").value("VERIFIED"));
+    }
+
+    @Test
+    void adminRevokesBadgeWithReasonFromBody() throws Exception {
+        when(challengeBadgeService.revoke(1L, 7L, 2L, "Gian lận")).thenReturn(
+                new BadgeResponse(2L, "ACHIEVEMENT", LocalDateTime.of(2026, 11, 1, 10, 0),
+                        LocalDateTime.of(2026, 11, 2, 10, 0), "Gian lận"));
+        mockMvc.perform(post("/admin/users/7/badges/2/revoke")
+                        .with(jwt().jwt(t -> t.claim("userId", 1L))
+                                .authorities(new SimpleGrantedAuthority("ROLE_ADMIN")))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"reason\":\"Gian lận\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.revocationReason").value("Gian lận"));
+        verify(challengeBadgeService).revoke(1L, 7L, 2L, "Gian lận");
+    }
 
     @Test
     void withoutToken_is401() throws Exception {

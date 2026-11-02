@@ -7,8 +7,9 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface ModerationRepository extends JpaRepository<ModerationCase,Long> {
+public interface ModerationRepository extends JpaRepository<ModerationCase,Long>, JpaSpecificationExecutor<ModerationCase> {
     List<ModerationCase> findByDecisionOrderByCreatedAtAsc(String decision);
     Optional<ModerationCase> findFirstByContentTypeAndExternalContentIdAndAuthorIdAndReviewedAtIsNullOrderByCreatedAtDesc(
             String contentType, Long externalContentId, Long authorId);

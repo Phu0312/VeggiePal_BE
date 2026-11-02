@@ -29,6 +29,9 @@ public class MealPlanVersion {
     @Column(nullable = false, length = 500)
     private String goal;
 
+    @Column(name = "goal_type", length = 20)
+    private String goalType;
+
     @Column(name = "plan_json", nullable = false, columnDefinition = "LONGTEXT")
     private String planJson;
 
@@ -39,10 +42,16 @@ public class MealPlanVersion {
     private LocalDateTime createdAt;
 
     public MealPlanVersion(MealPlan mealPlan, Integer version, String name, String goal, String planJson, String changeSummary) {
+        this(mealPlan, version, name, goal, mealPlan.getGoalType(), planJson, changeSummary);
+    }
+
+    public MealPlanVersion(MealPlan mealPlan, Integer version, String name, String goal, String goalType,
+            String planJson, String changeSummary) {
         this.mealPlan = mealPlan;
         this.version = version;
         this.name = name;
         this.goal = goal;
+        this.goalType = goalType;
         this.planJson = planJson;
         this.changeSummary = changeSummary;
         this.createdAt = LocalDateTime.now();

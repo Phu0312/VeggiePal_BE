@@ -139,6 +139,33 @@ class RecipeServiceTest {
     }
 
     @Test
+    void updateWithoutImageUrl_preservesExistingImage() {
+        Recipe recipe = Recipe.builder().id(1L).userId(100L).status(RecipeStatus.DRAFT)
+                .imageUrl("https://res.cloudinary.com/demo/image/upload/recipes/1/old.png").build();
+        when(recipes.findById(1L)).thenReturn(Optional.of(recipe));
+        when(ingredients.findById(9L)).thenReturn(Optional.of(activeIngredient()));
+        when(recipes.save(recipe)).thenReturn(recipe);
+
+        service.updateRecipe(1L, 100L, false, request("G", 1, 2));
+
+        assertEquals("https://res.cloudinary.com/demo/image/upload/recipes/1/old.png", recipe.getImageUrl());
+    }
+
+    @Test
+    void updateWithDifferentImageUrl_requiresImageUpload() {
+        Recipe recipe = Recipe.builder().id(1L).userId(100L).status(RecipeStatus.DRAFT)
+                .imageUrl("https://res.cloudinary.com/demo/image/upload/recipes/1/old.png").build();
+        when(recipes.findById(1L)).thenReturn(Optional.of(recipe));
+        var request = request("G", 1, 2);
+        request.setImageUrl("https://res.cloudinary.com/demo/image/upload/recipes/1/other.png");
+
+        assertEquals(ErrorCode.RECIPE_IMAGE_UPDATE_REQUIRES_UPLOAD,
+                assertThrows(AppException.class,
+                        () -> service.updateRecipe(1L, 100L, false, request)).getErrorCode());
+        verify(recipes, never()).save(any());
+    }
+
+    @Test
     void duplicateStepNumbersAreRejectedBeforeSave() {
         AppException exception = assertThrows(AppException.class,
                 () -> service.createRecipe(100L, request("G", 1, 1)));

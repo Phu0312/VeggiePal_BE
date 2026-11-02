@@ -30,6 +30,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.veggiepal.dto.request.ChangePasswordRequest;
 import com.veggiepal.dto.request.UpdateProfileRequest;
 import com.veggiepal.dto.response.UserProfileResponse;
+import com.veggiepal.dto.response.BadgeResponse;
+import java.time.LocalDateTime;
+import java.util.List;
 import com.veggiepal.entity.User;
 import com.veggiepal.enums.ActivityLevel;
 import com.veggiepal.enums.Gender;
@@ -61,6 +64,9 @@ class ProfileServiceTest {
     RefreshTokenService refreshTokenService;
 
     @Mock
+    ChallengeBadgeService challengeBadgeService;
+
+    @Mock
     org.springframework.transaction.PlatformTransactionManager transactionManager;
 
     @InjectMocks
@@ -75,6 +81,17 @@ class ProfileServiceTest {
         assertThat(profile.getId()).isEqualTo(USER_ID);
         assertThat(profile.getEmail()).isEqualTo("an@example.com");
         assertThat(profile.getDateOfBirth()).isEqualTo(LocalDate.of(2000, 1, 31));
+    }
+
+    @Test
+    void getProfileContainsOnlyActiveBadges() {
+        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(existingUser()));
+        when(challengeBadgeService.activeBadges(USER_ID)).thenReturn(List.of(
+                new BadgeResponse(5L, "VERIFIED", LocalDateTime.of(2026, 11, 2, 10, 0), null, null)));
+
+        UserProfileResponse profile = profileService.getProfile(USER_ID);
+
+        assertThat(profile.getBadges()).extracting(BadgeResponse::type).containsExactly("VERIFIED");
     }
 
     @Test

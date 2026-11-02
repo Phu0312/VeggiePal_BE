@@ -29,7 +29,8 @@ class MealPlanSnapshotClientTest {
     }
     @Test void forwardsOwnerTokenAndReadsMealNutritionFromPlanSnapshot() {
         endpoint("/ai/meal-plans/10",200,"""
-            {"code":1000,"result":{"id":10,"plan":{"days":[{"day":"MONDAY","meals":[
+            {"code":1000,"result":{"id":10,"createdAt":"2026-10-26T09:00:00","createdOn":"2026-10-26",
+             "plan":{"days":[{"day":"MONDAY","meals":[
              {"mealType":"LUNCH","recipeId":5,"recipeTitle":"Tofu","servingMultiplier":2,
               "nutrition":{"calories":600,"protein":40,"carbohydrate":80,"fat":20}}]}]}}}
             """);
@@ -39,6 +40,16 @@ class MealPlanSnapshotClientTest {
         assertThat(result.recipeId()).isEqualTo(5);assertThat(result.title()).isEqualTo("Tofu");
         assertThat(result.plannedServings()).isEqualByComparingTo("2");
         assertThat(result.nutrition().calories()).isEqualByComparingTo("600");
+        assertThat(result.planCreatedOn()).isEqualTo(LocalDate.of(2026,10,26));
+    }
+    @Test void planWithoutCreatedOnIsUnavailable() {
+        endpoint("/ai/meal-plans/10",200,"""
+            {"code":1000,"result":{"id":10,"plan":{"days":[{"day":"MONDAY","meals":[
+             {"mealType":"LUNCH","recipeId":5,"recipeTitle":"Tofu",
+              "nutrition":{"calories":600,"protein":40,"carbohydrate":80,"fat":20}}]}]}}}
+            """);
+        assertThatThrownBy(() -> new MealPlanSnapshotClient(url,url).fetch("token",10L,LocalDate.of(2026,10,26),MealType.LUNCH))
+                .isInstanceOf(AppException.class).extracting("errorCode").isEqualTo(ErrorCode.DIARY_SOURCE_UNAVAILABLE);
     }
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(ints={403,404})

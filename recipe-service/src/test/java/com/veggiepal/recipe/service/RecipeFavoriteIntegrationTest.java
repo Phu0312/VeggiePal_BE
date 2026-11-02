@@ -30,14 +30,30 @@ class RecipeFavoriteIntegrationTest {
         recipes.flush();
 
         var popular = recipeService.getPublishedRecipes(null, "popular", 0, 5);
-        assertThat(popular.getContent().get(0).getId()).isEqualTo(loved.getId());
-        assertThat(popular.getContent().get(0).getFavoriteCount()).isEqualTo(2);
+        assertThat(popular.getItems().get(0).getId()).isEqualTo(loved.getId());
+        assertThat(popular.getItems().get(0).getFavoriteCount()).isEqualTo(2);
 
-        assertThat(favorites.myFavorites(11L, 0, 20).getContent())
+        assertThat(favorites.myFavorites(11L, 0, 20).getItems())
                 .extracting("id").containsExactly(loved.getId());
         assertThat(favorites.myFavoriteIds(12L)).containsExactly(loved.getId());
 
         favorites.remove(11L, loved.getId());
         assertThat(favorites.myFavoriteIds(11L)).isEmpty();
+    }
+
+    @Test
+    void favoriteIds_includeOnlyPublishedRecipes() {
+        Recipe visible = recipes.saveAndFlush(Recipe.builder().userId(987654L).title("Visible IT")
+                .servings(1).status(RecipeStatus.PUBLISHED).build());
+        Recipe hidden = recipes.saveAndFlush(Recipe.builder().userId(987654L).title("Hidden IT")
+                .servings(1).status(RecipeStatus.PUBLISHED).build());
+        favorites.add(33L, visible.getId());
+        favorites.add(33L, hidden.getId());
+        hidden.setStatus(RecipeStatus.HIDDEN);
+        recipes.saveAndFlush(hidden);
+
+        assertThat(favorites.myFavoriteIds(33L)).containsExactly(visible.getId());
+        assertThat(favorites.myFavorites(33L, 0, 20).getItems())
+                .extracting("id").containsExactly(visible.getId());
     }
 }

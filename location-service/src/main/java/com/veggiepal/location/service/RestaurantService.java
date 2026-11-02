@@ -59,7 +59,8 @@ public class RestaurantService {
             throw new AppException(ErrorCode.INVALID_COORDINATES);
         }
 
-        return restaurantRepository.searchByName(keyword, lat, lng, veganOnly)
+        String likeKeyword = keyword.replace("!", "!!").replace("%", "!%").replace("_", "!_");
+        return restaurantRepository.searchByName(likeKeyword, lat, lng, veganOnly)
                 .stream()
                 .map(RestaurantService::toResponse)
                 .toList();

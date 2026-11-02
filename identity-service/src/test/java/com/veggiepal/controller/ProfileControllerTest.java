@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -34,6 +35,8 @@ import com.veggiepal.dto.response.UserProfileResponse;
 import com.veggiepal.enums.ActivityLevel;
 import com.veggiepal.enums.Gender;
 import com.veggiepal.service.ProfileService;
+import com.veggiepal.service.ChallengeBadgeService;
+import com.veggiepal.dto.response.ChallengeProgressResponse;
 
 @WebMvcTest(ProfileController.class)
 @Import({SecurityConfig.class, JwtConfig.class, SecurityExceptionHandler.class})
@@ -46,6 +49,19 @@ class ProfileControllerTest {
 
     @MockitoBean
     ProfileService profileService;
+
+    @MockitoBean
+    ChallengeBadgeService challengeBadgeService;
+
+    @Test
+    void checkInReturnsProgressForCurrentUser() throws Exception {
+        when(challengeBadgeService.checkIn(USER_ID)).thenReturn(
+                new ChallengeProgressResponse(3L, LocalDate.of(2026, 11, 2), 1, 7, 10, "IN_PROGRESS", true));
+        mockMvc.perform(post("/users/me/challenges/7-day/check-ins").with(currentUser()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.points").value(10));
+        verify(challengeBadgeService).checkIn(USER_ID);
+    }
 
     static RequestPostProcessor currentUser() {
         return jwt().jwt(token -> token.claim("userId", USER_ID).claim("role", "USER"));

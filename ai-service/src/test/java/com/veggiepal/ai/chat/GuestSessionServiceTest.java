@@ -1,5 +1,7 @@
 package com.veggiepal.ai.chat;
 
+import static org.mockito.Mockito.mockStatic;
+
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -16,6 +18,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import com.veggiepal.ai.quota.QuotaCalendar;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
@@ -28,9 +31,9 @@ class GuestSessionServiceTest {
 
         when(repository.countByIpHashAndCreatedAtGreaterThanEqual(any(), any())).thenReturn(0L);
         GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24), "pepper", 3);
-        LocalDateTime before = LocalDateTime.now();
+        LocalDateTime before = QuotaCalendar.localNow();
         GuestSession created = service.create("203.0.113.10");
-        LocalDateTime after = LocalDateTime.now();
+        LocalDateTime after = QuotaCalendar.localNow();
 
         assertNotNull(created);
         assertNotNull(created.getId());
@@ -85,5 +88,18 @@ class GuestSessionServiceTest {
         GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24), "pepper", 3);
 
         assertThrows(AppException.class, () -> service.create("203.0.113.10"));
+    }
+
+    @Test
+    void guestSessionLimitUsesVietnamCalendarDay() {
+        GuestSessionRepository repository = mock(GuestSessionRepository.class);
+        when(repository.save(any(GuestSession.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        GuestSessionService service = new GuestSessionService(repository, Duration.ofHours(24), "pepper", 3);
+        try (var calendar = mockStatic(QuotaCalendar.class)) {
+            calendar.when(QuotaCalendar::localNow).thenReturn(LocalDateTime.of(2026, 11, 1, 0, 0));
+            service.create("203.0.113.10");
+        }
+        verify(repository).countByIpHashAndCreatedAtGreaterThanEqual(any(),
+                eq(LocalDateTime.of(2026, 11, 1, 0, 0)));
     }
 }

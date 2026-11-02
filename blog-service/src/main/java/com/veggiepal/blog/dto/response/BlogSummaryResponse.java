@@ -2,6 +2,7 @@ package com.veggiepal.blog.dto.response;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.veggiepal.blog.enums.ContentStatus;
 
 import lombok.*;
@@ -35,4 +36,11 @@ public class BlogSummaryResponse {
     LocalDateTime publishedAt;
 
     LocalDateTime createdAt;
+
+    // Owner-only (GET /blogs/me); left null, and so omitted, on every public list.
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String moderationReason;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    Boolean aiReviewInProgress;
 }

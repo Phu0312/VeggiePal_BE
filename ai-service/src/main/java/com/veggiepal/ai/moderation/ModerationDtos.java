@@ -11,6 +11,7 @@ public final class ModerationDtos {
     private ModerationDtos() {}
     public enum ContentType { BLOG, VIDEO, COMMENT }
     public enum Decision { APPROVED, REJECTED, REVIEW_REQUIRED, DISMISSED }
+    public enum Reviewer { AI, ADMIN }
     public record ModerationRequest(@NotNull ContentType contentType, Long externalContentId, Long authorId,
                                     @NotBlank @Size(max=20000) String text) {}
     public record ReviewRequest(@NotNull Decision decision, @Size(max=1000) String reason) {}

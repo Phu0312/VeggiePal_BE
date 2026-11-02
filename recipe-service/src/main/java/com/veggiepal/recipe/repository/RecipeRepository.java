@@ -5,6 +5,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
+import java.util.Optional;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +17,10 @@ import com.veggiepal.recipe.enums.RecipeStatus;
 @Repository
 public interface RecipeRepository
         extends JpaRepository<Recipe, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from Recipe r where r.id = :id")
+    Optional<Recipe> findByIdForUpdate(@Param("id") Long id);
 
     boolean existsByTitle(String title);
 

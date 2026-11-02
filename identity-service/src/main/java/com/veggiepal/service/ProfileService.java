@@ -40,11 +40,13 @@ public class ProfileService {
     PasswordEncoder passwordEncoder;
     FileStorageService fileStorageService;
     RefreshTokenService refreshTokenService;
+    ChallengeBadgeService challengeBadgeService;
     PlatformTransactionManager transactionManager;
 
     public UserProfileResponse getProfile(Long userId) {
-
-        return userMapper.toUserProfileResponse(findUser(userId));
+        UserProfileResponse profile = userMapper.toUserProfileResponse(findUser(userId));
+        profile.setBadges(challengeBadgeService.activeBadges(userId));
+        return profile;
     }
 
     @Transactional

@@ -21,3 +21,9 @@ INSERT INTO users (id, email, password_hash, full_name, role, status, email_veri
 SELECT 3, 'author3@veggiepal.invalid', 'SEED_ACCOUNT_NO_LOGIN', 'Sống Xanh', 'USER', 'ACTIVE', TRUE, NOW(), NOW()
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM users WHERE id = 3);
+
+-- Task B03: until 2026-10-17 registration created PENDING accounts that could still sign in and
+-- post, so their names are hidden now that PENDING means "email not verified". Accounts created
+-- before the email OTP release (2026-10-28) are activated; email_verified stays false so they can
+-- still verify. Idempotent: no code path makes a pre-2026-10-28 account PENDING again.
+UPDATE users SET status = 'ACTIVE' WHERE status = 'PENDING' AND created_at < '2026-10-28 00:00:00';

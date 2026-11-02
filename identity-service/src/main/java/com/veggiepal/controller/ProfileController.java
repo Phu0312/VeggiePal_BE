@@ -12,7 +12,11 @@ import com.veggiepal.dto.request.ChangePasswordRequest;
 import com.veggiepal.dto.request.UpdateProfileRequest;
 import com.veggiepal.dto.response.ApiResponse;
 import com.veggiepal.dto.response.UserProfileResponse;
+import com.veggiepal.dto.response.BadgeResponse;
+import com.veggiepal.dto.response.ChallengeProgressResponse;
 import com.veggiepal.service.ProfileService;
+import com.veggiepal.service.ChallengeBadgeService;
+import java.util.List;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,6 +34,31 @@ import lombok.experimental.FieldDefaults;
 public class ProfileController {
 
     ProfileService profileService;
+    ChallengeBadgeService challengeBadgeService;
+
+    @PostMapping("/challenges/7-day")
+    ApiResponse<ChallengeProgressResponse> joinChallenge(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.<ChallengeProgressResponse>builder()
+                .result(challengeBadgeService.join(CurrentUser.id(jwt))).build();
+    }
+
+    @PostMapping("/challenges/7-day/check-ins")
+    ApiResponse<ChallengeProgressResponse> checkIn(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.<ChallengeProgressResponse>builder()
+                .result(challengeBadgeService.checkIn(CurrentUser.id(jwt))).build();
+    }
+
+    @GetMapping("/challenges/7-day")
+    ApiResponse<ChallengeProgressResponse> challengeProgress(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.<ChallengeProgressResponse>builder()
+                .result(challengeBadgeService.progress(CurrentUser.id(jwt))).build();
+    }
+
+    @GetMapping("/badges")
+    ApiResponse<List<BadgeResponse>> badges(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        return ApiResponse.<List<BadgeResponse>>builder()
+                .result(challengeBadgeService.activeBadges(CurrentUser.id(jwt))).build();
+    }
 
     @Operation(
             summary = "Get current user profile"
