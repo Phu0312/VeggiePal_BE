@@ -22,4 +22,12 @@ public class UsageService {
     public void failure(Long userId, String principal, String feature, String model, long latency, Exception error) {
         repository.save(new UsageLog(userId, principal, feature, model, "FAILED", 0, 0, latency, error.getMessage()));
     }
+    /** The provider answered but the answer was rejected (truncated, malformed): its tokens were still spent. */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void failure(Long userId, String principal, String feature, String model, GroqResult result, long latency,
+                        Exception error) {
+        repository.save(new UsageLog(userId, principal, feature, model, "FAILED", result.promptTokens(),
+                result.completionTokens(), latency, error.getMessage()));
+        quotaService.addTokens(principal, feature, result.promptTokens(), result.completionTokens());
+    }
 }

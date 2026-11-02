@@ -10,7 +10,6 @@ import com.veggiepal.ai.video.VideoDtos.SharedVideoRecipeResponse;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.concurrent.Executor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
@@ -228,7 +227,7 @@ public class VideoProcessingService {
     }
 
     private java.time.Instant utc(LocalDateTime value) {
-        return value == null ? null : value.toInstant(ZoneOffset.UTC);
+        return value == null ? null : value.atZone(java.time.ZoneId.systemDefault()).toInstant();
     }
 
     private BlogVideoClient.BlogVideoMetadata requirePublishedUpload(Long videoId) {
