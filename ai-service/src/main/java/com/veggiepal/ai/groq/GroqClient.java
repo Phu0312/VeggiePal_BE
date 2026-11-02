@@ -88,6 +88,7 @@ public class GroqClient {
             body.add("file", new FileSystemResource(audioFile));
             body.add("model", model);
             body.add("response_format", "json");
+            body.add("language", "vi");
             try {
                 com.fasterxml.jackson.databind.JsonNode response = transcriptionRestClient.post().uri("/audio/transcriptions")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + properties.key())

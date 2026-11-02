@@ -20,7 +20,6 @@ import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.ZoneOffset;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
@@ -281,14 +280,14 @@ class VideoProcessingServiceTest {
     }
 
     @Test
-    void responseTimestampsAreExplicitUtcInstants() {
+    void responseTimestampsAreInstantsOfTheJvmZoneWallClock() {
         VideoJob job = new VideoJob(8L, "history.mp4");
         when(repository.findByIdAndUserId(10L, 8L)).thenReturn(Optional.of(job));
 
         var response = service.get(8L, 10L);
 
-        assertEquals(job.getCreatedAt().toInstant(ZoneOffset.UTC), response.createdAt());
-        assertEquals(job.getUpdatedAt().toInstant(ZoneOffset.UTC), response.updatedAt());
+        assertEquals(job.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant(), response.createdAt());
+        assertEquals(job.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant(), response.updatedAt());
     }
 
     @Test

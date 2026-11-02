@@ -19,6 +19,11 @@ public final class QuotaCalendar {
         return Instant.now().atZone(ZONE).toLocalDateTime();
     }
 
+    /** For values written with {@link #localNow()}: they are Vietnam wall-clock time, not JVM-zone time. */
+    public static Instant toInstant(LocalDateTime localTime) {
+        return localTime == null ? null : localTime.atZone(ZONE).toInstant();
+    }
+
     static LocalDate dateAt(Instant instant) {
         return instant.atZone(ZONE).toLocalDate();
     }
