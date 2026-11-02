@@ -11,6 +11,5 @@ public interface VideoMapper {
 
     @Mapping(target = "categoryId", source = "category.id")
     @Mapping(target = "categoryName", source = "category.name")
-    @Mapping(target = "moderationReason", ignore = true)
     VideoResponse toVideoResponse(Video video);
 }

@@ -18,6 +18,16 @@ import com.veggiepal.recipe.enums.RecipeStatus;
 public interface RecipeRepository
         extends JpaRepository<Recipe, Long> {
 
+    @Query("""
+            select r from Recipe r
+            where (:status is null or r.status = :status)
+              and (:authorId is null or r.userId = :authorId)
+              and (:keyword is null or lower(r.title) like concat('%', :keyword, '%')
+                   or lower(r.description) like concat('%', :keyword, '%'))
+            """)
+    Page<Recipe> adminSearch(@Param("status") RecipeStatus status, @Param("authorId") Long authorId,
+                             @Param("keyword") String keyword, Pageable pageable);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from Recipe r where r.id = :id")
     Optional<Recipe> findByIdForUpdate(@Param("id") Long id);

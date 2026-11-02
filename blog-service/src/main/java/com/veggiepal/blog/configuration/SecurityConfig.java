@@ -78,6 +78,9 @@ public class SecurityConfig {
                                 .requestMatchers("/internal/moderation/**")
                                 .hasRole("ADMIN")
 
+                                .requestMatchers("/admin/**")
+                                .hasRole("ADMIN")
+
                                 .anyRequest()
                                 .authenticated()
                 )

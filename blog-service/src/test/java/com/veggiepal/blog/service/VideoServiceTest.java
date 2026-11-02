@@ -487,7 +487,7 @@ class VideoServiceTest {
     @Test
     void applyAdminModeration_approved_publishesAndStampsPublishedAt() {
         Video video = video(ContentStatus.PENDING);
-        when(videoRepository.findById(10L)).thenReturn(Optional.of(video));
+        when(videoRepository.findForModeration(10L)).thenReturn(Optional.of(video));
 
         videoService.applyAdminModeration(10L, AUTHOR_ID, true);
 
@@ -497,7 +497,7 @@ class VideoServiceTest {
 
     @Test
     void applyAdminModeration_wrongAuthor_throwsTargetMismatch() {
-        when(videoRepository.findById(10L)).thenReturn(Optional.of(video(ContentStatus.PENDING)));
+        when(videoRepository.findForModeration(10L)).thenReturn(Optional.of(video(ContentStatus.PENDING)));
 
         assertFailsWith(() -> videoService.applyAdminModeration(10L, STRANGER_ID, true),
                 ErrorCode.MODERATION_TARGET_MISMATCH);
@@ -506,10 +506,19 @@ class VideoServiceTest {
     @Test
     void applyAdminModeration_bannedVideo_staysBanned() {
         Video video = video(ContentStatus.BANNED);
-        when(videoRepository.findById(10L)).thenReturn(Optional.of(video));
+        when(videoRepository.findForModeration(10L)).thenReturn(Optional.of(video));
 
         assertFailsWith(() -> videoService.applyAdminModeration(10L, AUTHOR_ID, true),
-                ErrorCode.INVALID_VIDEO_STATUS_TRANSITION);
+                ErrorCode.MODERATION_CASE_STALE);
         assertThat(video.getStatus()).isEqualTo(ContentStatus.BANNED);
+    }
+
+    @Test
+    void applyAdminModeration_afterDirectAdminDecision_isStale() {
+        Video video = video(ContentStatus.PUBLISHED);
+        when(videoRepository.findForModeration(10L)).thenReturn(Optional.of(video));
+        assertFailsWith(() -> videoService.applyAdminModeration(10L, AUTHOR_ID, false),
+                ErrorCode.MODERATION_CASE_STALE);
+        assertThat(video.getStatus()).isEqualTo(ContentStatus.PUBLISHED);
     }
 }

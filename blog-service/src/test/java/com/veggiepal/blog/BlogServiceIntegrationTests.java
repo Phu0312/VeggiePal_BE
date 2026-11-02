@@ -105,6 +105,12 @@ class BlogServiceIntegrationTests {
     BlogRepository blogRepository;
 
     @Autowired
+    com.veggiepal.blog.repository.VideoRepository videoRepository;
+
+    @Autowired
+    com.veggiepal.blog.repository.ContentStatusAuditRepository statusAudits;
+
+    @Autowired
     PlatformTransactionManager transactionManager;
 
     @Value("${spring.servlet.multipart.max-file-size}")
@@ -690,6 +696,89 @@ class BlogServiceIntegrationTests {
             Thread.currentThread().interrupt();
             throw new IllegalStateException(exception);
         }
+    }
+
+    @Test
+    void adminCanFindRejectedContentAndRepublishWithAudit() throws Exception {
+        String marker = unique();
+        long category = createRootCategory("Admin " + marker);
+        long blogId = createPublishedBlog(category, "Blog " + marker, body(marker));
+        long videoId = createVideo(category, "Video " + marker, true);
+        var blog = blogRepository.findById(blogId).orElseThrow();
+        blog.setStatus(ContentStatus.REJECTED);
+        blogRepository.saveAndFlush(blog);
+        var video = videoRepository.findById(videoId).orElseThrow();
+        video.setStatus(ContentStatus.REJECTED);
+        videoRepository.saveAndFlush(video);
+
+        mockMvc.perform(authed(get("/admin/blogs"), ADMIN_ID, "ADMIN")
+                        .param("status", "REJECTED").param("authorId", String.valueOf(AUTHOR_ID))
+                        .param("keyword", marker))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.items[?(@.id == %d)].status".formatted(blogId)).value("REJECTED"));
+        mockMvc.perform(authed(get("/admin/videos"), ADMIN_ID, "ADMIN")
+                        .param("status", "REJECTED").param("authorId", String.valueOf(AUTHOR_ID))
+                        .param("keyword", marker))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.items[?(@.id == %d)].status".formatted(videoId)).value("REJECTED"));
+        mockMvc.perform(authed(get("/admin/blogs"), ADMIN_ID, "ADMIN"))
+                .andExpect(jsonPath("$.result.items[?(@.id == %d)].status".formatted(blogId)).value("REJECTED"));
+        mockMvc.perform(authed(get("/admin/blogs"), OTHER_MEMBER_ID, "USER"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(authed(get("/admin/videos/" + videoId), ADMIN_ID, "ADMIN"))
+                .andExpect(jsonPath("$.result.status").value("REJECTED"));
+
+        String decision = "{\"status\":\"PUBLISHED\",\"reason\":\"False positive\"}";
+        mockMvc.perform(authed(put("/admin/blogs/" + blogId + "/status"), ADMIN_ID, "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON).content(decision))
+                .andExpect(jsonPath("$.result.status").value("PUBLISHED"));
+        mockMvc.perform(authed(put("/admin/videos/" + videoId + "/status"), ADMIN_ID, "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON).content(decision))
+                .andExpect(jsonPath("$.result.status").value("PUBLISHED"));
+        mockMvc.perform(authed(get("/blogs/me"), AUTHOR_ID, "USER").param("status", "PUBLISHED"))
+                .andExpect(jsonPath("$.result.items[?(@.id == %d)].status".formatted(blogId)).value("PUBLISHED"));
+        mockMvc.perform(authed(get("/videos/me"), AUTHOR_ID, "USER").param("status", "PUBLISHED"))
+                .andExpect(jsonPath("$.result.items[?(@.id == %d)].status".formatted(videoId)).value("PUBLISHED"));
+        assertThat(statusAudits.findAll().stream().filter(a -> a.getContentId().equals(blogId)
+                && a.getContentType().equals("BLOG"))).anySatisfy(a -> {
+            assertThat(a.getReviewedBy()).isEqualTo(ADMIN_ID);
+            assertThat(a.getReason()).isEqualTo("False positive");
+        });
+    }
+
+    @Test
+    void pendingCanBeRejectedButBannedCannotBeReopened() throws Exception {
+        String marker = unique();
+        long category = createRootCategory("Review " + marker);
+        long blogId = createDraftBlog(category, "Blog " + marker, body(marker));
+        long videoId = createVideo(category, "Video " + marker, false);
+        var blog = blogRepository.findById(blogId).orElseThrow();
+        blog.setStatus(ContentStatus.PENDING);
+        blogRepository.saveAndFlush(blog);
+        var video = videoRepository.findById(videoId).orElseThrow();
+        video.setStatus(ContentStatus.PENDING);
+        videoRepository.saveAndFlush(video);
+
+        String decision = "{\"status\":\"REJECTED\",\"reason\":\"Manual review\"}";
+        mockMvc.perform(authed(put("/admin/blogs/" + blogId + "/status"), ADMIN_ID, "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON).content(decision))
+                .andExpect(jsonPath("$.result.status").value("REJECTED"));
+        mockMvc.perform(authed(put("/admin/videos/" + videoId + "/status"), ADMIN_ID, "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON).content(decision))
+                .andExpect(jsonPath("$.result.status").value("REJECTED"));
+        mockMvc.perform(authed(get("/videos/me"), AUTHOR_ID, "USER")
+                        .param("status", "REJECTED"))
+                .andExpect(jsonPath("$.result.items[?(@.id == %d)].moderationReason".formatted(videoId))
+                        .value("Manual review"));
+
+        blog = blogRepository.findById(blogId).orElseThrow();
+        blog.setStatus(ContentStatus.BANNED);
+        blogRepository.saveAndFlush(blog);
+        mockMvc.perform(authed(put("/admin/blogs/" + blogId + "/status"), ADMIN_ID, "ADMIN")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"PUBLISHED\",\"reason\":\"Retry\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(3015));
     }
 
     private static String unique() {

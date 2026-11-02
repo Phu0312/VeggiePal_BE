@@ -385,14 +385,14 @@ public class BlogService {
 
     @Transactional
     public void applyAdminModeration(Long blogId, Long expectedAuthorId, boolean approved) {
-        Blog blog = blogRepository.findById(blogId)
+        Blog blog = blogRepository.findForModeration(blogId)
                 .orElseThrow(() -> new AppException(ErrorCode.BLOG_NOT_EXISTED));
         if (expectedAuthorId == null || !blog.getAuthorId().equals(expectedAuthorId)) {
             throw new AppException(ErrorCode.MODERATION_TARGET_MISMATCH);
         }
-        // A ban is terminal: a moderation decision queued before the ban must not lift it
-        if (blog.getStatus() == ContentStatus.BANNED) {
-            throw new AppException(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
+        // A direct admin decision or a ban supersedes the older AI queue case.
+        if (blog.getStatus() != ContentStatus.PENDING) {
+            throw new AppException(ErrorCode.MODERATION_CASE_STALE);
         }
         blog.setStatus(approved ? ContentStatus.PUBLISHED : ContentStatus.REJECTED);
         // The admin's word is final: a late AI verdict must not override it, nor the retry job resend it

@@ -21,6 +21,16 @@ import jakarta.persistence.LockModeType;
 @Repository
 public interface BlogRepository extends JpaRepository<Blog, Long> {
 
+    @Query("""
+            select b from Blog b
+            where (:status is null or b.status = :status)
+              and (:authorId is null or b.authorId = :authorId)
+              and (:keyword is null or lower(b.title) like concat('%', :keyword, '%')
+                   or lower(b.content) like concat('%', :keyword, '%'))
+            """)
+    Page<Blog> adminSearch(@Param("status") ContentStatus status, @Param("authorId") Long authorId,
+                           @Param("keyword") String keyword, Pageable pageable);
+
     Page<Blog> findByAuthorIdInAndStatus(java.util.Collection<Long> authorIds, ContentStatus status, Pageable pageable);
 
     Page<Blog> findByAuthorId(Long authorId, Pageable pageable);

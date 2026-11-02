@@ -232,19 +232,20 @@ public class VideoService {
     public void applyAdminModeration(Long videoId, Long expectedAuthorId, boolean approved) {
 
         Video video = videoRepository
-                .findById(videoId)
+                .findForModeration(videoId)
                 .orElseThrow(() -> new AppException(ErrorCode.VIDEO_NOT_EXISTED));
 
         if (expectedAuthorId == null || !video.getAuthorId().equals(expectedAuthorId)) {
             throw new AppException(ErrorCode.MODERATION_TARGET_MISMATCH);
         }
 
-        // A ban is terminal: a moderation decision queued before the ban must not lift it
-        if (video.getStatus() == ContentStatus.BANNED) {
-            throw new AppException(ErrorCode.INVALID_VIDEO_STATUS_TRANSITION);
+        // A direct admin decision or a ban supersedes the older AI queue case.
+        if (video.getStatus() != ContentStatus.PENDING) {
+            throw new AppException(ErrorCode.MODERATION_CASE_STALE);
         }
 
         video.setStatus(approved ? ContentStatus.PUBLISHED : ContentStatus.REJECTED);
+        if (approved) video.setModerationReason(null);
 
         if (approved && video.getPublishedAt() == null) {
             video.setPublishedAt(LocalDateTime.now());
@@ -298,6 +299,7 @@ public class VideoService {
 
             case APPROVED -> {
                 video.setStatus(ContentStatus.PUBLISHED);
+                video.setModerationReason(null);
 
                 // Stamped once: re-publishing an edited video must not reshuffle the feed
                 if (video.getPublishedAt() == null) {
@@ -311,6 +313,8 @@ public class VideoService {
 
             case REVIEW_REQUIRED -> video.setStatus(ContentStatus.PENDING);
         }
+
+        video.setModerationReason(result.reason());
 
         return result.reason();
     }

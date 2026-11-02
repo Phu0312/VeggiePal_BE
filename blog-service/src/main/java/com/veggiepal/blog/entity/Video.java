@@ -73,6 +73,9 @@ public class Video {
     @Column(name = "published_at")
     LocalDateTime publishedAt;
 
+    @Column(name = "moderation_reason", length = 1000)
+    String moderationReason;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     LocalDateTime createdAt;
 

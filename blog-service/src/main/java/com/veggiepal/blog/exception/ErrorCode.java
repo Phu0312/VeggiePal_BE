@@ -110,7 +110,8 @@ public enum ErrorCode {
 
     INVALID_MODERATION_RESPONSE(3051, "AI moderation returned an invalid response", HttpStatus.BAD_GATEWAY),
 
-    MODERATION_TARGET_MISMATCH(3052, "Moderation target does not match its author", HttpStatus.CONFLICT);
+    MODERATION_TARGET_MISMATCH(3052, "Moderation target does not match its author", HttpStatus.CONFLICT),
+    MODERATION_CASE_STALE(3053, "Moderation case is no longer pending", HttpStatus.CONFLICT);
 
     ErrorCode(
             int code,

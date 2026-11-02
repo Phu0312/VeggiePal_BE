@@ -286,12 +286,12 @@ class BlogServiceTest {
     @Test
     void applyAdminModeration_bannedBlog_staysBanned() {
         Blog blog = blog(ContentStatus.BANNED);
-        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog));
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
 
         assertThatThrownBy(() -> blogService.applyAdminModeration(10L, AUTHOR_ID, true))
                 .isInstanceOf(AppException.class)
                 .extracting(e -> ((AppException) e).getErrorCode())
-                .isEqualTo(ErrorCode.INVALID_BLOG_STATUS_TRANSITION);
+                .isEqualTo(ErrorCode.MODERATION_CASE_STALE);
         assertThat(blog.getStatus()).isEqualTo(ContentStatus.BANNED);
     }
 
@@ -420,13 +420,24 @@ class BlogServiceTest {
     void applyAdminModeration_approved_clearsTheAiStateAndReason() {
         Blog blog = awaitingAi();
         blog.setModerationReason("queued");
-        when(blogRepository.findById(10L)).thenReturn(Optional.of(blog));
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
 
         blogService.applyAdminModeration(10L, AUTHOR_ID, true);
 
         assertThat(blog.getStatus()).isEqualTo(ContentStatus.PUBLISHED);
         assertThat(blog.getModerationRequestedAt()).isNull();
         assertThat(blog.getModerationReason()).isNull();
+    }
+
+    @Test
+    void applyAdminModeration_afterDirectAdminDecision_isStale() {
+        Blog blog = blog(ContentStatus.PUBLISHED);
+        when(blogRepository.findForModeration(10L)).thenReturn(Optional.of(blog));
+        assertThatThrownBy(() -> blogService.applyAdminModeration(10L, AUTHOR_ID, false))
+                .isInstanceOf(AppException.class)
+                .extracting(e -> ((AppException) e).getErrorCode())
+                .isEqualTo(ErrorCode.MODERATION_CASE_STALE);
+        assertThat(blog.getStatus()).isEqualTo(ContentStatus.PUBLISHED);
     }
 
     @Test
