@@ -7,6 +7,11 @@ import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.veggiepal.recipe.enums.RecipeStatus;
+import com.veggiepal.recipe.repository.RecipeRepository;
 
 import jakarta.persistence.EntityManagerFactory;
 
@@ -19,6 +24,22 @@ class RecipeListQueryCountIntegrationTest {
     @Autowired RecipeService recipeService;
     @Autowired RecipeFavoriteService favoriteService;
     @Autowired EntityManagerFactory entityManagerFactory;
+    @Autowired RecipeRepository recipes;
+
+    @Test
+    @Transactional
+    void adminListIncludesArchivedAndFiltersByAuthorAndKeyword() {
+        var recipe = recipes.findByStatus(RecipeStatus.PUBLISHED, PageRequest.of(0, 1))
+                .getContent().getFirst();
+        recipe.setStatus(RecipeStatus.ARCHIVED);
+        recipes.flush();
+
+        var result = recipeService.getAdminRecipes(RecipeStatus.ARCHIVED, recipe.getUserId(),
+                recipe.getTitle(), 0, 20);
+        assertThat(result.getItems()).extracting(item -> item.getId()).contains(recipe.getId());
+        assertThat(recipeService.getAdminRecipes(null, null, null, 0, 20).getTotalElements())
+                .isEqualTo(recipes.count());
+    }
 
     @Test
     void publishedListStatementCountDoesNotGrowWithEachRecipe() {

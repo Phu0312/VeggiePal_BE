@@ -126,7 +126,23 @@ class ModerationServiceTest {
     }
 
     @Test
-    void adminCanExplicitlyDismissOrphanCase() {
+    void supersededDomainDecisionClosesStaleQueueCase() {
+        ModerationRepository repository = mock(ModerationRepository.class);
+        ModerationOwnerClient owner = mock(ModerationOwnerClient.class);
+        ModerationCase item = new ModerationCase("BLOG", 42L, 7L, "content", "REVIEW_REQUIRED", "spam",
+                "needs review", new BigDecimal("0.7"));
+        when(repository.findForReview(10L)).thenReturn(Optional.of(item));
+        org.mockito.Mockito.doThrow(new AppException(ErrorCode.MODERATION_CASE_STALE))
+                .when(owner).apply("BLOG", 42L, 7L, Decision.REJECTED, "admin-token");
+
+        var response = service(repository, mock(GroqClient.class), owner)
+                .review(1L, 10L, new ReviewRequest(Decision.REJECTED, "stale"), "admin-token");
+        assertEquals(Decision.DISMISSED, response.decision());
+        assertEquals(false, item.isPending());
+    }
+
+    @Test
+    void dismissDoesNotCloseLivePendingCase() {
         ModerationRepository repository = mock(ModerationRepository.class);
         ModerationOwnerClient owner = mock(ModerationOwnerClient.class);
         ModerationCase item = new ModerationCase("BLOG", 42L, 7L, "orphan content", "REVIEW_REQUIRED", "spam",
@@ -135,16 +151,14 @@ class ModerationServiceTest {
 
         ModerationService service = service(repository, mock(GroqClient.class), owner);
 
-        var response = service.dismiss(1L, 10L, "Orphan case dismissal");
-
-        assertEquals(Decision.DISMISSED, response.decision());
-        assertEquals(false, item.isPending());
-        assertEquals(1L, item.getReviewedBy());
+        var response = service.dismiss(1L, 10L, "Skip");
+        assertEquals(Decision.REVIEW_REQUIRED, response.decision());
+        assertEquals(true, item.isPending());
         org.mockito.Mockito.verifyNoInteractions(owner);
     }
 
     @Test
-    void adminCanSubmitDismissDecisionInReviewRequest() {
+    void dismissDecisionDoesNotCloseLivePendingCase() {
         ModerationRepository repository = mock(ModerationRepository.class);
         ModerationOwnerClient owner = mock(ModerationOwnerClient.class);
         ModerationCase item = new ModerationCase("BLOG", 42L, 7L, "orphan content", "REVIEW_REQUIRED", "spam",
@@ -153,11 +167,9 @@ class ModerationServiceTest {
 
         ModerationService service = service(repository, mock(GroqClient.class), owner);
 
-        var response = service.review(1L, 10L, new ReviewRequest(Decision.DISMISSED, "Manual dismiss"), "admin-token");
-
-        assertEquals(Decision.DISMISSED, response.decision());
-        assertEquals(false, item.isPending());
-        assertEquals(1L, item.getReviewedBy());
+        var response = service.review(1L, 10L, new ReviewRequest(Decision.DISMISSED, "Skip"), "admin-token");
+        assertEquals(Decision.REVIEW_REQUIRED, response.decision());
+        assertEquals(true, item.isPending());
         org.mockito.Mockito.verifyNoInteractions(owner);
     }
 

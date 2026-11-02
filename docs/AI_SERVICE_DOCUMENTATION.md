@@ -609,10 +609,7 @@ Trả mảng `ModerationResponse` chỉ gồm case `REVIEW_REQUIRED`, theo thờ
 
 #### DELETE `/ai/admin/moderation/10?reason=...`
 
-Bỏ qua hoặc đóng case mồ côi mà không cần thực thi callback xuống domain service:
-- Quyền yêu cầu: `ROLE_ADMIN`.
-- Cập nhật case sang `DISMISSED` kèm ghi nhận `reviewedBy` và `reviewedAt`.
-- Trả về `ModerationResponse` đã đóng.
+"Bỏ qua" trả về case `REVIEW_REQUIRED` không đổi để nội dung vẫn có thể được duyệt sau. Khi callback duyệt gặp nội dung đã xóa (404) hoặc đã được quyết định qua API admin (409), case cũ được đóng thành `DISMISSED`.
 
 ### 7.5 Recommendation API
 

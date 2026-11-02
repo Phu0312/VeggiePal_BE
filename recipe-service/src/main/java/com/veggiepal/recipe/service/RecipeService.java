@@ -54,6 +54,17 @@ public class RecipeService {
     IngredientRepository ingredientRepository;
     RecipeMapper recipeMapper;
 
+    @Transactional(readOnly = true)
+    public PageResponse<RecipeResponse> getAdminRecipes(RecipeStatus status, Long authorId,
+                                                         String keyword, int page, int size) {
+        int safeSize = Math.clamp(size, 1, 100);
+        Pageable pageable = PageRequest.of(Math.min(Math.max(page, 0), Integer.MAX_VALUE / safeSize),
+                safeSize, Sort.by(Sort.Order.desc("createdAt"), Sort.Order.desc("id")));
+        String term = normalizeKeyword(keyword);
+        return toPageResponse(recipeRepository.adminSearch(status, authorId,
+                term == null ? null : term.toLowerCase(Locale.ROOT), pageable));
+    }
+
     @Transactional
     public RecipeResponse createRecipe(
             Long userId,
