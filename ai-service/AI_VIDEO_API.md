@@ -19,6 +19,12 @@ remain synchronous error responses.
 `createdAt` and `updatedAt` are UTC instants serialized with a `Z` suffix (for example,
 `2026-10-22T06:00:00Z`).
 
+Completed jobs include `extraction.nutritionEstimate` with `calories` (kcal), `protein`,
+`carbohydrate`, and `fat` (grams) for the whole extracted recipe, plus `estimated: true`.
+The model derives these estimates from the transcript's ingredient names and stated amounts;
+they are estimates, not verified nutrition facts. Ingredient names and recipe steps are in Vietnamese.
+Older retained jobs keep their original extraction until they expire and are processed again.
+
 ## Existing blog videos
 
 - `POST /ai/videos/process-existing` with `{ "videoId": 8 }` starts extraction or reuses a retained result/job.

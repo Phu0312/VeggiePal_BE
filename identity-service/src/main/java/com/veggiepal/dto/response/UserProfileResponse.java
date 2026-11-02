@@ -2,6 +2,7 @@ package com.veggiepal.dto.response;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.veggiepal.enums.ActivityLevel;
 import com.veggiepal.enums.Gender;
@@ -38,6 +39,8 @@ public class UserProfileResponse {
     UserStatus status;
 
     Boolean emailVerified;
+
+    List<BadgeResponse> badges;
 
     LocalDateTime createdAt;
 }
