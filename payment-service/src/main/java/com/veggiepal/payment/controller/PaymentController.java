@@ -2,6 +2,7 @@ package com.veggiepal.payment.controller;
 
 import com.veggiepal.payment.dto.request.CheckoutRequest;
 import com.veggiepal.payment.dto.response.*;
+import com.veggiepal.payment.entity.PlanCode;
 import com.veggiepal.payment.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,6 +35,14 @@ public class PaymentController {
                                                        @Valid @RequestBody CheckoutRequest request) {
         return ApiResponse.<PaymentOrderResponse>builder()
                 .result(paymentService.checkout(CurrentUser.id(jwt), request.planCode())).build();
+    }
+
+    @GetMapping("/checkout-preview")
+    @Operation(summary = "Preview paid plan renewal or upgrade using the current subscription")
+    public ApiResponse<CheckoutPreviewResponse> checkoutPreview(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt, @RequestParam("plan") PlanCode planCode) {
+        return ApiResponse.<CheckoutPreviewResponse>builder()
+                .result(paymentService.checkoutPreview(CurrentUser.id(jwt), planCode)).build();
     }
 
     @GetMapping("/orders/{id}")

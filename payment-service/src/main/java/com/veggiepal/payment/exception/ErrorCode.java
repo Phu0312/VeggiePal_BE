@@ -20,7 +20,8 @@ public enum ErrorCode {
     PAYMENT_AMOUNT_MISMATCH(6006, "Payment amount does not match the order", HttpStatus.BAD_REQUEST),
     PAYMENT_NOT_SUCCESSFUL(6007, "Payment was not successful", HttpStatus.BAD_REQUEST),
     PAYMENT_ORDER_NOT_CANCELLABLE(6008, "Only pending payment orders can be cancelled", HttpStatus.CONFLICT),
-    PAYMENT_CANCELLATION_NOT_CONFIRMED(6009, "Payment provider did not confirm cancellation", HttpStatus.CONFLICT);
+    PAYMENT_CANCELLATION_NOT_CONFIRMED(6009, "Payment provider did not confirm cancellation", HttpStatus.CONFLICT),
+    PLAN_DOWNGRADE_NOT_ALLOWED(6010, "Không thể mua gói thấp hơn khi gói hiện tại còn hiệu lực", HttpStatus.CONFLICT);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code; this.message = message; this.statusCode = statusCode;
