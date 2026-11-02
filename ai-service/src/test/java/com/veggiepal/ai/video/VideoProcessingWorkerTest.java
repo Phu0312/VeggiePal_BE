@@ -2,6 +2,7 @@ package com.veggiepal.ai.video;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -56,7 +57,9 @@ class VideoProcessingWorkerTest {
     void completesValidRecipeAndKeepsTranscriptOutOfSystemInstructions() {
         when(groq.complete(eq("video"), any(), anyDouble(), anyInt())).thenReturn(new GroqClient.GroqResult(
                 "{\"title\":\"Water\",\"ingredients\":[{\"name\":\"water\",\"quantity\":\"2 cups\"}]," +
-                        "\"steps\":[{\"number\":1,\"instruction\":\"Boil water\"}]}", 10, 5));
+                        "\"steps\":[{\"number\":1,\"instruction\":\"Boil water\"}]," +
+                        "\"nutritionEstimate\":{\"calories\":0,\"protein\":0,\"carbohydrate\":0," +
+                        "\"fat\":0,\"estimated\":true}}", 10, 5));
 
         worker.process(9L);
 
@@ -64,8 +67,10 @@ class VideoProcessingWorkerTest {
         verify(groq).complete(eq("video"), messages.capture(), eq(0.1), eq(4000));
         assertEquals("system", messages.getValue().get(0).role());
         assertFalse(messages.getValue().get(0).content().contains("Ignore prior instructions"));
+        assertTrue(messages.getValue().get(0).content().contains(
+                "Viết tiêu đề, tên nguyên liệu và hướng dẫn từng bước bằng tiếng Việt"));
         assertEquals("user", messages.getValue().get(1).role());
-        verify(states).complete(eq(9L), any(), any());
+        verify(states).complete(eq(9L), any(), org.mockito.ArgumentMatchers.contains("nutritionEstimate"));
         verify(storage).delete(video);
         verify(storage).delete(audio);
     }
@@ -75,6 +80,20 @@ class VideoProcessingWorkerTest {
         when(groq.complete(eq("video"), any(), anyDouble(), anyInt())).thenReturn(new GroqClient.GroqResult(
                 "{\"title\":\"Soup\",\"ingredients\":[{\"name\":\"water\"}]," +
                         "\"steps\":[{\"number\":1,\"instruction\":\"Boil\"}]}", 1, 1));
+
+        worker.process(9L);
+
+        verify(states, never()).complete(any(), any(), any());
+        verify(states).failAndRefund(9L, ErrorCode.INVALID_AI_RESPONSE.message);
+    }
+
+    @Test
+    void negativeNutritionEstimateIsRejectedAndRefunded() {
+        when(groq.complete(eq("video"), any(), anyDouble(), anyInt())).thenReturn(new GroqClient.GroqResult(
+                "{\"title\":\"Soup\",\"ingredients\":[{\"name\":\"water\",\"quantity\":\"2 cups\"}]," +
+                        "\"steps\":[{\"number\":1,\"instruction\":\"Boil\"}]," +
+                        "\"nutritionEstimate\":{\"calories\":-1,\"protein\":0,\"carbohydrate\":0," +
+                        "\"fat\":0,\"estimated\":true}}", 10, 5));
 
         worker.process(9L);
 

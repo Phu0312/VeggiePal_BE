@@ -5,6 +5,7 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -15,9 +16,12 @@ import com.veggiepal.dto.request.LockUserRequest;
 import com.veggiepal.dto.response.AdminUserResponse;
 import com.veggiepal.dto.response.ApiResponse;
 import com.veggiepal.dto.response.PageResponse;
+import com.veggiepal.dto.response.BadgeResponse;
 import com.veggiepal.enums.Role;
 import com.veggiepal.enums.UserStatus;
 import com.veggiepal.service.AdminUserService;
+import com.veggiepal.service.ChallengeBadgeService;
+import java.util.List;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,6 +38,29 @@ import lombok.experimental.FieldDefaults;
 public class AdminUserController {
 
     AdminUserService adminUserService;
+    ChallengeBadgeService challengeBadgeService;
+
+    @GetMapping("/{id}/badges")
+    ApiResponse<List<BadgeResponse>> badgeHistory(@PathVariable Long id) {
+        return ApiResponse.<List<BadgeResponse>>builder().result(challengeBadgeService.badgeHistory(id)).build();
+    }
+
+    @PostMapping("/{id}/badges/verification")
+    ApiResponse<BadgeResponse> grantVerification(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                                 @PathVariable Long id) {
+        return ApiResponse.<BadgeResponse>builder()
+                .result(challengeBadgeService.grantVerification(CurrentUser.id(jwt), id)).build();
+    }
+
+    @PostMapping("/{id}/badges/{badgeId}/revoke")
+    ApiResponse<BadgeResponse> revokeBadge(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                           @PathVariable Long id, @PathVariable Long badgeId,
+                                           @RequestBody RevokeBadgeRequest request) {
+        return ApiResponse.<BadgeResponse>builder()
+                .result(challengeBadgeService.revoke(CurrentUser.id(jwt), id, badgeId, request.reason())).build();
+    }
+
+    record RevokeBadgeRequest(String reason) { }
 
     @Operation(summary = "Users, newest first; keyword matches email or full name")
     @GetMapping
