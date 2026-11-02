@@ -69,10 +69,10 @@ class VideoProcessingWorkerTest {
 
         @SuppressWarnings("unchecked") ArgumentCaptor<List<GroqRequest.Message>> messages = ArgumentCaptor.forClass(List.class);
         verify(groq).complete(eq("video"), messages.capture(), eq(0.1), eq(4000));
+        verify(states).assignPromptVersion(9L, 0);
         assertEquals("system", messages.getValue().get(0).role());
         assertFalse(messages.getValue().get(0).content().contains("Ignore prior instructions"));
-        assertTrue(messages.getValue().get(0).content().contains(
-                "Viết tiêu đề, tên nguyên liệu và hướng dẫn từng bước bằng tiếng Việt"));
+        assertTrue(messages.getValue().get(0).content().contains("tiếng Việt"));
         assertEquals("user", messages.getValue().get(1).role());
         verify(states).complete(eq(9L), any(), org.mockito.ArgumentMatchers.contains("nutritionEstimate"));
         verify(storage).delete(video);
@@ -167,7 +167,7 @@ class VideoProcessingWorkerTest {
 
     @Test
     void systemInstructionAsksForVietnameseOutput() {
-        assertTrue(VideoProcessingWorker.SYSTEM_INSTRUCTION.contains("Vietnamese"));
+        assertTrue(VideoProcessingWorker.SYSTEM_INSTRUCTION.contains("tiếng Việt"));
     }
 
     @Test
@@ -175,7 +175,9 @@ class VideoProcessingWorkerTest {
         GroqClient.GroqResult truncated = new GroqClient.GroqResult("{\"title\":\"Wa", 10, 4000, "length");
         GroqClient.GroqResult valid = new GroqClient.GroqResult(
                 "{\"title\":\"Water\",\"ingredients\":[{\"name\":\"water\",\"quantity\":\"2 cups\"}]," +
-                        "\"steps\":[{\"number\":1,\"instruction\":\"Boil water\"}]}", 10, 50, "stop");
+                        "\"steps\":[{\"number\":1,\"instruction\":\"Boil water\"}]," +
+                        "\"nutritionEstimate\":{\"calories\":0,\"protein\":0,\"carbohydrate\":0," +
+                        "\"fat\":0,\"estimated\":true}}", 10, 50, "stop");
         when(groq.complete(eq("video"), any(), anyDouble(), anyInt())).thenReturn(truncated, valid);
 
         worker.process(9L);

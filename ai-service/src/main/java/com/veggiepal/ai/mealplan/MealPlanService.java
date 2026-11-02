@@ -14,6 +14,10 @@ import com.veggiepal.ai.groq.GroqClient;
 import com.veggiepal.ai.groq.ModelProperties;
 import com.veggiepal.ai.groq.dto.GroqRequest;
 import com.veggiepal.ai.monitoring.UsageService;
+import com.veggiepal.ai.prompt.PromptKey;
+import com.veggiepal.ai.prompt.PromptRuntime;
+import com.veggiepal.ai.prompt.PromptTemplate;
+import java.util.Map;
 import com.veggiepal.ai.quota.FeatureUsage;
 import com.veggiepal.ai.quota.PremiumQuotaService;
 import java.math.BigDecimal;
@@ -50,6 +54,8 @@ public class MealPlanService {
     private final MealPlanFavoriteRepository favoriteRepository;
     private final MealPlanVersionRepository versionRepository;
     private final PremiumQuotaService premiumQuota;
+    @Autowired(required = false)
+    private PromptRuntime promptRuntime;
 
     @Autowired
     public MealPlanService(MealPlanRepository repository,
@@ -99,16 +105,15 @@ public class MealPlanService {
         ArrayNode candidates = validator.safeCandidates(allRecipes, allergies, request.availableIngredients());
         ArrayNode promptRecipes = validator.promptCandidates(candidates);
 
-        String prompt = """
-                Tạo thực đơn chay đúng 7 ngày từ danh sách recipe thật. Không tự tạo recipe hoặc ID.
-                Mỗi ngày phải có duy nhất BREAKFAST, LUNCH và DINNER. Ưu tiên sở thích và mục tiêu được cung cấp.
-                Trả duy nhất JSON {"days":[{"day":"MONDAY","meals":[{"mealType":"BREAKFAST","recipeId":1,"note":"..."}]}]}.
-                Mỗi note viết bằng tiếng Việt, một câu ngắn.
-                Mục tiêu: %s; sở thích: %s; nguyên liệu sẵn có: %s; sức khỏe: %s; dị ứng đã lọc: %s;
-                mục tiêu dinh dưỡng/ngày: %s; recipes an toàn: %s
-                """.formatted(request.healthGoal(), request.preferences(), request.availableIngredients(), health,
-                allergies, target, json(promptRecipes))
-                + validator.mealBudgetHint(target);
+        Map<String, ?> createVariables = Map.of(
+                "goal", request.healthGoal(), "preferences", nullToEmpty(request.preferences()),
+                "availableIngredients", nullToEmpty(request.availableIngredients()), "health", health,
+                "allergies", allergies, "target", target, "recipes", json(promptRecipes),
+                "budgetHint", validator.mealBudgetHint(target));
+        String prompt = promptRuntime == null
+                ? PromptTemplate.render(PromptKey.MEAL_PLAN_CREATE,
+                        PromptKey.MEAL_PLAN_CREATE.defaultContent(), createVariables)
+                : promptRuntime.render(PromptKey.MEAL_PLAN_CREATE, createVariables);
 
         ObjectNode plan;
         try {
@@ -167,12 +172,15 @@ public class MealPlanService {
         ArrayNode candidates = validator.safeCandidates(allRecipes, allergies, available);
         String mealType = request.mealType().trim().toUpperCase(Locale.ROOT);
         BigDecimal budget = validator.mealBudgets(target).get(mealType);
-        String prompt = "Chọn một recipe thay thế từ danh sách thật, khác ID " + request.currentRecipeId()
-                + ", phù hợp mục tiêu " + entity.getGoal()
-                + (budget == null ? "" : ", ngân sách calo của bữa này khoảng "
-                        + budget.setScale(0, RoundingMode.HALF_UP).toPlainString() + " kcal")
-                + ". Trả duy nhất JSON {\"recipeId\":1,\"note\":\"...\"}, note viết bằng tiếng Việt. Recipes: "
-                + json(validator.promptCandidates(candidates));
+        Map<String, ?> replaceVariables = Map.of(
+                "currentRecipeId", String.valueOf(request.currentRecipeId()), "goal", entity.getGoal(),
+                "budget", budget == null ? "" : ", ngân sách calo của bữa này khoảng "
+                        + budget.setScale(0, RoundingMode.HALF_UP).toPlainString() + " kcal",
+                "recipes", json(validator.promptCandidates(candidates)));
+        String prompt = promptRuntime == null
+                ? PromptTemplate.render(PromptKey.MEAL_PLAN_REPLACE,
+                        PromptKey.MEAL_PLAN_REPLACE.defaultContent(), replaceVariables)
+                : promptRuntime.render(PromptKey.MEAL_PLAN_REPLACE, replaceVariables);
 
         long replacementId = -1;
         String note = "Món ăn thay thế dinh dưỡng";
@@ -699,7 +707,9 @@ public class MealPlanService {
         long start = System.nanoTime();
         try {
             var result = groq.complete(models.mealPlan(), List.of(
-                    new GroqRequest.Message("system", "Lập thực đơn chay an toàn chỉ từ dữ liệu được cung cấp. Không tự tính dinh dưỡng."),
+                    new GroqRequest.Message("system", promptRuntime == null
+                            ? PromptKey.MEAL_PLAN_SYSTEM.defaultContent()
+                            : promptRuntime.activeContent(PromptKey.MEAL_PLAN_SYSTEM)),
                     new GroqRequest.Message("user", prompt)), 0.2, 1800);
             usage.success(userId, "user:" + userId, "MEAL_PLAN", models.mealPlan(), result, elapsed(start));
             return read(cleanJson(result.content()));
